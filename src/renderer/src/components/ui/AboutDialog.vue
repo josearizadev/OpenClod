@@ -8,6 +8,18 @@ import {
   DialogRoot,
   DialogTitle
 } from 'reka-ui'
+import {
+  CircleAlert,
+  CircleCheck,
+  Copy,
+  Download,
+  ExternalLink,
+  Github,
+  Globe,
+  Info,
+  LoaderCircle,
+  RefreshCw
+} from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
 import type { SystemInfo } from '../../../../shared/types'
 import { useCopy } from '../../composables/useCopy'
@@ -15,6 +27,9 @@ import { useUpdateStore } from '../../stores/update'
 import appIcon from '../../../../../resources/icon.png'
 
 /** «Acerca de OpenClod». */
+const REPO_URL = 'https://github.com/josearizadev/OpenClod'
+const WEB_URL = 'https://openclod.joseariza.dev/'
+
 const open = defineModel<boolean>('open', { required: true })
 
 const info = ref<SystemInfo | null>(null)
@@ -57,6 +72,21 @@ const updateText = computed(() => {
   }
   return ''
 })
+const updateIcon = computed(() => {
+  switch (update.status.state) {
+    case 'checking':
+      return LoaderCircle
+    case 'downloading':
+    case 'ready':
+      return Download
+    case 'error':
+      return CircleAlert
+    case 'disabled':
+      return Info
+    default:
+      return CircleCheck
+  }
+})
 const canCheck = computed(() => ['idle', 'latest', 'error'].includes(update.status.state))
 
 const { copied, copy } = useCopy()
@@ -71,56 +101,118 @@ function copyInfo(): void {
     <DialogPortal>
       <DialogOverlay class="fixed inset-0 z-40 bg-overlay" />
       <DialogContent
-        class="fixed top-1/2 left-1/2 z-50 flex w-[min(24rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-3 rounded-dialog bg-surface p-6 text-center text-text shadow-float"
+        class="fixed top-1/2 left-1/2 z-50 flex w-[min(26rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 flex-col gap-5 rounded-dialog bg-surface p-6 text-text shadow-float"
+        @open-auto-focus.prevent
       >
-        <img :src="appIcon" alt="" class="size-16" />
-        <div>
-          <DialogTitle class="font-serif text-2xl">OpenClod</DialogTitle>
-          <DialogDescription class="text-sm text-muted">
-            Versión {{ info?.app ?? '…' }}
-          </DialogDescription>
-        </div>
-        <dl class="grid w-full grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-left text-sm">
-          <template v-for="[name, value] in rows" :key="name">
-            <dt class="text-muted">{{ name }}</dt>
-            <dd class="font-mono text-[13px]">{{ value }}</dd>
-          </template>
-        </dl>
-        <div class="flex flex-col items-center gap-2 text-sm" aria-live="polite">
-          <p v-if="updateText" class="text-muted">{{ updateText }}</p>
+        <header class="flex items-center gap-4">
+          <img :src="appIcon" alt="" class="size-14 shrink-0" />
+          <div class="min-w-0">
+            <DialogTitle class="font-serif text-2xl leading-tight">OpenClod</DialogTitle>
+            <DialogDescription class="mt-0.5 text-sm text-muted">
+              Versión {{ info?.app ?? '…' }}
+            </DialogDescription>
+          </div>
+        </header>
+
+        <section
+          v-if="update.status.state !== 'disabled' || updateText"
+          class="flex items-center gap-3 rounded-menu bg-bg-sidebar px-3 py-2.5 text-sm"
+          aria-live="polite"
+        >
+          <component
+            :is="updateIcon"
+            :size="16"
+            :stroke-width="1.75"
+            aria-hidden="true"
+            :class="[
+              'shrink-0',
+              update.status.state === 'error' ? 'text-danger' : 'text-accent',
+              update.status.state === 'checking' ? 'motion-safe:animate-spin' : ''
+            ]"
+          />
+          <p class="min-w-0 flex-1 text-muted">
+            {{ updateText || 'Comprueba si hay una versión nueva.' }}
+          </p>
           <button
             v-if="update.status.state === 'ready'"
             type="button"
-            class="h-8 rounded-item bg-accent px-3 text-on-accent hover:bg-accent-hover"
+            class="h-7 shrink-0 rounded-item bg-accent px-2.5 text-xs text-on-accent transition-colors duration-150 hover:bg-accent-hover"
             @click="update.install()"
           >
-            Reiniciar y actualizar
+            Reiniciar
           </button>
           <button
             v-else-if="update.status.state !== 'disabled'"
             type="button"
-            class="h-8 rounded-item px-3 hover:bg-surface-hover disabled:opacity-50 disabled:hover:bg-transparent"
+            class="inline-flex h-7 shrink-0 items-center gap-1.5 rounded-item px-2 text-xs transition-colors duration-150 hover:bg-surface-hover disabled:opacity-50 disabled:hover:bg-transparent"
             :disabled="!canCheck"
             @click="update.check()"
           >
-            Buscar actualizaciones
+            <RefreshCw :size="13" :stroke-width="1.75" aria-hidden="true" />
+            Buscar
           </button>
-        </div>
-        <p class="text-xs text-muted">Proyecto personal, no afiliado a Anthropic.</p>
-        <div class="mt-1 flex gap-2">
+        </section>
+
+        <dl class="divide-y divide-border text-sm">
+          <div
+            v-for="[name, value] in rows"
+            :key="name"
+            class="flex items-baseline justify-between gap-4 py-1.5"
+          >
+            <dt class="text-muted">{{ name }}</dt>
+            <dd class="truncate font-mono text-[13px]">{{ value }}</dd>
+          </div>
+        </dl>
+
+        <nav class="grid grid-cols-2 gap-2 text-sm" aria-label="Enlaces">
+          <a
+            :href="REPO_URL"
+            target="_blank"
+            rel="noreferrer"
+            class="group flex items-center gap-2 rounded-item px-3 py-2 shadow-float transition-colors duration-150 hover:bg-surface-hover"
+          >
+            <Github :size="16" :stroke-width="1.75" aria-hidden="true" />
+            GitHub
+            <ExternalLink
+              :size="12"
+              class="ml-auto text-muted opacity-0 transition-opacity group-hover:opacity-100"
+              aria-hidden="true"
+            />
+          </a>
+          <a
+            :href="WEB_URL"
+            target="_blank"
+            rel="noreferrer"
+            class="group flex items-center gap-2 rounded-item px-3 py-2 shadow-float transition-colors duration-150 hover:bg-surface-hover"
+          >
+            <Globe :size="16" :stroke-width="1.75" aria-hidden="true" />
+            Web
+            <ExternalLink
+              :size="12"
+              class="ml-auto text-muted opacity-0 transition-opacity group-hover:opacity-100"
+              aria-hidden="true"
+            />
+          </a>
+        </nav>
+
+        <footer class="flex items-center gap-2 border-t border-border pt-4">
+          <p class="mr-auto text-xs text-muted">
+            Código abierto (MIT).<br />No afiliado a Anthropic.
+          </p>
           <button
             type="button"
-            class="h-8 rounded-item px-3 text-sm hover:bg-surface-hover"
+            class="inline-flex h-8 items-center gap-1.5 rounded-item px-3 text-sm transition-colors duration-150 hover:bg-surface-hover"
             @click="copyInfo"
           >
-            {{ copied ? 'Copiado' : 'Copiar información' }}
+            <Copy :size="14" :stroke-width="1.75" aria-hidden="true" />
+            {{ copied ? 'Copiado' : 'Copiar' }}
           </button>
           <DialogClose
-            class="h-8 rounded-item bg-accent px-3 text-sm text-on-accent hover:bg-accent-hover"
+            class="h-8 rounded-item bg-accent px-4 text-sm text-on-accent transition-colors duration-150 hover:bg-accent-hover"
           >
             Cerrar
           </DialogClose>
-        </div>
+        </footer>
       </DialogContent>
     </DialogPortal>
   </DialogRoot>
