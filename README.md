@@ -16,12 +16,11 @@ App de escritorio para usar Claude Code desde una interfaz propia (muy parecida 
 - **Node.js 26** (versión exacta en `.nvmrc`) con **npm 11**.
 - **Claude Code** con una sesión iniciada (ejecuta `claude` una vez en una terminal e inicia sesión). La app usa esa sesión a través del Agent SDK; no pide ni guarda credenciales.
 - **Git** (opcional): sin él, no aparecen el chip de rama ni la lista Git del panel de archivos.
-- **Build Tools de Visual Studio** y **Python 3**: hoy no hacen falta, porque `better-sqlite3` y `node-pty` traen binarios precompilados (N-API); solo si hubiera que compilar un módulo nativo.
-  Verificado el 2026-10-14 con Build Tools 2026 (18.9.2, MSVC 14.51), Windows SDK 10.0.26100, Python 3.14.7 y Node 26.7.0.
+- No hacen falta **Build Tools de Visual Studio** ni **Python**: `better-sqlite3` y `node-pty` traen binarios precompilados (N-API) que funcionan en cualquier versión de Electron, así que no se recompilan al instalar.
 
 ## Arrancar en desarrollo
 ```bash
-npm ci             # instala dependencias (y recompila módulos nativos para Electron en postinstall)
+npm ci             # instala dependencias
 npm run dev        # abre la app con recarga en caliente
 ```
 - npm 11 solo ejecuta los scripts de instalación aprobados en `allowScripts` de `package.json` (Electron, esbuild, electron-winstaller, better-sqlite3, node-pty). Si actualizas alguno de esos paquetes, vuelve a aprobarlo con `npm install-scripts approve <paquete>`.
