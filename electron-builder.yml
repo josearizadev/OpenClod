@@ -1,0 +1,42 @@
+appId: dev.local.bitacora
+productName: OpenClod
+directories:
+  buildResources: build
+files:
+  - '!**/.vscode/*'
+  - '!{.claude,docs,scripts,src,tests}/**'
+  - '!electron.vite.config.{js,ts,mjs,cjs}'
+  - '!vitest.config.{js,ts,mjs,cjs}'
+  - '!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,.editorconfig,.nvmrc,dev-app-update.yml,CHANGELOG.md,README.md,CLAUDE.md}'
+  - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
+  - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+asar: true
+asarUnpack:
+  - resources/**
+  - '**/node_modules/better-sqlite3/**'
+  # Módulo nativo de la terminal: binarios y conpty.dll fuera de app.asar.
+  - '**/node_modules/node-pty/**'
+  # El binario de Claude Code tiene que poder ejecutarse: no puede quedar dentro de app.asar.
+  - '**/node_modules/@anthropic-ai/claude-agent-sdk*/**'
+win:
+  executableName: openclod
+  target: nsis
+nsis:
+  artifactName: ${productName}-${version}-setup.${ext}
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  shortcutName: ${productName}
+  uninstallDisplayName: ${productName}
+  createDesktopShortcut: always
+mac:
+  entitlementsInherit: build/entitlements.mac.plist
+  notarize: false
+dmg:
+  artifactName: ${name}-${version}.${ext}
+linux:
+  target:
+    - AppImage
+  category: Utility
+appImage:
+  artifactName: ${name}-${version}.${ext}
+npmRebuild: false
