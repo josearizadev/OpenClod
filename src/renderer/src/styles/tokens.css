@@ -1,0 +1,211 @@
+/*
+ * Tokens de diseño. Fuente única de colores, fuentes y radios.
+ * Los componentes usan las utilidades de Tailwind que se generan a partir de `@theme`
+ * (bg-bg, text-muted, border-border…), nunca valores sueltos.
+ * Si se cambia algún color de fondo, actualizar también WINDOW_COLORS en src/main/window.ts.
+ */
+
+:root {
+  --bg: #faf9f5;
+  --bg-sidebar: #f5f4ed;
+  --surface: #ffffff;
+  --surface-hover: #f0eee6;
+  --bubble-user: #f0eee6;
+  --border: #1f1e1d26;
+  --text: #141413;
+  --text-muted: #73726c;
+  --accent: #d97757;
+  --accent-hover: #c6613f;
+  --on-accent: #ffffff;
+  --danger: #b53333;
+  --warning: #a35a00;
+  --code-bg: #f5f4ed;
+  --overlay: #14141340;
+
+  /* Resaltado de código: paleta cálida, contraste ≥ 4.5:1 sobre --code-bg. */
+  --code-text: #141413;
+  --code-comment: #7a776e;
+  --code-keyword: #a8462b;
+  --code-string: #4a6f2f;
+  --code-number: #93590f;
+  --code-function: #2f5f96;
+  --code-variable: #6b4596;
+  --code-punctuation: #5f5d57;
+
+  /* Diff de Edit/Write. */
+  --diff-add: #2d6e36;
+  --diff-del: #b53333;
+  --diff-add-bg: #2d6e361a;
+  --diff-del-bg: #b533331a;
+
+  /* «En vivo» y coincidencias de búsqueda. */
+  --live: #d97757;
+  --live-halo: #d9775759;
+  --find-match: #f3d27a99;
+  --find-current: #ec9a6ccc;
+
+  /* Uso: series por modelo validadas (skill dataviz) y medidor. */
+  --chart-1: #2a78d6;
+  --chart-2: #eb6834;
+  --chart-3: #1baf7a;
+  --chart-4: #eda100;
+  --chart-other: #9c9a92;
+  --meter-track: #1f1e1d1a;
+
+  /* Terminal: ANSI legible sobre --code-bg. */
+  --term-black: #141413;
+  --term-red: #b53333;
+  --term-green: #2d6e36;
+  --term-yellow: #8a5a00;
+  --term-blue: #2f5f96;
+  --term-magenta: #6b4596;
+  --term-cyan: #1d6f73;
+  --term-white: #73726c;
+  --term-bright-black: #5f5d57;
+  --term-bright-red: #c4402f;
+  --term-bright-green: #3a7f44;
+  --term-bright-yellow: #93590f;
+  --term-bright-blue: #2a6cc0;
+  --term-bright-magenta: #7f52b0;
+  --term-bright-cyan: #227a7f;
+  --term-bright-white: #9c9a92;
+  --term-selection: #d9775740;
+
+  --shadow-float: 0 4px 20px rgb(0 0 0 / 0.04), 0 0 0 0.5px var(--border);
+
+  color-scheme: light;
+}
+
+.dark {
+  --bg: #262624;
+  --bg-sidebar: #1f1e1d;
+  --surface: #30302e;
+  --surface-hover: #3a3a37;
+  --bubble-user: #141413;
+  --border: #dedcd126;
+  --text: #faf9f5;
+  --text-muted: #9c9a92;
+  --accent: #d97757;
+  --accent-hover: #e08a6d;
+  --on-accent: #ffffff;
+  --danger: #e5534b;
+  --warning: #e0a043;
+  --code-bg: #1f1e1d;
+  --overlay: #00000080;
+
+  --code-text: #faf9f5;
+  --code-comment: #8e8c84;
+  --code-keyword: #e5937a;
+  --code-string: #a9c47f;
+  --code-number: #e3b26b;
+  --code-function: #8fb4e3;
+  --code-variable: #c3a5e0;
+  --code-punctuation: #b8b6ad;
+
+  --diff-add: #7fc48a;
+  --diff-del: #ef7b74;
+  --diff-add-bg: #7fc48a1f;
+  --diff-del-bg: #e5534b26;
+
+  --live: #e08a6d;
+  --live-halo: #e08a6d59;
+  --find-match: #8a6d1fb3;
+  --find-current: #b8583acc;
+
+  --chart-1: #3987e5;
+  --chart-2: #d95926;
+  --chart-3: #199e70;
+  --chart-4: #c98500;
+  --chart-other: #73726c;
+  --meter-track: #dedcd126;
+
+  --term-black: #3a3a37;
+  --term-red: #e5534b;
+  --term-green: #7fbf6a;
+  --term-yellow: #e0a043;
+  --term-blue: #6ca7e8;
+  --term-magenta: #c49be0;
+  --term-cyan: #6cc2c2;
+  --term-white: #dedcd1;
+  --term-bright-black: #8e8c84;
+  --term-bright-red: #f07a72;
+  --term-bright-green: #a9c47f;
+  --term-bright-yellow: #edc06a;
+  --term-bright-blue: #93c1f2;
+  --term-bright-magenta: #d8b8ef;
+  --term-bright-cyan: #93d8d8;
+  --term-bright-white: #faf9f5;
+  --term-selection: #d9775759;
+
+  color-scheme: dark;
+}
+
+/* El tema de shiki (`createCssVariablesTheme`) pide estas variables: salen de los tokens. */
+:root {
+  --shiki-foreground: var(--code-text);
+  --shiki-background: transparent;
+  --shiki-token-comment: var(--code-comment);
+  --shiki-token-keyword: var(--code-keyword);
+  --shiki-token-string: var(--code-string);
+  --shiki-token-string-expression: var(--code-string);
+  --shiki-token-constant: var(--code-number);
+  --shiki-token-function: var(--code-function);
+  --shiki-token-parameter: var(--code-variable);
+  --shiki-token-punctuation: var(--code-punctuation);
+  --shiki-token-link: var(--code-function);
+  --shiki-token-inserted: var(--diff-add);
+  --shiki-token-deleted: var(--diff-del);
+  --shiki-token-changed: var(--code-number);
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* `inline`: las utilidades apuntan a var(--…) y cambian solas con `.dark`. */
+@theme inline {
+  /* Sin la paleta por defecto de Tailwind: solo existen los colores de la app. */
+  --color-*: initial;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+  --color-bg: var(--bg);
+  --color-bg-sidebar: var(--bg-sidebar);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-bubble-user: var(--bubble-user);
+  --color-border: var(--border);
+  --color-text: var(--text);
+  --color-muted: var(--text-muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-on-accent: var(--on-accent);
+  --color-danger: var(--danger);
+  --color-warning: var(--warning);
+  --color-code-bg: var(--code-bg);
+  --color-overlay: var(--overlay);
+  --color-diff-add: var(--diff-add);
+  --color-diff-del: var(--diff-del);
+  --color-diff-add-bg: var(--diff-add-bg);
+  --color-diff-del-bg: var(--diff-del-bg);
+  --color-live: var(--live);
+  --color-find-match: var(--find-match);
+  --color-find-current: var(--find-current);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-other: var(--chart-other);
+  --color-meter-track: var(--meter-track);
+
+  --font-sans: 'Inter Variable', system-ui, sans-serif;
+  --font-serif: 'Source Serif 4 Variable', Georgia, serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+
+  --radius-item: 8px;
+  --radius-bubble: 16px;
+  --radius-dialog: 16px;
+  --radius-menu: 12px;
+  --radius-composer: 20px;
+
+  --shadow-float: var(--shadow-float);
+
+  --container-chat: 48rem;
+}

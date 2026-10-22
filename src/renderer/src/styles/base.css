@@ -1,0 +1,144 @@
+@import 'tailwindcss';
+@import './tokens.css';
+@import './markdown.css';
+
+/* Zonas para arrastrar la ventana (barra de título oculta). Los controles que
+   haya dentro deben llevar `no-drag` o no recibirán clics. */
+@utility drag-region {
+  -webkit-app-region: drag;
+  user-select: none;
+}
+
+@utility no-drag {
+  -webkit-app-region: no-drag;
+}
+
+@layer base {
+  html,
+  body,
+  #app {
+    height: 100%;
+  }
+
+  /* La página nunca se desplaza entera: cada zona (barra lateral, vista, paneles) tiene su
+     propio scroll. `clip` y no `hidden`: tampoco se puede desplazar desde código
+     (`scrollIntoView`, foco), que movía también la barra lateral. */
+  html,
+  body {
+    overflow: clip;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  code,
+  kbd,
+  pre,
+  samp {
+    font-family: var(--font-mono);
+    /* Sin ligaduras (`=>` como `⇒`): el código se muestra tal cual se escribe. */
+    font-variant-ligatures: none;
+  }
+
+  /* Barras de desplazamiento finas y en los colores del tema, como en la app de Claude. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--text-muted) 40%, transparent) transparent;
+  }
+
+  ::selection {
+    background-color: color-mix(in srgb, var(--accent) 30%, transparent);
+  }
+
+  /* Foco visible solo con teclado: anillo de 2 px del acento con separación. */
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* Marca «en vivo»: aro de 8 px con el centro al 50 % y un halo que
+   pulsa. Distinta del punto «trabajando» del chat. Sin pulso con movimiento reducido. */
+@layer components {
+  .live-dot {
+    position: relative;
+    display: inline-block;
+    flex-shrink: 0;
+    width: 8px;
+    height: 8px;
+    border-radius: 9999px;
+    border: 1.5px solid var(--live);
+    background-color: color-mix(in srgb, var(--live) 50%, transparent);
+  }
+  .live-dot::after {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border-radius: 9999px;
+    box-shadow: 0 0 0 0 var(--live-halo);
+    animation: live-halo 2s ease-out infinite;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .live-dot::after {
+      animation: none;
+    }
+  }
+}
+
+@keyframes live-halo {
+  0% {
+    box-shadow: 0 0 0 0 var(--live-halo);
+  }
+  100% {
+    box-shadow: 0 0 0 5px transparent;
+  }
+}
+
+/* Búsqueda: coincidencias con la CSS Custom Highlight API y bloque
+   al que se salta, que se desvanece. */
+::highlight(find-match) {
+  background-color: var(--find-match);
+  color: inherit;
+}
+::highlight(find-current) {
+  background-color: var(--find-current);
+  color: inherit;
+}
+.is-target > * {
+  border-radius: 8px;
+  animation: find-flash 1.5s ease-out;
+}
+@keyframes find-flash {
+  0%,
+  30% {
+    background-color: var(--find-current);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .is-target > * {
+    animation: none;
+    outline: 2px solid var(--find-current);
+  }
+}
