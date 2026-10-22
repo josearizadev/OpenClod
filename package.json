@@ -1,6 +1,6 @@
 {
   "name": "openclod",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Interfaz de escritorio para usar Claude Code y explorar sus sesiones locales",
   "main": "./out/main/index.js",
   "author": "josearizadev",
