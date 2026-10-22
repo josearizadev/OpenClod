@@ -216,6 +216,8 @@ export interface CloseRequest {
   waiting: number
   /** Terminales con el proceso vivo. */
   terminals?: number
+  /** Se cierra para instalar una actualización (y la app vuelve a abrirse). */
+  restart?: boolean
 }
 
 // ---------------------------------------------------------------- entradas IPC

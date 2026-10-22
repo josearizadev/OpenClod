@@ -20,6 +20,7 @@ import { useProjectsStore } from './stores/projects'
 import { useSearchStore } from './stores/search'
 import { useSessionsStore } from './stores/sessions'
 import { useUiStore } from './stores/ui'
+import { useUpdateStore } from './stores/update'
 import { useUsageStore } from './stores/usage'
 
 const route = useRoute()
@@ -36,7 +37,9 @@ let unsubscribe: (() => void) | null = null
 let unsubscribeChat: (() => void) | null = null
 let unsubscribeClose: (() => void) | null = null
 let unsubscribeLimits: (() => void) | null = null
+let unsubscribeUpdate: (() => void) | null = null
 const usage = useUsageStore()
+const update = useUpdateStore()
 
 /** Cerrar con sesiones trabajando o esperando permiso pide confirmación. */
 const closing = ref<CloseRequest | null>(null)
@@ -58,11 +61,13 @@ const closeText = computed(() => {
     )
   if (c.terminals)
     parts.push(c.terminals === 1 ? '1 terminal abierta' : `${c.terminals} terminales abiertas`)
-  return `Hay ${parts.join(' y ')}. Al salir se detendrán; las sesiones podrás continuarlas al volver a abrir la app.`
+  return c.restart
+    ? `Hay ${parts.join(' y ')}. Al reiniciar se detendrán; las sesiones podrás continuarlas cuando se abra la versión nueva.`
+    : `Hay ${parts.join(' y ')}. Al salir se detendrán; las sesiones podrás continuarlas al volver a abrir la app.`
 })
 
 function quit(): void {
-  void window.api.app.quit()
+  void window.api.app.quit(closing.value?.restart ?? false)
 }
 
 // `Ctrl+N`: sesión nueva.
@@ -143,12 +148,14 @@ onMounted(() => {
   void sessions.loadStatus()
   void projects.load()
   void chat.init().then((off) => (unsubscribeChat = off))
+  void update.init().then((off) => (unsubscribeUpdate = off))
 })
 onBeforeUnmount(() => {
   unsubscribe?.()
   unsubscribeChat?.()
   unsubscribeClose?.()
   unsubscribeLimits?.()
+  unsubscribeUpdate?.()
   unsubscribeNavigate?.()
   unsubscribeCommand?.()
   window.removeEventListener('focus', onFocus)
@@ -182,9 +189,9 @@ onBeforeUnmount(() => {
     />
     <ConfirmDialog
       v-model:open="closeOpen"
-      title="¿Salir de OpenClod?"
+      :title="closing?.restart ? '¿Reiniciar para actualizar?' : '¿Salir de OpenClod?'"
       :description="closeText"
-      confirm-label="Salir"
+      :confirm-label="closing?.restart ? 'Reiniciar' : 'Salir'"
       danger
       @confirm="quit"
     />

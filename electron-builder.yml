@@ -40,3 +40,8 @@ linux:
 appImage:
   artifactName: ${name}-${version}.${ext}
 npmRebuild: false
+# Actualizaciones: el instalador, su .blockmap y latest.yml se suben a este servidor
+# (npm run publicar) y la app los busca ahí.
+publish:
+  provider: generic
+  url: https://openclod.joseariza.dev/

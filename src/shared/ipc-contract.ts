@@ -69,6 +69,7 @@ import {
   type LimitsSnapshot,
   type UsageReport
 } from './usage'
+import type { UpdateStatus } from './update'
 
 /**
  * Contrato IPC: fuente única de canales, esquemas y tipos.
@@ -294,8 +295,16 @@ export const invokeContract = {
   },
   'chat:active': { input: z.void(), output: z.custom<ChatActiveEntry[]>() },
   'chat:catalog': { input: z.void(), output: z.custom<ChatCatalog>() },
-  /** Salir tras confirmar el cierre con sesiones trabajando. */
-  'app:quit': { input: z.void(), output: z.void() }
+  /** Salir tras confirmar el cierre con sesiones trabajando; `restart` instala la actualización. */
+  'app:quit': {
+    input: z.object({ restart: z.boolean() }).strict().optional(),
+    output: z.void()
+  },
+  // Actualizaciones de la app.
+  'update:status': { input: z.void(), output: z.custom<UpdateStatus>() },
+  'update:check': { input: z.void(), output: z.void() },
+  /** Reinicia para instalar; con trabajo vivo, antes pide confirmar (`app:closeRequest`). */
+  'update:install': { input: z.void(), output: z.void() }
 } as const
 
 /** Eventos main → renderer. */
@@ -310,7 +319,8 @@ export const eventContract = {
   /** Menú nativo y bandeja. */
   'app:command': z.object({ command: AppCommandSchema }),
   'terminal:data': z.custom<{ id: string; data: string }>(),
-  'terminal:exit': z.custom<{ id: string; exitCode: number }>()
+  'terminal:exit': z.custom<{ id: string; exitCode: number }>(),
+  'update:status': z.custom<UpdateStatus>()
 } as const satisfies Record<string, z.ZodType>
 
 export type InvokeChannel = keyof typeof invokeContract
@@ -445,10 +455,17 @@ export interface Api {
     onEvent(callback: (event: EventPayload<'chat:event'>) => void): () => void
   }
   app: {
-    quit(): Promise<Result<void>>
+    quit(restart?: boolean): Promise<Result<void>>
     /** El main pide confirmar el cierre. Devuelve la función para desuscribirse. */
     onCloseRequest(callback: (request: EventPayload<'app:closeRequest'>) => void): () => void
     onNavigate(callback: (event: EventPayload<'app:navigate'>) => void): () => void
     onCommand(callback: (event: EventPayload<'app:command'>) => void): () => void
+  }
+  update: {
+    status(): Promise<Result<InvokeOutput<'update:status'>>>
+    check(): Promise<Result<void>>
+    install(): Promise<Result<void>>
+    /** Devuelve la función para desuscribirse. */
+    onStatus(callback: (status: EventPayload<'update:status'>) => void): () => void
   }
 }

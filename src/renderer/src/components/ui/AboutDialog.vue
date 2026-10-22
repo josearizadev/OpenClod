@@ -11,6 +11,7 @@ import {
 import { computed, ref, watch } from 'vue'
 import type { SystemInfo } from '../../../../shared/types'
 import { useCopy } from '../../composables/useCopy'
+import { useUpdateStore } from '../../stores/update'
 import appIcon from '../../../../../resources/icon.png'
 
 /** «Acerca de OpenClod». */
@@ -34,6 +35,29 @@ const rows = computed(() => {
     ['Git', i.git ?? 'No encontrado']
   ] as const
 })
+
+const update = useUpdateStore()
+const updateText = computed(() => {
+  const s = update.status
+  switch (s.state) {
+    case 'disabled':
+      return 'Las actualizaciones solo funcionan en la versión instalada.'
+    case 'idle':
+      return ''
+    case 'checking':
+      return 'Buscando actualizaciones…'
+    case 'latest':
+      return 'Tienes la última versión.'
+    case 'downloading':
+      return `Descargando la ${s.version}… ${s.percent} %`
+    case 'ready':
+      return `La ${s.version} está lista para instalarse.`
+    case 'error':
+      return s.message
+  }
+  return ''
+})
+const canCheck = computed(() => ['idle', 'latest', 'error'].includes(update.status.state))
 
 const { copied, copy } = useCopy()
 function copyInfo(): void {
@@ -62,6 +86,26 @@ function copyInfo(): void {
             <dd class="font-mono text-[13px]">{{ value }}</dd>
           </template>
         </dl>
+        <div class="flex flex-col items-center gap-2 text-sm" aria-live="polite">
+          <p v-if="updateText" class="text-muted">{{ updateText }}</p>
+          <button
+            v-if="update.status.state === 'ready'"
+            type="button"
+            class="h-8 rounded-item bg-accent px-3 text-on-accent hover:bg-accent-hover"
+            @click="update.install()"
+          >
+            Reiniciar y actualizar
+          </button>
+          <button
+            v-else-if="update.status.state !== 'disabled'"
+            type="button"
+            class="h-8 rounded-item px-3 hover:bg-surface-hover disabled:opacity-50 disabled:hover:bg-transparent"
+            :disabled="!canCheck"
+            @click="update.check()"
+          >
+            Buscar actualizaciones
+          </button>
+        </div>
         <p class="text-xs text-muted">Proyecto personal, no afiliado a Anthropic.</p>
         <div class="mt-1 flex gap-2">
           <button

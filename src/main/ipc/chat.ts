@@ -23,7 +23,7 @@ async function guard<T>(fn: () => T | Promise<T>): Promise<T> {
 /** Canales del chat. zod valida cada entrada en `handle`. */
 export function registerChatIpc(
   service: ChatService,
-  opts: { catalog: () => ChatCatalog; onQuit: () => void }
+  opts: { catalog: () => ChatCatalog; onQuit: (restart: boolean) => void }
 ): void {
   handle('chat:start', (input) => guard(() => service.start(input)))
   handle('chat:send', (input) => guard(() => service.send(input)))
@@ -51,5 +51,5 @@ export function registerChatIpc(
   handle('chat:snapshot', ({ sessionId }) => service.snapshot(sessionId))
   handle('chat:active', () => service.active())
   handle('chat:catalog', () => opts.catalog())
-  handle('app:quit', () => opts.onQuit())
+  handle('app:quit', (input) => opts.onQuit(input?.restart ?? false))
 }

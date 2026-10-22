@@ -112,10 +112,16 @@ const api: Api = {
     onEvent: (callback) => subscribe('chat:event', callback)
   },
   app: {
-    quit: () => invoke('app:quit', undefined),
+    quit: (restart) => invoke('app:quit', restart ? { restart } : undefined),
     onCloseRequest: (callback) => subscribe('app:closeRequest', callback),
     onNavigate: (callback) => subscribe('app:navigate', callback),
     onCommand: (callback) => subscribe('app:command', callback)
+  },
+  update: {
+    status: () => invoke('update:status', undefined),
+    check: () => invoke('update:check', undefined),
+    install: () => invoke('update:install', undefined),
+    onStatus: (callback) => subscribe('update:status', callback)
   }
 }
 

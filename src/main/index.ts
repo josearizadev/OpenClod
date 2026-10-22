@@ -45,6 +45,9 @@ import { createTranscriptService } from './services/transcript'
 import { createTranscriptFollower } from './services/transcript-follower'
 import type { IndexStatus } from '../shared/projects'
 import { createMainWindow, hardenSession } from './window'
+import { autoUpdater } from 'electron-updater'
+import { registerUpdateIpc } from './ipc/update'
+import { createAppUpdater } from './services/updater'
 
 // En desarrollo, `userData` propia: la versión instalada y la de desarrollo no comparten
 // `state.json`, índice ni logs. Tiene que ir antes de cualquier uso de `userData`.
@@ -288,12 +291,15 @@ app.whenReady().then(() => {
   // `quitting` = la app se va (no se oculta en la bandeja); `closingChats` = ya se están cerrando.
   let quitting = false
   let closingChats = false
-  const quit = (): void => {
+  /** Con `restart`, en lugar de salir instala la actualización descargada y vuelve a abrir. */
+  const quit = (restart = false): void => {
     if (closingChats) return
     closingChats = true
     quitting = true
     terminal.service?.disposeAll()
-    void chat.closeAll().finally(() => app.quit())
+    void chat.closeAll().finally(() => {
+      if (!restart || !updater.install()) app.quit()
+    })
   }
   app.on('before-quit', (event) => {
     quitting = true
@@ -318,6 +324,26 @@ app.whenReady().then(() => {
     showWindow()
     if (mainWindow && !mainWindow.webContents.isDestroyed()) {
       mainWindow.webContents.send('app:closeRequest', busy)
+    }
+  }
+
+  // Actualizaciones: solo la versión instalada; en desarrollo no hay `app-update.yml`.
+  const updater = createAppUpdater({
+    updater: app.isPackaged ? autoUpdater : null,
+    emit: (status) => {
+      for (const w of BrowserWindow.getAllWindows())
+        if (!w.webContents.isDestroyed()) w.webContents.send('update:status', status)
+    },
+    log: logger
+  })
+  app.on('will-quit', () => updater.dispose())
+  /** «Reiniciar para actualizar»: con trabajo vivo, primero lo confirma la ventana. */
+  const requestRestart = (): void => {
+    const busy = busyNow()
+    if (busy.working + busy.waiting + busy.terminals === 0) return quit(true)
+    showWindow()
+    if (mainWindow && !mainWindow.webContents.isDestroyed()) {
+      mainWindow.webContents.send('app:closeRequest', { ...busy, restart: true })
     }
   }
 
@@ -390,6 +416,7 @@ app.whenReady().then(() => {
     (settings) => syncTray(settings.window.closeToTray)
   )
   registerSystemIpc({ gitVersion: () => git.version() })
+  registerUpdateIpc(updater, { restart: requestRestart })
   // Eliminar conversaciones: a la papelera, y el índice las quita en la pasada.
   const trash = reader
     ? async (sessionIds: string[]) => {
@@ -500,6 +527,7 @@ app.whenReady().then(() => {
       .catch((error) => logger.error('index', error))
       .finally(() => watcher.start())
     if (!indexService) watcher.start()
+    updater.start()
   })
 
   // Sin vigilancia: comprobación cada 30 s, solo con la ventana enfocada.

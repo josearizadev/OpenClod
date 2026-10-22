@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {
   Activity,
+  Download,
   FolderPlus,
   Gauge,
   FolderSearch,
@@ -11,11 +12,12 @@ import {
   SquarePen,
   SquareTerminal
 } from 'lucide-vue-next'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import type { ProjectView } from '../../../../shared/projects'
 import { useProjectsStore } from '../../stores/projects'
 import { useSearchStore } from '../../stores/search'
 import { useUiStore } from '../../stores/ui'
+import { useUpdateStore } from '../../stores/update'
 import DiscoverProjectsDialog from '../projects/DiscoverProjectsDialog.vue'
 import ProjectPicker from '../projects/ProjectPicker.vue'
 import SessionList from '../sessions/SessionList.vue'
@@ -27,6 +29,11 @@ import SidebarItem from './SidebarItem.vue'
 const ui = useUiStore()
 const search = useSearchStore()
 const projects = useProjectsStore()
+const update = useUpdateStore()
+/** Versión descargada que espera a reiniciar. */
+const readyVersion = computed(() =>
+  update.status.state === 'ready' ? update.status.version : null
+)
 
 const discoverOpen = ref(false)
 const removing = ref<ProjectView | null>(null)
@@ -150,6 +157,16 @@ async function confirmRemove(): Promise<void> {
         >
         <span class="truncate">Usuario local</span>
       </div>
+      <button
+        v-if="readyVersion"
+        type="button"
+        :title="`Reiniciar para actualizar a la ${readyVersion}`"
+        :aria-label="`Reiniciar para actualizar a la ${readyVersion}`"
+        class="inline-flex size-8 shrink-0 items-center justify-center rounded-item bg-accent text-on-accent transition-colors duration-150 hover:bg-accent-hover"
+        @click="update.install()"
+      >
+        <Download :size="18" :stroke-width="1.75" />
+      </button>
       <SidebarItem
         v-if="ui.sidebarCollapsed"
         label="Diagnóstico"
