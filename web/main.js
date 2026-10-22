@@ -43,7 +43,7 @@ async function loadLatest() {
   }
   const parts = [`Versión ${version}`]
   if (size) parts.push(`${Math.round(size / 1024 ** 2)} MB`)
-  parts.push('Windows 10 y 11', 'Se actualiza sola')
+  parts.push('Windows 10 y 11', 'Licencia MIT')
   for (const el of document.querySelectorAll('#meta, .meta-cta')) el.textContent = parts.join(' · ')
 }
 

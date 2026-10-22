@@ -158,6 +158,32 @@
         <path d="m16 18 6-6-6-6" />
         <path d="m8 6-6 6 6 6" />
       </symbol>
+      <symbol id="i-bug" viewBox="0 0 24 24">
+        <path d="M12 20v-9" />
+        <path d="M14 7a4 4 0 0 1 4 4v3a6 6 0 0 1-12 0v-3a4 4 0 0 1 4-4z" />
+        <path d="M14.12 3.88 16 2" />
+        <path d="M21 21a4 4 0 0 0-3.81-4" />
+        <path d="M21 5a4 4 0 0 1-3.55 3.97" />
+        <path d="M22 13h-4" />
+        <path d="M3 21a4 4 0 0 1 3.81-4" />
+        <path d="M3 5a4 4 0 0 0 3.55 3.97" />
+        <path d="M6 13H2" />
+        <path d="m8 2 1.88 1.88" />
+        <path d="M9 7.13V6a3 3 0 1 1 6 0v1.13" />
+      </symbol>
+      <symbol id="i-bulb" viewBox="0 0 24 24">
+        <path
+          d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"
+        />
+        <path d="M9 18h6" />
+        <path d="M10 22h4" />
+      </symbol>
+      <symbol id="i-pr" viewBox="0 0 24 24">
+        <circle cx="18" cy="18" r="3" />
+        <circle cx="6" cy="6" r="3" />
+        <path d="M13 6h3a2 2 0 0 1 2 2v7" />
+        <line x1="6" x2="6" y1="9" y2="21" />
+      </symbol>
     </svg>
 
     <header class="topbar">
@@ -169,6 +195,7 @@
         <nav class="nav" aria-label="Secciones">
           <a href="#funciones">Funciones</a>
           <a href="#privacidad">Privacidad</a>
+          <a href="#codigo-abierto">Código abierto</a>
           <a href="#empezar">Empezar</a>
           <a href="https://github.com/josearizadev/OpenClod">GitHub</a>
         </nav>
@@ -183,7 +210,7 @@
       <section class="hero wrap">
         <p class="eyebrow">
           <svg class="ico"><use href="#i-compass" /></svg>
-          App de escritorio para Windows
+          App de escritorio para Windows · Código abierto
         </p>
         <h1>Claude&nbsp;Code, en una ventana&nbsp;propia.</h1>
         <p class="lead">
@@ -197,10 +224,10 @@
           </a>
           <a class="btn btn-ghost" href="https://github.com/josearizadev/OpenClod">
             <svg class="ico"><use href="#i-code" /></svg>
-            Código en GitHub
+            Ver el código
           </a>
         </div>
-        <p class="meta" id="meta">Windows 10 y 11 · 64 bits · Se actualiza sola</p>
+        <p class="meta" id="meta">Windows 10 y 11 · Se actualiza sola · Licencia MIT</p>
         <p class="badge" id="descargas" hidden>
           <svg class="ico ico-sm"><use href="#i-download" /></svg>
           <span></span>
@@ -411,6 +438,57 @@
               </div>
             </li>
           </ul>
+          <p class="privacy-note">
+            No hace falta que te fíes de nuestra palabra:
+            <a href="https://github.com/josearizadev/OpenClod">el código está en GitHub</a> para que
+            cualquiera lo revise.
+          </p>
+        </div>
+      </section>
+
+      <section id="codigo-abierto" class="wrap section">
+        <h2>Código abierto, de verdad.</h2>
+        <p class="section-lead">
+          Licencia MIT: úsalo, estúdialo, modifícalo y compártelo. Y si algo se puede mejorar, se
+          mejora entre todos.
+        </p>
+        <div class="grid">
+          <a
+            class="card card-link"
+            href="https://github.com/josearizadev/OpenClod/issues/new?template=fallo.yml"
+          >
+            <span class="card-ico"
+              ><svg class="ico"><use href="#i-bug" /></svg
+            ></span>
+            <h3>Avisa de un fallo</h3>
+            <p>Cuéntanos qué pasa y cómo reproducirlo. Cada aviso hace la app más sólida.</p>
+          </a>
+          <a
+            class="card card-link"
+            href="https://github.com/josearizadev/OpenClod/issues/new?template=idea.yml"
+          >
+            <span class="card-ico"
+              ><svg class="ico"><use href="#i-bulb" /></svg
+            ></span>
+            <h3>Propón una idea</h3>
+            <p>¿Echas algo en falta? Abre una propuesta y lo hablamos.</p>
+          </a>
+          <a
+            class="card card-link"
+            href="https://github.com/josearizadev/OpenClod/blob/main/CONTRIBUTING.md"
+          >
+            <span class="card-ico"
+              ><svg class="ico"><use href="#i-pr" /></svg
+            ></span>
+            <h3>Contribuye con código</h3>
+            <p>Haz un fork, prepara tu cambio y abre un pull request. La guía te cuenta cómo.</p>
+          </a>
+        </div>
+        <div class="actions actions-left">
+          <a class="btn btn-ghost" href="https://github.com/josearizadev/OpenClod">
+            <svg class="ico"><use href="#i-code" /></svg>
+            Ver el repositorio
+          </a>
         </div>
       </section>
 
@@ -454,7 +532,11 @@
           <a href="https://github.com/josearizadev">josearizadev</a>, no afiliado a Anthropic.
           Claude y Claude Code son marcas de Anthropic.
         </p>
-        <p><a href="https://github.com/josearizadev/OpenClod">Código fuente</a></p>
+        <p>
+          Código abierto bajo
+          <a href="https://github.com/josearizadev/OpenClod/blob/main/LICENSE">licencia MIT</a> ·
+          <a href="https://github.com/josearizadev/OpenClod">GitHub</a>
+        </p>
       </div>
     </footer>
   </body>

@@ -674,6 +674,30 @@ h2 {
   font-weight: 600;
 }
 
+.privacy-note {
+  margin: 32px 0 0;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+}
+.privacy-note a {
+  color: var(--accent-hover);
+  text-underline-offset: 3px;
+}
+.card-link {
+  display: block;
+  text-decoration: none;
+}
+.card-link:hover {
+  background: var(--surface-hover);
+}
+.actions-left {
+  justify-content: flex-start;
+  margin-top: 24px;
+}
+
 .steps {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
