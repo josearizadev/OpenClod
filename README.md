@@ -52,5 +52,13 @@ npm run publicar -- <patch|minor|major>   # versión, commit, etiqueta, instalad
 - Sube a `OPENCLOD_DESTINO` (por defecto `jos-server:/var/www/openclod/`, por `scp`) el instalador, su `.blockmap` y `latest.yml`, que se sirven en `https://openclod.joseariza.dev/`.
 - `--sin-subir` deja la versión solo en `dist/`; `--instalar` la instala en silencio sobre la actual.
 
+## Web
+`web/` es la landing de `https://openclod.joseariza.dev/`: HTML, CSS y JS estáticos, sin compilación, con las fuentes y los colores de la app. Se publica con:
+```bash
+npm run publicar:web   # sube web/ al mismo destino que los instaladores
+```
+- El botón de descarga lee `latest.yml` y apunta a `descargar/<instalador>`, que el servidor registra aparte de las descargas del actualizador.
+- El servidor cuenta esas descargas y escribe `stats.json` (`{"descargas": N}`). A partir de 500, la landing muestra «+ de 500 descargas» (y los hitos siguientes: 1.000, 5.000…).
+
 ## Actualizaciones
 La versión instalada busca actualizaciones al arrancar y cada 4 horas (`electron-updater`). La versión nueva se descarga en segundo plano; cuando está lista, la app avisa y se instala al pulsar **Reiniciar** (botón del pie de la barra lateral o «Acerca de») o, si no, al salir. Si hay sesiones trabajando, pide confirmación antes de reiniciar.

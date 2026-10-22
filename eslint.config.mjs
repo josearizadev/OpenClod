@@ -37,8 +37,8 @@ export default defineConfig(
     }
   },
   {
-    // Scripts de mantenimiento en JavaScript plano: sin anotaciones de tipos.
-    files: ['scripts/**/*.mjs'],
+    // Scripts de mantenimiento y landing en JavaScript plano: sin anotaciones de tipos.
+    files: ['scripts/**/*.mjs', 'web/**/*.js'],
     rules: {
       '@typescript-eslint/explicit-function-return-type': 'off'
     }
