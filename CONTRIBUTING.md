@@ -2,6 +2,8 @@
 
 Gracias por querer mejorar OpenClod. Toda ayuda es bienvenida: avisos de fallos, ideas y código.
 
+Al participar aceptas el [código de conducta](CODE_OF_CONDUCT.md).
+
 ## Antes de empezar
 - **Fallos e ideas:** abre un *issue* con la plantilla que corresponda. Busca antes si ya existe uno parecido.
 - **Cambios grandes:** abre primero un *issue* para hablarlo. Así no trabajas en algo que luego no encaja.
