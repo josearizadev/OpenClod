@@ -10,6 +10,13 @@ files:
   - '!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,.editorconfig,.nvmrc,dev-app-update.yml,CHANGELOG.md,README.md,CLAUDE.md,CONTRIBUTING.md,CODE_OF_CONDUCT.md,SECURITY.md}'
   - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json,*.tsbuildinfo}'
+  # Fuentes y restos de compilación de los módulos nativos: en ejecución solo se usan los prebuilds.
+  - '!**/node_modules/better-sqlite3/{build,deps,src}/**'
+  - '!**/node_modules/node-pty/{deps,third_party,src}/**'
+# Traducciones de Chromium (menú contextual, diálogos nativos): solo los idiomas de la interfaz.
+electronLanguages:
+  - es
+  - en-US
 asar: true
 asarUnpack:
   - resources/**
@@ -21,6 +28,9 @@ asarUnpack:
 win:
   executableName: openclod
   target: nsis
+  files:
+    - '!**/node_modules/better-sqlite3/prebuilds/{darwin,linux,linuxmusl}-*'
+    - '!**/node_modules/node-pty/prebuilds/{darwin,linux}-*/**'
 nsis:
   artifactName: ${productName}-${version}-setup.${ext}
   oneClick: false
@@ -30,6 +40,9 @@ nsis:
   createDesktopShortcut: always
 mac:
   entitlementsInherit: build/entitlements.mac.plist
+  files:
+    - '!**/node_modules/better-sqlite3/prebuilds/{win32,linux,linuxmusl}-*'
+    - '!**/node_modules/node-pty/prebuilds/{win32,linux}-*/**'
   notarize: false
 dmg:
   artifactName: ${name}-${version}.${ext}
@@ -37,6 +50,9 @@ linux:
   target:
     - AppImage
   category: Utility
+  files:
+    - '!**/node_modules/better-sqlite3/prebuilds/{win32,darwin}-*'
+    - '!**/node_modules/node-pty/prebuilds/{win32,darwin}-*/**'
 appImage:
   artifactName: ${name}-${version}.${ext}
 npmRebuild: false
