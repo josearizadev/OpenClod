@@ -62,3 +62,6 @@ npm run publicar:web   # sube web/ al mismo destino que los instaladores
 
 ## Actualizaciones
 La versión instalada busca actualizaciones al arrancar y cada 4 horas (`electron-updater`). La versión nueva se descarga en segundo plano; cuando está lista, la app avisa y se instala al pulsar **Reiniciar** (botón del pie de la barra lateral o «Acerca de») o, si no, al salir. Si hay sesiones trabajando, pide confirmación antes de reiniciar.
+
+## Licencia
+[MIT](LICENSE). Para contribuir, mira [CONTRIBUTING.md](CONTRIBUTING.md); para avisar de una vulnerabilidad, [SECURITY.md](SECURITY.md).

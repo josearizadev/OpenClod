@@ -1,0 +1,40 @@
+name: Fallo
+description: Algo no funciona como debería
+labels: [fallo]
+body:
+  - type: textarea
+    id: que-pasa
+    attributes:
+      label: Qué pasa
+      description: Qué ocurre y qué esperabas que ocurriera.
+    validations:
+      required: true
+  - type: textarea
+    id: pasos
+    attributes:
+      label: Cómo reproducirlo
+      placeholder: |
+        1. Abre…
+        2. Pulsa…
+        3. Aparece…
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Versión de OpenClod
+      description: Está en «Acerca de».
+      placeholder: 1.4.0
+    validations:
+      required: true
+  - type: input
+    id: sistema
+    attributes:
+      label: Sistema
+      placeholder: Windows 11 24H2
+  - type: textarea
+    id: log
+    attributes:
+      label: Log o capturas
+      description: La vista Diagnóstico muestra la ruta del log. Revisa que no incluya datos privados antes de pegarlo.
+      render: text
