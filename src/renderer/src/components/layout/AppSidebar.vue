@@ -19,6 +19,7 @@ import { useSearchStore } from '../../stores/search'
 import { useUiStore } from '../../stores/ui'
 import { useUpdateStore } from '../../stores/update'
 import DiscoverProjectsDialog from '../projects/DiscoverProjectsDialog.vue'
+import ProjectMenu from '../projects/ProjectMenu.vue'
 import ProjectPicker from '../projects/ProjectPicker.vue'
 import SessionList from '../sessions/SessionList.vue'
 import ConfirmDialog from '../ui/ConfirmDialog.vue'
@@ -101,12 +102,15 @@ async function confirmRemove(): Promise<void> {
     </nav>
 
     <!-- Proyecto activo. En el riel solo se ve su icono, que despliega la barra. -->
-    <div class="shrink-0 px-3 pb-1">
-      <ProjectPicker
-        :collapsed="ui.sidebarCollapsed"
-        @discover="discoverOpen = true"
-        @remove="askRemove"
-      />
+    <div class="flex shrink-0 items-center gap-1 px-3 pb-1">
+      <div class="min-w-0 flex-1">
+        <ProjectPicker
+          :collapsed="ui.sidebarCollapsed"
+          @discover="discoverOpen = true"
+          @remove="askRemove"
+        />
+      </div>
+      <ProjectMenu v-if="!ui.sidebarCollapsed && projects.active && !projects.active.missing" />
     </div>
 
     <div v-if="!ui.sidebarCollapsed" class="min-h-0 flex-1 overflow-y-auto px-3 pb-3">

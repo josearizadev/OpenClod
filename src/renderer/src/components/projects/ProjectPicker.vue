@@ -17,12 +17,9 @@ import {
   FolderPlus,
   FolderSearch,
   FolderX,
-  ScrollText,
-  SlidersHorizontal,
   X
 } from 'lucide-vue-next'
 import { computed, nextTick, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
 import type { ProjectView } from '../../../../shared/projects'
 import { useShortcut } from '../../composables/useShortcut'
 import { useProjectsStore } from '../../stores/projects'
@@ -42,9 +39,6 @@ const query = ref('')
 
 const IMPORT = '__import'
 const DISCOVER = '__discover'
-const INSTRUCTIONS = '__instructions'
-const PROJECT_SETTINGS = '__project-settings'
-const router = useRouter()
 
 const filtered = computed(() => {
   const q = query.value.trim().toLocaleLowerCase('es')
@@ -96,16 +90,6 @@ async function onPick(value: AcceptableValue | AcceptableValue[] | undefined): P
   if (value === DISCOVER) {
     open.value = false
     emit('discover')
-    return
-  }
-  if (value === PROJECT_SETTINGS) {
-    open.value = false
-    if (projects.activeId) void router.push(`/proyecto/${projects.activeId}/ajustes`)
-    return
-  }
-  if (value === INSTRUCTIONS) {
-    open.value = false
-    if (projects.activeId) void router.push(`/proyecto/${projects.activeId}/instrucciones`)
     return
   }
   open.value = false
@@ -227,22 +211,6 @@ defineExpose({ show })
             >
               <FolderSearch :size="16" :stroke-width="1.75" class="shrink-0" />
               Descubrir proyectos…
-            </ListboxItem>
-            <ListboxItem
-              v-if="projects.active && !projects.active.missing"
-              :value="INSTRUCTIONS"
-              class="flex h-8 cursor-default items-center gap-2 rounded-item px-2 outline-none data-[highlighted]:bg-surface-hover"
-            >
-              <ScrollText :size="16" :stroke-width="1.75" class="shrink-0" />
-              Instrucciones del proyecto (CLAUDE.md)
-            </ListboxItem>
-            <ListboxItem
-              v-if="projects.active && !projects.active.missing"
-              :value="PROJECT_SETTINGS"
-              class="flex h-8 cursor-default items-center gap-2 rounded-item px-2 outline-none data-[highlighted]:bg-surface-hover"
-            >
-              <SlidersHorizontal :size="16" :stroke-width="1.75" class="shrink-0" />
-              Ajustes del proyecto (permisos, Git…)
             </ListboxItem>
           </ListboxContent>
         </ListboxRoot>
