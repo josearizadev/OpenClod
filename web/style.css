@@ -224,6 +224,30 @@ kbd {
   background: var(--surface-hover);
   color: var(--text);
 }
+/* Selector de idioma: ES · EN, el actual resaltado. */
+.lang-switch {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 8px;
+  background: var(--surface-hover);
+  font-size: 12px;
+  font-weight: 500;
+}
+.lang-switch a {
+  padding: 4px 8px;
+  border-radius: 6px;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 150ms;
+}
+.lang-switch a:hover {
+  color: var(--text);
+}
+.lang-switch a[aria-current='true'] {
+  background: var(--surface);
+  color: var(--text);
+}
 /* El botón muestra el tema al que cambia: luna en claro, sol en oscuro. */
 .ico-sun,
 :root[data-theme='dark'] .ico-moon {
@@ -788,6 +812,9 @@ h2 {
   }
   .topbar-inner {
     justify-content: space-between;
+  }
+  .lang-switch {
+    margin-left: auto;
   }
   .hero {
     padding-top: 48px;

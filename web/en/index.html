@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OpenClod · Claude Code in a window of its own</title>
+    <meta
+      name="description"
+      content="Desktop app for Windows to use Claude Code from a warm interface and browse the history of your local sessions."
+    />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#faf9f5" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#262624" media="(prefers-color-scheme: dark)" />
+    <meta property="og:title" content="OpenClod" />
+    <meta
+      property="og:description"
+      content="Claude Code in a window of its own: chat, history, usage, Git and terminal, all local."
+    />
+    <meta property="og:image" content="https://openclod.joseariza.dev/icon.png" />
+    <meta property="og:url" content="https://openclod.joseariza.dev/en/" />
+    <link rel="alternate" hreflang="es" href="https://openclod.joseariza.dev/" />
+    <link rel="alternate" hreflang="en" href="https://openclod.joseariza.dev/en/" />
+    <link rel="alternate" hreflang="x-default" href="https://openclod.joseariza.dev/" />
+    <link rel="icon" href="../favicon.ico?v=2" sizes="any" />
+    <link rel="icon" href="../icon.png?v=2" type="image/png" />
+    <link rel="apple-touch-icon" href="../icon.png?v=2" />
+    <link
+      rel="preload"
+      href="../fonts/inter-latin-wght-normal.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="../fonts/source-serif-4-latin-wght-normal.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link rel="stylesheet" href="../style.css" />
+    <script src="../main.js" defer></script>
+  </head>
+  <body>
+    <!-- Iconos lucide (ISC) reutilizados con <use>. -->
+    <svg class="sprite" aria-hidden="true">
+      <symbol id="i-compass" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" />
+        <path
+          d="m16.24 7.76-1.804 5.411a2 2 0 0 1-1.265 1.265L7.76 16.24l1.804-5.411a2 2 0 0 1 1.265-1.265z"
+        />
+      </symbol>
+      <symbol id="i-message" viewBox="0 0 24 24">
+        <path
+          d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"
+        />
+      </symbol>
+      <symbol id="i-search" viewBox="0 0 24 24">
+        <path d="m21 21-4.34-4.34" />
+        <circle cx="11" cy="11" r="8" />
+      </symbol>
+      <symbol id="i-gauge" viewBox="0 0 24 24">
+        <path d="m12 14 4-4" />
+        <path d="M3.34 19a10 10 0 1 1 17.32 0" />
+      </symbol>
+      <symbol id="i-branch" viewBox="0 0 24 24">
+        <path d="M15 6a9 9 0 0 0-9 9V3" />
+        <circle cx="18" cy="6" r="3" />
+        <circle cx="6" cy="18" r="3" />
+      </symbol>
+      <symbol id="i-terminal" viewBox="0 0 24 24">
+        <path d="m7 11 2-2-2-2" />
+        <path d="M11 13h4" />
+        <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+      </symbol>
+      <symbol id="i-download" viewBox="0 0 24 24">
+        <path d="M12 15V3" />
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+        <path d="m7 10 5 5 5-5" />
+      </symbol>
+      <symbol id="i-refresh" viewBox="0 0 24 24">
+        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+        <path d="M21 3v5h-5" />
+        <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+        <path d="M8 16H3v5" />
+      </symbol>
+      <symbol id="i-lock" viewBox="0 0 24 24">
+        <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+      </symbol>
+      <symbol id="i-arrow-up" viewBox="0 0 24 24">
+        <path d="m5 12 7-7 7 7" />
+        <path d="M12 19V5" />
+      </symbol>
+      <symbol id="i-folder" viewBox="0 0 24 24">
+        <path
+          d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"
+        />
+      </symbol>
+      <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></symbol>
+      <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" /></symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" />
+        <path d="M12 6v6l4 2" />
+      </symbol>
+      <symbol id="i-pen" viewBox="0 0 24 24">
+        <path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+        <path
+          d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z"
+        />
+      </symbol>
+      <symbol id="i-panel" viewBox="0 0 24 24">
+        <rect width="18" height="18" x="3" y="3" rx="2" />
+        <path d="M9 3v18" />
+      </symbol>
+      <symbol id="i-history" viewBox="0 0 24 24">
+        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+        <path d="M3 3v5h5" />
+        <path d="M12 7v5l4 2" />
+      </symbol>
+      <symbol id="i-files" viewBox="0 0 24 24">
+        <path d="M15 2h-4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8" />
+        <path d="M16.706 2.706A2.4 2.4 0 0 0 15 2v5a1 1 0 0 0 1 1h5a2.4 2.4 0 0 0-.706-1.706z" />
+        <path d="M5 7a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h8a2 2 0 0 0 1.732-1" />
+      </symbol>
+      <symbol id="i-drive" viewBox="0 0 24 24">
+        <path d="M10 16h.01" />
+        <path
+          d="M2.212 11.577a2 2 0 0 0-.212.896V18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5.527a2 2 0 0 0-.212-.896L18.55 5.11A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"
+        />
+        <path d="M21.946 12.013H2.054" />
+        <path d="M6 16h.01" />
+      </symbol>
+      <symbol id="i-eye-off" viewBox="0 0 24 24">
+        <path
+          d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"
+        />
+        <path d="M14.084 14.158a3 3 0 0 1-4.242-4.242" />
+        <path
+          d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"
+        />
+        <path d="m2 2 20 20" />
+      </symbol>
+      <symbol id="i-sun" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="4" />
+        <path d="M12 2v2" />
+        <path d="M12 20v2" />
+        <path d="m4.93 4.93 1.41 1.41" />
+        <path d="m17.66 17.66 1.41 1.41" />
+        <path d="M2 12h2" />
+        <path d="M20 12h2" />
+        <path d="m6.34 17.66-1.41 1.41" />
+        <path d="m19.07 4.93-1.41 1.41" />
+      </symbol>
+      <symbol id="i-moon" viewBox="0 0 24 24">
+        <path
+          d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"
+        />
+      </symbol>
+      <symbol id="i-code" viewBox="0 0 24 24">
+        <path d="m16 18 6-6-6-6" />
+        <path d="m8 6-6 6 6 6" />
+      </symbol>
+      <symbol id="i-bug" viewBox="0 0 24 24">
+        <path d="M12 20v-9" />
+        <path d="M14 7a4 4 0 0 1 4 4v3a6 6 0 0 1-12 0v-3a4 4 0 0 1 4-4z" />
+        <path d="M14.12 3.88 16 2" />
+        <path d="M21 21a4 4 0 0 0-3.81-4" />
+        <path d="M21 5a4 4 0 0 1-3.55 3.97" />
+        <path d="M22 13h-4" />
+        <path d="M3 21a4 4 0 0 1 3.81-4" />
+        <path d="M3 5a4 4 0 0 0 3.55 3.97" />
+        <path d="M6 13H2" />
+        <path d="m8 2 1.88 1.88" />
+        <path d="M9 7.13V6a3 3 0 1 1 6 0v1.13" />
+      </symbol>
+      <symbol id="i-bulb" viewBox="0 0 24 24">
+        <path
+          d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"
+        />
+        <path d="M9 18h6" />
+        <path d="M10 22h4" />
+      </symbol>
+      <symbol id="i-pr" viewBox="0 0 24 24">
+        <circle cx="18" cy="18" r="3" />
+        <circle cx="6" cy="6" r="3" />
+        <path d="M13 6h3a2 2 0 0 1 2 2v7" />
+        <line x1="6" x2="6" y1="9" y2="21" />
+      </symbol>
+    </svg>
+
+    <header class="topbar">
+      <div class="wrap topbar-inner">
+        <a class="brand" href="#">
+          <img src="../icon.png" alt="" width="28" height="28" />
+          OpenClod
+        </a>
+        <nav class="nav" aria-label="Sections">
+          <a href="#funciones">Features</a>
+          <a href="#privacidad">Privacy</a>
+          <a href="#codigo-abierto">Open source</a>
+          <a href="#empezar">Get started</a>
+          <a href="https://github.com/josearizadev/OpenClod">GitHub</a>
+        </nav>
+        <div class="lang-switch" role="group" aria-label="Language">
+          <a lang="es" hreflang="es" href="../" data-lang="es">ES</a>
+          <a aria-current="true" lang="en" href="./">EN</a>
+        </div>
+        <button class="icon-btn" id="tema" type="button" aria-label="Toggle theme">
+          <svg class="ico ico-sun"><use href="#i-sun" /></svg>
+          <svg class="ico ico-moon"><use href="#i-moon" /></svg>
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero wrap">
+        <p class="eyebrow">
+          <svg class="ico"><use href="#i-compass" /></svg>
+          Desktop app for Windows · Open source
+        </p>
+        <h1>Claude&nbsp;Code, in a window of its&nbsp;own.</h1>
+        <p class="lead">
+          OpenClod gives you a warm, calm interface to work with Claude Code on your projects, and a
+          history where you can find any conversation you've had.
+        </p>
+        <div class="actions">
+          <a class="btn btn-accent descargar" href="https://github.com/josearizadev/OpenClod">
+            <svg class="ico"><use href="#i-download" /></svg>
+            Download for Windows
+          </a>
+          <a class="btn btn-ghost" href="https://github.com/josearizadev/OpenClod">
+            <svg class="ico"><use href="#i-code" /></svg>
+            View the code
+          </a>
+        </div>
+        <p class="meta" id="meta">Windows 10 and 11 · Updates itself · MIT license</p>
+        <p class="badge" id="descargas" hidden>
+          <svg class="ico ico-sm"><use href="#i-download" /></svg>
+          <span></span>
+        </p>
+      </section>
+
+      <!-- Recreación de la ventana con datos de ejemplo. -->
+      <section class="showcase wrap" aria-label="App preview">
+        <div class="window" role="img" aria-label="OpenClod window with a sample conversation">
+          <aside class="w-side">
+            <div class="w-side-head">
+              <svg class="ico"><use href="#i-panel" /></svg>
+              <strong>OpenClod</strong>
+            </div>
+            <div class="w-item">
+              <svg class="ico"><use href="#i-pen" /></svg>New session
+            </div>
+            <div class="w-item">
+              <svg class="ico"><use href="#i-search" /></svg>Search <kbd>Ctrl K</kbd>
+            </div>
+            <div class="w-item">
+              <svg class="ico"><use href="#i-gauge" /></svg>Usage
+            </div>
+            <div class="w-item">
+              <svg class="ico"><use href="#i-terminal" /></svg>Terminal
+            </div>
+            <p class="w-label">Project</p>
+            <div class="w-item w-project">
+              <svg class="ico"><use href="#i-folder" /></svg>online-store
+              <svg class="ico ico-sm push"><use href="#i-chevron-down" /></svg>
+            </div>
+            <p class="w-label">Today</p>
+            <div class="w-item w-active">
+              <span class="dot dot-work"></span>Payments with a saved card
+            </div>
+            <div class="w-item"><span class="dot dot-idle"></span>Cart tests</div>
+            <p class="w-label">Yesterday</p>
+            <div class="w-item">Migrate to Vite 7</div>
+            <div class="w-item">Review checkout accessibility</div>
+            <div class="w-item">Backup script</div>
+          </aside>
+          <div class="w-main">
+            <div class="w-head">
+              <span class="chip"
+                ><svg class="ico ico-sm"><use href="#i-branch" /></svg>feat/payments<span
+                  class="chip-dot"
+                ></span
+                >3</span
+              >
+              <span class="w-title"
+                >Payments with a saved card
+                <svg class="ico ico-sm"><use href="#i-chevron-down" /></svg
+              ></span>
+              <span class="meter">
+                <svg class="ico ico-sm"><use href="#i-clock" /></svg>
+                <span class="meter-bar"><span style="width: 38%"></span></span>
+                38% · 3 h 12 min
+              </span>
+            </div>
+            <div class="w-chat">
+              <div class="bubble">
+                Add the option to pay with a saved card and have the last checkout step offer it by
+                default.
+              </div>
+              <div class="tool-row">
+                <svg class="ico ico-sm"><use href="#i-chevron-right" /></svg>
+                Read 4 files, edited 2 and ran 1 command
+              </div>
+              <div class="answer">
+                <p>
+                  Done. I added <code>SavedCardPicker</code> to the payment step and checkout
+                  preselects the last card used. If the customer has none, the usual form is shown.
+                </p>
+                <p>All 48 tests pass, including two new ones for the no-cards case.</p>
+              </div>
+              <div class="composer">
+                <span class="placeholder">Reply…</span>
+                <div class="composer-row">
+                  <span class="mode"
+                    >Accept edits <svg class="ico ico-sm"><use href="#i-chevron-down" /></svg
+                  ></span>
+                  <span class="push model"
+                    >Sonnet <svg class="ico ico-sm"><use href="#i-chevron-down" /></svg
+                  ></span>
+                  <span class="send"
+                    ><svg class="ico"><use href="#i-arrow-up" /></svg
+                  ></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="funciones" class="wrap section">
+        <h2>Everything you do with Claude Code, in plain sight.</h2>
+        <p class="section-lead">
+          The same sessions you use in the terminal, with an interface made for reading and working
+          at your own pace.
+        </p>
+        <div class="grid">
+          <article class="card">
+            <span class="card-ico"
+              ><svg class="ico"><use href="#i-message" /></svg
+            ></span>
+            <h3>Chat with Claude Code</h3>
+            <p>
+              Start new sessions or pick up any of them. Clear permissions, message queue,
+              background tasks and attached images or files.
+            </p>
+          </article>
+          <article class="card">
+            <span class="card-ico"
+              ><svg class="ico"><use href="#i-history" /></svg
+            ></span>
+            <h3>History and search</h3>
+            <p>
+              All your local conversations, with a live viewer and global search across every
+              project with <kbd>Ctrl K</kbd>.
+            </p>
+          </article>
+          <article class="card">
+            <span class="card-ico"
+              ><svg class="ico"><use href="#i-gauge" /></svg
+            ></span>
+            <h3>Usage and limits</h3>
+            <p>
+              An always-visible 5-hour window meter, a daily chart and breakdowns by model and by
+              project.
+            </p>
+          </article>
+          <article class="card">
+            <span class="card-ico"
+              ><svg class="ico"><use href="#i-files" /></svg
+            ></span>
+            <h3>Git and files</h3>
+            <p>
+              Repository branch and changes, a files panel with preview and diff against
+              <code>HEAD</code>, and Markdown export.
+            </p>
+          </article>
+          <article class="card">
+            <span class="card-ico"
+              ><svg class="ico"><use href="#i-terminal" /></svg
+            ></span>
+            <h3>Built-in terminal</h3>
+            <p>
+              Open the project shell or <code>claude --resume</code> in tabs, without leaving the
+              app.
+            </p>
+          </article>
+          <article class="card">
+            <span class="card-ico"
+              ><svg class="ico"><use href="#i-refresh" /></svg
+            ></span>
+            <h3>Always up to date</h3>
+            <p>
+              It downloads new versions in the background and updates with one click, without going
+              through the installer again.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section class="wrap section keys" aria-label="Keyboard shortcuts">
+        <div class="keys-text">
+          <h2>Made for the keyboard.</h2>
+          <p class="section-lead">Everything important is one shortcut away.</p>
+        </div>
+        <ul class="key-list">
+          <li><kbd>Ctrl K</kbd> Search every session</li>
+          <li><kbd>Ctrl U</kbd> Usage and limits</li>
+          <li><kbd>Ctrl `</kbd> Terminal</li>
+          <li><kbd>Ctrl ,</kbd> Settings</li>
+          <li><kbd>Ctrl F</kbd> Search the conversation</li>
+          <li><kbd>Esc</kbd> Stop the response</li>
+        </ul>
+      </section>
+
+      <section id="privacidad" class="wrap section">
+        <div class="privacy">
+          <h2>Your data stays on your computer.</h2>
+          <ul class="privacy-list">
+            <li>
+              <svg class="ico"><use href="#i-drive" /></svg>
+              <div>
+                <strong>Local only.</strong> It reads the sessions Claude Code saves in your user
+                folder and doesn't send them anywhere.
+              </div>
+            </li>
+            <li>
+              <svg class="ico"><use href="#i-lock" /></svg>
+              <div>
+                <strong>No credentials.</strong> It uses Claude Code with the account you sign in
+                with. It never asks for, reads or stores keys.
+              </div>
+            </li>
+            <li>
+              <svg class="ico"><use href="#i-eye-off" /></svg>
+              <div>
+                <strong>No telemetry.</strong> No analytics, no tracking. The only thing it checks
+                on its own is whether there's a new version.
+              </div>
+            </li>
+          </ul>
+          <p class="privacy-note">
+            You don't have to take our word for it:
+            <a href="https://github.com/josearizadev/OpenClod">the code is on GitHub</a> for anyone
+            to review.
+          </p>
+        </div>
+      </section>
+
+      <section id="codigo-abierto" class="wrap section">
+        <h2>Truly open source.</h2>
+        <p class="section-lead">
+          MIT license: use it, study it, modify it and share it. And if something can be better, we
+          improve it together.
+        </p>
+        <div class="grid">
+          <a
+            class="card card-link"
+            href="https://github.com/josearizadev/OpenClod/issues/new?template=fallo.yml"
+          >
+            <span class="card-ico"
+              ><svg class="ico"><use href="#i-bug" /></svg
+            ></span>
+            <h3>Report a bug</h3>
+            <p>
+              Tell us what happens and how to reproduce it. Every report makes the app sturdier.
+            </p>
+          </a>
+          <a
+            class="card card-link"
+            href="https://github.com/josearizadev/OpenClod/issues/new?template=idea.yml"
+          >
+            <span class="card-ico"
+              ><svg class="ico"><use href="#i-bulb" /></svg
+            ></span>
+            <h3>Suggest an idea</h3>
+            <p>Missing something? Open a proposal and let's talk about it.</p>
+          </a>
+          <a
+            class="card card-link"
+            href="https://github.com/josearizadev/OpenClod/blob/main/CONTRIBUTING.md"
+          >
+            <span class="card-ico"
+              ><svg class="ico"><use href="#i-pr" /></svg
+            ></span>
+            <h3>Contribute code</h3>
+            <p>Fork it, prepare your change and open a pull request. The guide tells you how.</p>
+          </a>
+        </div>
+        <div class="actions actions-left">
+          <a class="btn btn-ghost" href="https://github.com/josearizadev/OpenClod">
+            <svg class="ico"><use href="#i-code" /></svg>
+            View the repository
+          </a>
+        </div>
+      </section>
+
+      <section id="empezar" class="wrap section">
+        <h2>Get started in three steps.</h2>
+        <ol class="steps">
+          <li>
+            <span class="step-n">1</span>
+            <h3>Your Claude account</h3>
+            <p>
+              Use Claude Code with your Claude account. If you haven't signed in yet, OpenClod walks
+              you through it the first time you open it.
+            </p>
+          </li>
+          <li>
+            <span class="step-n">2</span>
+            <h3>Download OpenClod</h3>
+            <p>
+              Open the installer. If you already have a version, it detects it and asks before
+              updating it.
+            </p>
+          </li>
+          <li>
+            <span class="step-n">3</span>
+            <h3>Choose a project</h3>
+            <p>Your sessions show up on their own. Open one or start a new one.</p>
+          </li>
+        </ol>
+        <div class="cta">
+          <p class="cta-title">What are we working on today?</p>
+          <a class="btn btn-accent descargar" href="https://github.com/josearizadev/OpenClod">
+            <svg class="ico"><use href="#i-download" /></svg>
+            Download for Windows
+          </a>
+          <p class="meta meta-cta"></p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="wrap footer-inner">
+        <p>
+          OpenClod is a personal project by
+          <a href="https://github.com/josearizadev">josearizadev</a>, not affiliated with Anthropic.
+          Claude and Claude Code are trademarks of Anthropic.
+        </p>
+        <p>
+          Open source under the
+          <a href="https://github.com/josearizadev/OpenClod/blob/main/LICENSE">MIT license</a> ·
+          <a href="https://github.com/josearizadev/OpenClod">GitHub</a>
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>

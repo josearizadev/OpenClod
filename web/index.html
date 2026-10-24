@@ -18,6 +18,9 @@
     />
     <meta property="og:image" content="https://openclod.joseariza.dev/icon.png" />
     <meta property="og:url" content="https://openclod.joseariza.dev/" />
+    <link rel="alternate" hreflang="es" href="https://openclod.joseariza.dev/" />
+    <link rel="alternate" hreflang="en" href="https://openclod.joseariza.dev/en/" />
+    <link rel="alternate" hreflang="x-default" href="https://openclod.joseariza.dev/" />
     <link rel="icon" href="favicon.ico?v=2" sizes="any" />
     <link rel="icon" href="icon.png?v=2" type="image/png" />
     <link rel="apple-touch-icon" href="icon.png?v=2" />
@@ -199,6 +202,10 @@
           <a href="#empezar">Empezar</a>
           <a href="https://github.com/josearizadev/OpenClod">GitHub</a>
         </nav>
+        <div class="lang-switch" role="group" aria-label="Idioma">
+          <a aria-current="true" lang="es" href="./">ES</a>
+          <a lang="en" hreflang="en" href="en/" data-lang="en">EN</a>
+        </div>
         <button class="icon-btn" id="tema" type="button" aria-label="Cambiar tema">
           <svg class="ico ico-sun"><use href="#i-sun" /></svg>
           <svg class="ico ico-moon"><use href="#i-moon" /></svg>
@@ -497,8 +504,11 @@
         <ol class="steps">
           <li>
             <span class="step-n">1</span>
-            <h3>Instala Claude Code</h3>
-            <p>Ejecuta <code>claude</code> una vez en una terminal e inicia sesión.</p>
+            <h3>Tu cuenta de Claude</h3>
+            <p>
+              Ten Claude Code con tu cuenta de Claude. Si aún no has iniciado sesión, OpenClod te
+              guía la primera vez que lo abres.
+            </p>
           </li>
           <li>
             <span class="step-n">2</span>
