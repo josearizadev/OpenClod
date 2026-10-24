@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../../i18n'
 import { computed, ref } from 'vue'
 import type { ToolCallView } from '../../../lib/transcript/blocks'
 import { languageOf, relativePath } from '../../../lib/transcript/tools'
@@ -26,7 +27,7 @@ const cut = computed(() => truncateText(content.value, { lines: 40, chars: 8000 
     <CodeBlock
       :code="showAll ? content : cut.head"
       :lang="languageOf(path)"
-      :label="relativePath(path, cwd) || 'Archivo nuevo'"
+      :label="relativePath(path, cwd) || t('Archivo nuevo')"
     />
     <button
       v-if="cut.truncated"
@@ -35,7 +36,7 @@ const cut = computed(() => truncateText(content.value, { lines: 40, chars: 8000 
       :aria-expanded="showAll"
       @click="showAll = !showAll"
     >
-      {{ showAll ? 'Mostrar menos' : `Mostrar todo (${cut.totalLines} líneas)` }}
+      {{ showAll ? t('Mostrar menos') : t('Mostrar todo ({n} líneas)', { n: cut.totalLines }) }}
     </button>
   </div>
   <ToolResult v-if="!call.result || call.result.isError" :call="call" />

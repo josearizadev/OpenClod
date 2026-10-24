@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import {
   DialogClose,
   DialogContent,
@@ -30,15 +31,15 @@ const props = defineProps<{
 const emit = defineEmits<{ session: [enabled: boolean]; project: [enabled: boolean] }>()
 
 const STATUS: Record<ChromeState['status'], string> = {
-  off: 'Desactivado.',
-  pending: 'Activado: se conecta al enviar el siguiente mensaje.',
-  connected: 'Conectado a Chrome.',
-  failed: 'No conecta: comprueba que Chrome está abierto con la extensión Claude in Chrome.'
+  off: t('Desactivado.'),
+  pending: t('Activado: se conecta al enviar el siguiente mensaje.'),
+  connected: t('Conectado a Chrome.'),
+  failed: t('No conecta: comprueba que Chrome está abierto con la extensión Claude in Chrome.')
 }
 
 const status = computed(() =>
   props.draft && props.chrome.enabled
-    ? 'Activado: se conecta al empezar la sesión.'
+    ? t('Activado: se conecta al empezar la sesión.')
     : STATUS[props.chrome.status]
 )
 </script>
@@ -50,13 +51,16 @@ const status = computed(() =>
       <DialogContent
         class="fixed top-1/2 left-1/2 z-50 flex w-[min(28rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 flex-col gap-2 rounded-dialog bg-surface p-5 text-text shadow-float"
       >
-        <DialogTitle class="font-serif text-lg">Claude en Chrome</DialogTitle>
+        <DialogTitle class="font-serif text-lg">{{ t('Claude en Chrome') }}</DialogTitle>
         <DialogDescription class="text-sm text-muted">
-          Claude puede abrir pestañas, leer páginas y hacer clic en tu Chrome con tus sesiones
-          iniciadas. Necesita la extensión Claude in Chrome.
+          {{
+            t(
+              'Claude puede abrir pestañas, leer páginas y hacer clic en tu Chrome con tus sesiones iniciadas. Necesita la extensión Claude in Chrome.'
+            )
+          }}
         </DialogDescription>
         <div class="divide-y divide-border">
-          <SettingRow label="En esta sesión" for="chrome-sesion" :description="status">
+          <SettingRow :label="t('En esta sesión')" for="chrome-sesion" :description="status">
             <SettingSwitch
               id="chrome-sesion"
               :model-value="chrome.enabled"
@@ -65,9 +69,9 @@ const status = computed(() =>
           </SettingRow>
           <SettingRow
             v-if="project !== null"
-            label="En todas las sesiones del proyecto"
+            :label="t('En todas las sesiones del proyecto')"
             for="chrome-proyecto"
-            description="Las nuevas y las que se reanuden."
+            :description="t('Las nuevas y las que se reanuden.')"
           >
             <SettingSwitch
               id="chrome-proyecto"
@@ -80,7 +84,7 @@ const status = computed(() =>
           <DialogClose
             class="h-8 rounded-item bg-accent px-3 text-sm text-on-accent hover:bg-accent-hover"
           >
-            Hecho
+            {{ t('Hecho') }}
           </DialogClose>
         </div>
       </DialogContent>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../i18n'
 import { Ellipsis, PanelRight } from 'lucide-vue-next'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { ChatAttachment, ChatMode, ChromeState } from '../../../shared/chat'
@@ -294,7 +295,7 @@ watch(
     const found = await jumpTo(m, { prefer: 'assistant' })
     if (!found) {
       list.value?.scrollToEnd()
-      showNotice('El mensaje ya no está en la sesión')
+      showNotice(t('El mensaje ya no está en la sesión'))
     }
   },
   { immediate: true }
@@ -458,12 +459,12 @@ async function copyLastResponse(): Promise<void> {
     if (item.kind === 'user-prompt') break
     if (item.kind === 'assistant-text' && item.text.trim()) parts.unshift(item.text.trim())
   }
-  if (parts.length === 0) return ui.toast('Claude aún no ha respondido en esta sesión.')
+  if (parts.length === 0) return ui.toast(t('Claude aún no ha respondido en esta sesión.'))
   try {
     await navigator.clipboard.writeText(parts.join('\n\n'))
-    ui.toast('Última respuesta copiada')
+    ui.toast(t('Última respuesta copiada'))
   } catch {
-    ui.toast('No se pudo copiar', { tone: 'danger' })
+    ui.toast(t('No se pudo copiar'), { tone: 'danger' })
   }
 }
 
@@ -587,7 +588,9 @@ async function setFavorite(value: boolean): Promise<void> {
       <template #actions>
         <IconButton
           :icon="PanelRight"
-          :label="filesOpen ? 'Cerrar el panel de archivos' : `Archivos (${files.length})`"
+          :label="
+            filesOpen ? t('Cerrar el panel de archivos') : t('Archivos ({n})', { n: files.length })
+          "
           :aria-pressed="filesOpen"
           :class="filesOpen ? 'text-text' : ''"
           @click="filesOpen = !filesOpen"
@@ -596,7 +599,7 @@ async function setFavorite(value: boolean): Promise<void> {
       <template #menu>
         <DropdownMenuRoot>
           <DropdownMenuTrigger as-child>
-            <IconButton :icon="Ellipsis" label="Más acciones" />
+            <IconButton :icon="Ellipsis" :label="t('Más acciones')" />
           </DropdownMenuTrigger>
           <DropdownMenuPortal>
             <DropdownMenuContent
@@ -628,14 +631,14 @@ async function setFavorite(value: boolean): Promise<void> {
             class="absolute top-2 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2 rounded-full bg-surface px-4 py-1.5 text-sm whitespace-nowrap shadow-float"
             role="status"
           >
-            <span class="text-muted">La conversación sigue en otra sesión</span>
+            <span class="text-muted">{{ t('La conversación sigue en otra sesión') }}</span>
             <span class="text-muted" aria-hidden="true">·</span>
             <button
               type="button"
               class="rounded-item px-1.5 font-medium text-accent hover:text-accent-hover"
               @click="openContinuation"
             >
-              Abrir
+              {{ t('Abrir') }}
             </button>
           </div>
 
@@ -662,7 +665,7 @@ async function setFavorite(value: boolean): Promise<void> {
             v-if="(transcript.state === 'loading' || transcript.state === 'idle') && !liveOnly"
             class="mx-auto flex w-full max-w-chat flex-col gap-6 px-6 py-8"
             aria-busy="true"
-            aria-label="Cargando la sesión"
+            :aria-label="t('Cargando la sesión')"
           >
             <div class="ml-auto h-12 w-2/3 animate-pulse rounded-bubble bg-surface-hover" />
             <div class="h-24 w-full animate-pulse rounded-item bg-surface-hover" />
@@ -673,11 +676,12 @@ async function setFavorite(value: boolean): Promise<void> {
             v-else-if="transcript.state === 'missing' && !liveOnly"
             class="mx-auto flex w-full max-w-chat flex-col gap-2 px-6 py-8"
           >
-            <h2 class="font-serif text-2xl">Esta sesión ya no existe.</h2>
+            <h2 class="font-serif text-2xl">{{ t('Esta sesión ya no existe.') }}</h2>
             <p class="text-muted">
-              Puede que se haya borrado de la carpeta de Claude Code.
-              <RouterLink to="/" class="text-text underline underline-offset-2"
-                >Volver al inicio</RouterLink
+              {{ t('Puede que se haya borrado de la carpeta de Claude Code.') }}
+              <RouterLink to="/" class="text-text underline underline-offset-2">{{
+                t('Volver al inicio')
+              }}</RouterLink
               >.
             </p>
           </div>
@@ -687,18 +691,20 @@ async function setFavorite(value: boolean): Promise<void> {
             class="mx-auto flex w-full max-w-chat flex-col items-start gap-3 px-6 py-8"
             role="alert"
           >
-            <p class="text-danger">No se pudo leer la sesión: {{ transcript.error }}</p>
+            <p class="text-danger">
+              {{ t('No se pudo leer la sesión: {error}', { error: transcript.error ?? '' }) }}
+            </p>
             <button
               type="button"
               class="rounded-item border border-border px-3 py-1.5 text-sm hover:bg-surface-hover"
               @click="transcript.open(id)"
             >
-              Reintentar
+              {{ t('Reintentar') }}
             </button>
           </div>
 
           <p v-else-if="blocks.length === 0" class="mx-auto w-full max-w-chat px-6 py-8 text-muted">
-            No hay nada que mostrar con los filtros actuales.
+            {{ t('No hay nada que mostrar con los filtros actuales.') }}
           </p>
 
           <TranscriptList
@@ -769,7 +775,7 @@ async function setFavorite(value: boolean): Promise<void> {
             :working="working"
             :models="chat.catalog.models"
             :commands="commands"
-            :placeholder="working ? 'Escribe para ponerlo en cola…' : 'Responder…'"
+            :placeholder="working ? t('Escribe para ponerlo en cola…') : t('Responder…')"
             @send="send"
             @stop="stop"
           >

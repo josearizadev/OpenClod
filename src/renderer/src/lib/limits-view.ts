@@ -1,5 +1,6 @@
 import type { LimitWindow } from '../../../shared/usage'
 import { formatAgo, formatClock, formatDuration, formatTokens } from './usage-format'
+import { t } from '../i18n'
 
 /** Presentación de una ventana de límite. Pura. */
 
@@ -24,20 +25,20 @@ export interface LimitView {
 }
 
 const NAMES: Record<string, string> = {
-  five_hour: 'Límite de 5 horas',
-  seven_day: 'Límite semanal',
-  seven_day_opus: 'Semanal de Opus',
-  seven_day_sonnet: 'Semanal de Sonnet'
+  five_hour: t('Límite de 5 horas'),
+  seven_day: t('Límite semanal'),
+  seven_day_opus: t('Semanal de {model}', { model: 'Opus' }),
+  seven_day_sonnet: t('Semanal de {model}', { model: 'Sonnet' })
 }
 
 export function limitName(w: Pick<LimitWindow, 'kind' | 'label'>): string {
-  return w.label ? `Semanal de ${w.label}` : (NAMES[w.kind] ?? 'Límite')
+  return w.label ? t('Semanal de {model}', { model: w.label }) : (NAMES[w.kind] ?? t('Límite'))
 }
 
 export function limitView(
   w: LimitWindow | null,
   now = Date.now(),
-  name = 'Límite de 5 horas'
+  name = t('Límite de 5 horas')
 ): LimitView {
   if (!w) {
     return {
@@ -48,8 +49,8 @@ export function limitView(
       value: '',
       remaining: '',
       resets: '',
-      source: 'Estimación local',
-      aria: `${name}: sin bloque activo`
+      source: t('Estimación local'),
+      aria: `${name}: ${t('sin bloque activo')}`
     }
   }
   const estimate = w.source === 'estimate'
@@ -74,16 +75,18 @@ export function limitView(
         ? `~${formatTokens(w.tokens)}`
         : ''
   const remaining = left !== null ? formatDuration(left) : ''
-  const resets = w.resetsAt ? `se renueva a las ${formatClock(w.resetsAt, now)}` : ''
+  const resets = w.resetsAt
+    ? t('se renueva a las {time}', { time: formatClock(w.resetsAt, now) })
+    : ''
   const source = estimate
-    ? 'Estimación local'
+    ? t('Estimación local')
     : w.source === 'session-hit'
-      ? `Aviso de Claude Code · ${formatAgo(w.observedAt, now)}`
-      : `Según Claude Code · ${formatAgo(w.observedAt, now)}`
+      ? t('Aviso de Claude Code · {ago}', { ago: formatAgo(w.observedAt, now) })
+      : t('Según Claude Code · {ago}', { ago: formatAgo(w.observedAt, now) })
   const parts = [name]
-  if (tone === 'danger') parts.push('límite alcanzado')
-  else if (pct !== null) parts.push(`${Math.round(pct)} % usado`)
-  else if (value) parts.push(`${value} tokens en el bloque (estimación local)`)
-  if (remaining) parts.push(`se renueva en ${remaining}`)
+  if (tone === 'danger') parts.push(t('límite alcanzado'))
+  else if (pct !== null) parts.push(t('{pct} % usado', { pct: Math.round(pct) }))
+  else if (value) parts.push(t('{value} tokens en el bloque (estimación local)', { value }))
+  if (remaining) parts.push(t('se renueva en {time}', { time: remaining }))
   return { pct, fill, tone, estimate, value, remaining, resets, source, aria: parts.join(', ') }
 }

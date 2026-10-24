@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { PopoverContent, PopoverPortal, PopoverRoot, PopoverTrigger } from 'reka-ui'
 import { FolderPlus, GitBranch, RefreshCw } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
@@ -23,7 +24,7 @@ const branch = computed(() => {
   const s = status.value
   if (!s) return ''
   if (s.branch) return s.branch
-  return s.head ? `HEAD separado · ${s.head}` : 'HEAD separado'
+  return s.head ? `${t('HEAD separado')} · ${s.head}` : t('HEAD separado')
 })
 const shortBranch = computed(() =>
   branch.value.length > 24 ? `${branch.value.slice(0, 23)}…` : branch.value
@@ -38,10 +39,14 @@ const hidden = computed(() => count.value - shown.value.length)
 const summary = computed(() => {
   const s = status.value
   if (!s) return ''
-  const parts = [`Rama ${branch.value}`]
-  if (s.ahead) parts.push(`${s.ahead} por delante`)
-  if (s.behind) parts.push(`${s.behind} por detrás`)
-  parts.push(count.value === 1 ? '1 archivo con cambios' : `${count.value} archivos con cambios`)
+  const parts = [t('Rama {branch}', { branch: branch.value })]
+  if (s.ahead) parts.push(t('{n} por delante', { n: s.ahead }))
+  if (s.behind) parts.push(t('{n} por detrás', { n: s.behind }))
+  parts.push(
+    count.value === 1
+      ? t('1 archivo con cambios')
+      : t('{n} archivos con cambios', { n: count.value })
+  )
   return parts.join(', ')
 })
 
@@ -90,24 +95,25 @@ async function importWorktree(path: string): Promise<void> {
               <template v-if="status.upstream">
                 {{ status.upstream }}
                 <template v-if="status.ahead || status.behind">
-                  · {{ status.ahead }} por delante · {{ status.behind }} por detrás
+                  · {{ t('{n} por delante', { n: status.ahead }) }} ·
+                  {{ t('{n} por detrás', { n: status.behind }) }}
                 </template>
-                <template v-else> · al día</template>
+                <template v-else> · {{ t('al día') }}</template>
               </template>
-              <template v-else>Sin rama remota</template>
+              <template v-else>{{ t('Sin rama remota') }}</template>
             </p>
           </div>
           <IconButton
             :icon="RefreshCw"
-            label="Actualizar"
+            :label="t('Actualizar')"
             :class="git.loading ? '[&_svg]:animate-spin' : ''"
             @click="git.reload()"
           />
         </header>
 
         <div class="min-h-0 flex-1 overflow-y-auto p-1">
-          <p v-if="count === 0" class="px-2 py-3 text-sm text-muted">Sin cambios.</p>
-          <ul v-else :aria-label="`${count} archivos con cambios`">
+          <p v-if="count === 0" class="px-2 py-3 text-sm text-muted">{{ t('Sin cambios.') }}</p>
+          <ul v-else :aria-label="t('{n} archivos con cambios', { n: count })">
             <li v-for="change in shown" :key="change.path">
               <button
                 type="button"
@@ -116,7 +122,7 @@ async function importWorktree(path: string): Promise<void> {
                 :title="
                   inSession
                     ? `${gitChangeLabel(change)}: ${change.path}`
-                    : `${gitChangeLabel(change)}: ${change.path} (abre una sesión para ver el diff)`
+                    : `${gitChangeLabel(change)}: ${change.path} (${t('abre una sesión para ver el diff')})`
                 "
                 @click="pick(change)"
               >
@@ -129,12 +135,18 @@ async function importWorktree(path: string): Promise<void> {
                 <span class="min-w-0 flex-1 truncate font-mono text-[13px]" dir="rtl">
                   <bdi>{{ change.path }}</bdi>
                 </span>
-                <span v-if="change.staged" class="shrink-0 text-xs text-muted">preparado</span>
+                <span v-if="change.staged" class="shrink-0 text-xs text-muted">{{
+                  t('preparado')
+                }}</span>
               </button>
             </li>
           </ul>
           <p v-if="hidden > 0 || status.truncated" class="px-2 py-1 text-xs text-muted">
-            Y {{ status.truncated ? 'más de ' : '' }}{{ hidden }} más…
+            {{
+              status.truncated
+                ? t('Y más de {n} más…', { n: hidden })
+                : t('Y {n} más…', { n: hidden })
+            }}
           </p>
         </div>
 
@@ -154,10 +166,14 @@ async function importWorktree(path: string): Promise<void> {
                 tree.path
               }}</span>
               <span class="block truncate text-xs text-muted">
-                {{ tree.bare ? 'bare' : (tree.branch ?? `HEAD separado · ${tree.head ?? ''}`) }}
+                {{
+                  tree.bare ? 'bare' : (tree.branch ?? `${t('HEAD separado')} · ${tree.head ?? ''}`)
+                }}
               </span>
             </span>
-            <span v-if="tree.current" class="shrink-0 text-xs font-medium text-accent">Actual</span>
+            <span v-if="tree.current" class="shrink-0 text-xs font-medium text-accent">{{
+              t('Actual')
+            }}</span>
             <button
               v-else-if="!tree.projectId && !tree.bare"
               type="button"
@@ -165,7 +181,7 @@ async function importWorktree(path: string): Promise<void> {
               @click="importWorktree(tree.path)"
             >
               <FolderPlus :size="14" :stroke-width="1.75" aria-hidden="true" />
-              Importar como proyecto
+              {{ t('Importar como proyecto') }}
             </button>
           </div>
         </footer>

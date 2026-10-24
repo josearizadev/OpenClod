@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { RefreshCw } from 'lucide-vue-next'
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { groupSessions, hiddenCount } from '../../lib/sessions-groups'
@@ -75,12 +76,12 @@ watch(
 <template>
   <section ref="root" aria-labelledby="sidebar-sessions" class="mt-3">
     <div class="flex items-center justify-between pr-1 pl-2">
-      <h2 id="sidebar-sessions" class="text-xs font-medium text-muted">Sesiones</h2>
+      <h2 id="sidebar-sessions" class="text-xs font-medium text-muted">{{ t('Sesiones') }}</h2>
       <button
         type="button"
         :disabled="sessions.refreshing"
-        :aria-label="running ? 'Actualizando sesiones' : 'Actualizar sesiones'"
-        :title="running ? 'Actualizando…' : 'Actualizar'"
+        :aria-label="running ? t('Actualizando sesiones') : t('Actualizar sesiones')"
+        :title="running ? t('Actualizando…') : t('Actualizar')"
         class="no-drag inline-flex size-7 items-center justify-center rounded-item text-muted transition-colors duration-150 hover:bg-surface-hover hover:text-text disabled:pointer-events-none"
         @click="sessions.refresh()"
       >
@@ -93,16 +94,17 @@ watch(
     </div>
 
     <p v-if="indexError" class="px-2 py-2 text-muted" role="alert">
-      No se pudo abrir el índice. Más detalles en
-      <RouterLink to="/diagnostico" class="text-text underline underline-offset-2"
-        >Diagnóstico</RouterLink
+      {{ t('No se pudo abrir el índice. Más detalles en') }}
+      <RouterLink to="/diagnostico" class="text-text underline underline-offset-2">{{
+        t('Diagnóstico')
+      }}</RouterLink
       >.
     </p>
     <p v-else-if="sessions.error" class="px-2 py-2 text-sm text-danger" role="alert">
       {{ sessions.error }}
     </p>
 
-    <ul v-if="showSkeleton" class="mt-1 flex flex-col gap-0.5" aria-label="Cargando sesiones">
+    <ul v-if="showSkeleton" class="mt-1 flex flex-col gap-0.5" :aria-label="t('Cargando sesiones')">
       <li v-for="n in 3" :key="n" class="flex flex-col gap-1.5 px-2 py-2" aria-hidden="true">
         <span class="h-3 w-4/5 animate-pulse rounded-full bg-surface-hover" />
         <span class="h-2.5 w-1/2 animate-pulse rounded-full bg-surface-hover" />
@@ -110,7 +112,7 @@ watch(
     </ul>
 
     <p v-else-if="showEmpty" class="px-2 py-2 text-muted">
-      Este proyecto no tiene sesiones de Claude Code.
+      {{ t('Este proyecto no tiene sesiones de Claude Code.') }}
     </p>
 
     <SessionSelectionBar v-if="sessions.selecting" :order="order" />
@@ -135,7 +137,7 @@ watch(
       :aria-pressed="sessions.showHidden"
       @click="sessions.showHidden = !sessions.showHidden"
     >
-      {{ sessions.showHidden ? 'Esconder ocultas' : `Mostrar ocultas (${hidden})` }}
+      {{ sessions.showHidden ? t('Esconder ocultas') : t('Mostrar ocultas ({n})', { n: hidden }) }}
     </button>
   </section>
 </template>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import type { ChromeState } from '../../../../shared/chat'
@@ -66,13 +67,13 @@ const terminalOpen = computed({
 
 function needsProject(): string | null {
   if (project.value) return project.value.id
-  ui.toast('Esta carpeta no es un proyecto importado: impórtala desde el selector de proyectos.')
+  ui.toast(t('Esta carpeta no es un proyecto importado: impórtala desde el selector de proyectos.'))
   return null
 }
 
 function needsSession(): string | null {
   if (props.sessionId) return props.sessionId
-  ui.toast('Primero empieza la sesión enviando un mensaje.')
+  ui.toast(t('Primero empieza la sesión enviando un mensaje.'))
   return null
 }
 
@@ -87,7 +88,10 @@ async function openChrome(): Promise<void> {
 async function setProjectChrome(enabled: boolean): Promise<void> {
   if (!project.value) return
   const result = await window.api.projectSettings.setChrome(project.value.id, enabled)
-  if (!result.ok) return ui.toast(`No se pudo guardar: ${result.error.message}`, { tone: 'danger' })
+  if (!result.ok)
+    return ui.toast(t('No se pudo guardar: {error}', { error: result.error.message }), {
+      tone: 'danger'
+    })
   projectChrome.value = enabled
   // Activarlo en el proyecto también lo activa aquí, y al revés.
   if (props.chrome.enabled !== enabled) emit('chrome', enabled)
@@ -96,12 +100,14 @@ async function setProjectChrome(enabled: boolean): Promise<void> {
 async function exportSession(sessionId: string): Promise<void> {
   const result = await window.api.sessions.export({ sessionId, tools: false })
   if (!result.ok)
-    return ui.toast(`No se pudo exportar: ${result.error.message}`, { tone: 'danger' })
+    return ui.toast(t('No se pudo exportar: {error}', { error: result.error.message }), {
+      tone: 'danger'
+    })
   const saved = result.data
   if (!saved) return
-  ui.toast('Sesión exportada', {
+  ui.toast(t('Sesión exportada'), {
     action: {
-      label: 'Mostrar en la carpeta',
+      label: t('Mostrar en la carpeta'),
       run: () => void window.api.files.revealExport(saved.path)
     }
   })
@@ -117,7 +123,7 @@ async function openTerminal(command?: string): Promise<void> {
     )
     if (opened) await router.push('/terminal')
   }
-  if (command) ui.toast(`Escribe /${command} en la terminal`)
+  if (command) ui.toast(t('Escribe /{command} en la terminal', { command }))
 }
 
 function runApp(id: AppCommandId, args: string): void {
@@ -165,7 +171,7 @@ function runApp(id: AppCommandId, args: string): void {
       const sessionId = needsSession()
       if (!sessionId) return
       void chat.close(sessionId)
-      ui.toast('Proceso de Claude Code cerrado: el siguiente mensaje lo vuelve a abrir.')
+      ui.toast(t('Proceso de Claude Code cerrado: el siguiente mensaje lo vuelve a abrir.'))
       return
     }
     case 'terminal':
@@ -201,13 +207,16 @@ defineExpose({ run, openChrome })
   />
   <ConfirmDialog
     v-model:open="terminalOpen"
-    :title="`/${terminalCommand?.name ?? ''} necesita la terminal`"
-    :description="`${terminalCommand?.description ?? ''}. Claude Code solo lo ofrece en su terminal interactiva: ${
-      sessionId
-        ? 'puedes seguir esta sesión en la terminal integrada y volver después.'
-        : 'puedes abrir Claude Code en la terminal integrada.'
-    }`"
-    confirm-label="Abrir en la terminal"
+    :title="t('/{command} necesita la terminal', { command: terminalCommand?.name ?? '' })"
+    :description="
+      t('{description}. Claude Code solo lo ofrece en su terminal interactiva: {next}', {
+        description: terminalCommand?.description ?? '',
+        next: sessionId
+          ? t('puedes seguir esta sesión en la terminal integrada y volver después.')
+          : t('puedes abrir Claude Code en la terminal integrada.')
+      })
+    "
+    :confirm-label="t('Abrir en la terminal')"
     @confirm="openTerminal(terminalCommand?.name)"
   />
 </template>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { computed, ref, watch } from 'vue'
 import type { FilePreview } from '../../../../shared/files'
 import { formatBytes } from '../../lib/files'
@@ -20,11 +21,11 @@ watch(
 const name = computed(() => props.preview.path.replace(/^.*\//, ''))
 
 const NOTICE: Partial<Record<FilePreview['kind'], string>> = {
-  missing: 'El archivo ya no existe.',
-  secret: 'Vista previa desactivada: puede contener secretos.',
-  outside: 'El archivo está fuera de la carpeta de la sesión.',
-  binary: 'Archivo binario: no se puede mostrar.',
-  'too-large': 'Archivo demasiado grande para la vista previa.'
+  missing: t('El archivo ya no existe.'),
+  secret: t('Vista previa desactivada: puede contener secretos.'),
+  outside: t('El archivo está fuera de la carpeta de la sesión.'),
+  binary: t('Archivo binario: no se puede mostrar.'),
+  'too-large': t('Archivo demasiado grande para la vista previa.')
 }
 </script>
 
@@ -34,8 +35,8 @@ const NOTICE: Partial<Record<FilePreview['kind'], string>> = {
       <div class="flex gap-0.5 self-start rounded-item bg-surface-hover p-0.5" role="tablist">
         <button
           v-for="option in [
-            { source: false, label: 'Vista previa' },
-            { source: true, label: 'Código' }
+            { source: false, label: t('Vista previa') },
+            { source: true, label: t('Código') }
           ]"
           :key="option.label"
           type="button"
@@ -76,7 +77,7 @@ const NOTICE: Partial<Record<FilePreview['kind'], string>> = {
       v-if="(preview.kind === 'text' || preview.kind === 'markdown') && preview.truncated"
       class="text-xs text-muted"
     >
-      Se muestra el primer MB de {{ formatBytes(preview.size) }}.
+      {{ t('Se muestra el primer MB de {size}.', { size: formatBytes(preview.size) }) }}
     </p>
   </div>
 </template>

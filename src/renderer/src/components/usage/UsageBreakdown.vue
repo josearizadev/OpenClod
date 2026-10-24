@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import type { UsageReport } from '../../../../shared/usage'
 import { formatInteger, formatTokens, formatUsd } from '../../lib/usage-format'
 
@@ -9,14 +10,14 @@ defineProps<{ report: UsageReport; showCost: boolean }>()
 <template>
   <div class="grid gap-6 md:grid-cols-2">
     <section aria-labelledby="usage-projects">
-      <h3 id="usage-projects" class="mb-2 text-sm font-medium">Por proyecto</h3>
+      <h3 id="usage-projects" class="mb-2 text-sm font-medium">{{ t('Por proyecto') }}</h3>
       <table class="w-full table-fixed text-sm">
         <tbody>
           <tr v-for="p in report.byProject" :key="p.key" class="border-t border-border">
             <td
               class="truncate py-1.5"
               :class="p.imported ? '' : 'text-muted'"
-              :title="p.imported ? p.name : `${p.name} (no importado)`"
+              :title="p.imported ? p.name : `${p.name} (${t('no importado')})`"
             >
               {{ p.name }}
             </td>
@@ -26,13 +27,13 @@ defineProps<{ report: UsageReport; showCost: boolean }>()
       </table>
     </section>
     <section aria-labelledby="usage-models">
-      <h3 id="usage-models" class="mb-2 text-sm font-medium">Por modelo</h3>
+      <h3 id="usage-models" class="mb-2 text-sm font-medium">{{ t('Por modelo') }}</h3>
       <table class="w-full text-sm">
         <tbody>
           <tr v-for="m in report.byModel" :key="m.model" class="border-t border-border">
             <td class="py-1.5 font-mono text-xs">{{ m.model }}</td>
             <td class="py-1.5 text-right text-xs text-muted tabular-nums">
-              {{ formatInteger(m.messages) }} mens.
+              {{ t('{n} mens.', { n: formatInteger(m.messages) }) }}
             </td>
             <td class="py-1.5 text-right tabular-nums">{{ formatTokens(m.tokens) }}</td>
           </tr>
@@ -40,7 +41,9 @@ defineProps<{ report: UsageReport; showCost: boolean }>()
       </table>
     </section>
     <section class="md:col-span-2" aria-labelledby="usage-sessions">
-      <h3 id="usage-sessions" class="mb-2 text-sm font-medium">Sesiones con más uso</h3>
+      <h3 id="usage-sessions" class="mb-2 text-sm font-medium">
+        {{ t('Sesiones con más uso') }}
+      </h3>
       <ol class="text-sm">
         <li v-for="s in report.topSessions" :key="s.sessionId" class="border-t border-border">
           <RouterLink

@@ -18,6 +18,7 @@ import type { ProjectsService } from '../services/projects'
 import { exportFileName, toMarkdown } from '../services/session-export'
 import type { TranscriptService } from '../services/transcript'
 import { handle, IpcError } from './handle'
+import { t } from '../i18n'
 
 export interface FilesIpcDeps extends RootDeps {
   git: GitService
@@ -77,18 +78,18 @@ export function registerFilesIpc(deps: FilesIpcDeps): void {
     guarded(async () => {
       const roots = await rootsOf(target)
       const resolved = await resolveInside(path, roots, deps.claudeDir())
-      if (!resolved.ok) throw new IpcError('FORBIDDEN', 'El archivo está fuera de la carpeta')
+      if (!resolved.ok) throw new IpcError('FORBIDDEN', t('El archivo está fuera de la carpeta'))
       if (how === 'folder') {
         if (resolved.exists) shell.showItemInFolder(resolved.abs)
         else await shell.openPath(dirname(resolved.abs))
         return
       }
-      if (!resolved.exists) throw new IpcError('NOT_FOUND', 'El archivo ya no existe')
+      if (!resolved.exists) throw new IpcError('NOT_FOUND', t('El archivo ya no existe'))
       if (isUnsafeToOpen(resolved.abs)) {
-        throw new IpcError('FORBIDDEN', 'No se abren ejecutables: usa «Mostrar en la carpeta»')
+        throw new IpcError('FORBIDDEN', t('No se abren ejecutables: usa «Mostrar en la carpeta»'))
       }
       const error = await shell.openPath(resolved.abs)
-      if (error) throw new IpcError('INTERNAL', `No se pudo abrir: ${error}`)
+      if (error) throw new IpcError('INTERNAL', t('No se pudo abrir: {error}', { error }))
     })
   )
 
@@ -122,10 +123,10 @@ export function registerFilesIpc(deps: FilesIpcDeps): void {
 
   handle('sessions:export', async ({ sessionId, tools }, event) => {
     const payload = await deps.transcripts.transcript(sessionId)
-    if (!payload) throw new IpcError('NOT_FOUND', 'La sesión ya no existe')
+    if (!payload) throw new IpcError('NOT_FOUND', t('La sesión ya no existe'))
     const detail = deps.projects.session(sessionId)
     const options: Electron.SaveDialogOptions = {
-      title: 'Exportar sesión a Markdown',
+      title: t('Exportar sesión a Markdown'),
       defaultPath: join(app.getPath('documents'), exportFileName(detail?.title ?? 'sesion')),
       filters: [{ name: 'Markdown', extensions: ['md'] }]
     }
@@ -142,7 +143,7 @@ export function registerFilesIpc(deps: FilesIpcDeps): void {
   })
 
   handle('files:revealExport', ({ path }) => {
-    if (!exported.has(pathKey(path))) throw new IpcError('FORBIDDEN', 'Ruta no exportada')
+    if (!exported.has(pathKey(path))) throw new IpcError('FORBIDDEN', t('Ruta no exportada'))
     shell.showItemInFolder(path)
   })
 }

@@ -70,6 +70,8 @@ import {
   type UsageReport
 } from './usage'
 import type { UpdateStatus } from './update'
+import type { AuthStatus } from './auth'
+import type { Locale } from './i18n'
 
 /**
  * Contrato IPC: fuente única de canales, esquemas y tipos.
@@ -221,6 +223,8 @@ export const invokeContract = {
     input: SessionExportInputSchema,
     output: z.object({ path: z.string() }).nullable()
   },
+  /** Sesión de Claude Code (`claude auth status`). */
+  'auth:status': { input: z.void(), output: z.custom<AuthStatus>() },
   'claude:dir': {
     input: z.void(),
     output: z.object({ dir: z.string(), source: z.enum(['settings', 'env', 'default']) })
@@ -332,6 +336,11 @@ export type EventPayload<C extends EventChannel> = z.output<(typeof eventContrac
 
 /** API que el preload expone como `window.api`. */
 export interface Api {
+  /** Idioma efectivo de la interfaz, leído al cargar la ventana. */
+  locale: Locale
+  auth: {
+    status(): Promise<Result<InvokeOutput<'auth:status'>>>
+  }
   settings: {
     get(): Promise<Result<InvokeOutput<'settings:get'>>>
     set(patch: InvokeInput<'settings:set'>): Promise<Result<InvokeOutput<'settings:set'>>>

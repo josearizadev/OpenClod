@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { computed } from 'vue'
 import type { LimitWindow } from '../../../../shared/usage'
 import { useCountdown } from '../../composables/useCountdown'
@@ -44,11 +45,13 @@ const fillClass = computed(() =>
       />
     </div>
     <p class="mt-2 text-sm">
-      <template v-if="view.tone === 'empty'">{{ empty ?? 'Sin datos' }}</template>
-      <template v-else-if="view.tone === 'danger'">Límite alcanzado · {{ view.resets }}</template>
+      <template v-if="view.tone === 'empty'">{{ empty ?? t('Sin datos') }}</template>
+      <template v-else-if="view.tone === 'danger'"
+        >{{ t('Límite alcanzado') }} · {{ view.resets }}</template
+      >
       <template v-else-if="view.resets">
-        {{ view.resets.charAt(0).toUpperCase() + view.resets.slice(1) }} · dentro de
-        {{ view.remaining }}
+        {{ view.resets.charAt(0).toUpperCase() + view.resets.slice(1) }} ·
+        {{ t('dentro de {time}', { time: view.remaining }) }}
       </template>
     </p>
     <p class="mt-1 text-xs text-muted">{{ view.source }}</p>

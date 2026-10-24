@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { ArrowUp, ChevronDown, Paperclip, Square } from 'lucide-vue-next'
 import {
   DropdownMenuContent,
@@ -202,7 +203,7 @@ defineExpose({ focus, textarea })
       @drop="onDrop"
     >
       <SlashMenu :commands="suggestions" :active="active" @pick="pick" @hover="active = $event" />
-      <ul v-if="attachments.length > 0" class="flex flex-wrap gap-2" aria-label="Adjuntos">
+      <ul v-if="attachments.length > 0" class="flex flex-wrap gap-2" :aria-label="t('Adjuntos')">
         <AttachmentChip
           v-for="(attachment, index) in attachments"
           :key="attachment.kind === 'file' ? attachment.path : `${index}-${attachment.name}`"
@@ -217,8 +218,8 @@ defineExpose({ focus, textarea })
         v-model="text"
         rows="1"
         :disabled="disabled"
-        :placeholder="placeholder ?? 'Escribe un mensaje…'"
-        aria-label="Mensaje"
+        :placeholder="placeholder ?? t('Escribe un mensaje…')"
+        :aria-label="t('Mensaje')"
         class="field-sizing-content max-h-[18rem] min-h-6 w-full resize-none bg-transparent px-1 text-base leading-6 outline-none placeholder:text-muted disabled:cursor-not-allowed"
         :aria-autocomplete="commands ? 'list' : undefined"
         :aria-controls="suggestions.length > 0 ? 'slash-menu' : undefined"
@@ -232,8 +233,8 @@ defineExpose({ focus, textarea })
           v-if="!noAttach"
           type="button"
           :disabled="disabled"
-          aria-label="Adjuntar archivos"
-          title="Adjuntar archivos (o pégalos y suéltalos aquí)"
+          :aria-label="t('Adjuntar archivos')"
+          :title="t('Adjuntar archivos (o pégalos y suéltalos aquí)')"
           class="inline-flex size-8 items-center justify-center rounded-item text-muted transition-colors duration-150 hover:bg-surface-hover hover:text-text disabled:pointer-events-none disabled:opacity-40"
           @click="pickFiles"
         >
@@ -246,8 +247,8 @@ defineExpose({ focus, textarea })
         <button
           v-if="working"
           type="button"
-          aria-label="Detener"
-          title="Detener (Esc)"
+          :aria-label="t('Detener')"
+          :title="t('Detener (Esc)')"
           class="inline-flex size-8 items-center justify-center rounded-item border border-border text-text transition-colors duration-150 hover:bg-surface-hover"
           @click="emit('stop')"
         >
@@ -256,8 +257,10 @@ defineExpose({ focus, textarea })
         <div class="flex items-center">
           <button
             type="button"
-            :aria-label="working ? 'Poner en cola' : 'Enviar'"
-            :title="working ? 'Poner en cola (Enter) · Enviar ya (Ctrl+Enter)' : 'Enviar (Enter)'"
+            :aria-label="working ? t('Poner en cola') : t('Enviar')"
+            :title="
+              working ? t('Poner en cola (Enter) · Enviar ya (Ctrl+Enter)') : t('Enviar (Enter)')
+            "
             :disabled="!canSend"
             class="inline-flex size-8 items-center justify-center bg-accent text-on-accent transition-colors duration-150 hover:bg-accent-hover disabled:opacity-40 disabled:hover:bg-accent"
             :class="working ? 'rounded-l-item' : 'rounded-item'"
@@ -269,7 +272,7 @@ defineExpose({ focus, textarea })
           <DropdownMenuRoot v-if="working">
             <DropdownMenuTrigger
               :disabled="!canSend"
-              aria-label="Más opciones de envío"
+              :aria-label="t('Más opciones de envío')"
               class="inline-flex h-8 w-5 items-center justify-center rounded-r-item border-l border-on-accent/30 bg-accent text-on-accent transition-colors duration-150 hover:bg-accent-hover disabled:opacity-40 disabled:hover:bg-accent"
             >
               <ChevronDown :size="14" :stroke-width="2" aria-hidden="true" />
@@ -285,15 +288,22 @@ defineExpose({ focus, textarea })
                   class="flex min-h-8 cursor-default flex-col items-start gap-0.5 rounded-item px-2 py-1.5 text-sm outline-none select-none data-[highlighted]:bg-surface-hover"
                   @select="send(true)"
                 >
-                  <span>Enviar ya <kbd class="ml-1 text-xs text-muted">Ctrl+Enter</kbd></span>
-                  <span class="text-xs text-muted">Claude lo recibe en el turno en curso</span>
+                  <span
+                    >{{ t('Enviar ya') }}
+                    <kbd class="ml-1 text-xs text-muted">Ctrl+Enter</kbd></span
+                  >
+                  <span class="text-xs text-muted">{{
+                    t('Claude lo recibe en el turno en curso')
+                  }}</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   class="flex min-h-8 cursor-default flex-col items-start gap-0.5 rounded-item px-2 py-1.5 text-sm outline-none select-none data-[highlighted]:bg-surface-hover"
                   @select="send(false)"
                 >
-                  <span>Poner en cola <kbd class="ml-1 text-xs text-muted">Enter</kbd></span>
-                  <span class="text-xs text-muted">Se envía al terminar el turno</span>
+                  <span
+                    >{{ t('Poner en cola') }} <kbd class="ml-1 text-xs text-muted">Enter</kbd></span
+                  >
+                  <span class="text-xs text-muted">{{ t('Se envía al terminar el turno') }}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenuPortal>

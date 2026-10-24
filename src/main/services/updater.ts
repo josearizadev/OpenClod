@@ -1,5 +1,6 @@
 import type { UpdateStatus } from '../../shared/update'
 import type { Logger } from './logger'
+import { t } from '../i18n'
 
 /**
  * Actualizaciones de la app con `electron-updater`. Busca al arrancar y cada pocas horas,
@@ -49,10 +50,10 @@ const INTERVAL_MS = 4 * 60 * 60 * 1000
 function shortMessage(error: unknown): string {
   const text = error instanceof Error ? error.message : String(error)
   if (/ENOTFOUND|ECONNREFUSED|ETIMEDOUT|ECONNRESET|EAI_AGAIN|net::ERR_/i.test(text)) {
-    return 'No se pudo conectar con el servidor de actualizaciones.'
+    return t('No se pudo conectar con el servidor de actualizaciones.')
   }
-  if (/\b404\b/.test(text)) return 'El servidor no tiene información de versiones.'
-  return 'No se pudo comprobar si hay actualizaciones.'
+  if (/\b404\b/.test(text)) return t('El servidor no tiene información de versiones.')
+  return t('No se pudo comprobar si hay actualizaciones.')
 }
 
 export function createAppUpdater(options: AppUpdaterOptions): AppUpdater {

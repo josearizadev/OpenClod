@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { UsagePeriodSchema, UsageScopeSchema, type LimitsSnapshot } from './usage'
 import { SearchScopeSchema } from './search'
 import { ChatCommandSchema, ChatModelSchema, SavedChatModeSchema } from './chat'
+import { LanguageSchema } from './i18n'
 
 /** Preferencia de tema. `system` sigue el tema del sistema operativo. */
 export const ThemeSchema = z.enum(['system', 'light', 'dark'])
@@ -91,6 +92,10 @@ export type AppCommand = z.infer<typeof AppCommandSchema>
 /** Ajustes persistidos en `userData/state.json` por `AppStore`. */
 export const SettingsSchema = z.object({
   theme: ThemeSchema,
+  /** Idioma de la interfaz; `system` sigue el del sistema operativo. */
+  language: LanguageSchema,
+  /** Ya se vio la pantalla de bienvenida (idioma y sesión de Claude Code). */
+  welcomed: z.boolean(),
   /** Carpeta de Claude Code elegida por el usuario; `null` = `CLAUDE_CONFIG_DIR` o `~/.claude`. */
   claudeDir: z.string().trim().min(1).max(1024).nullable(),
   viewer: ViewerSchema,
@@ -116,6 +121,8 @@ export type Settings = z.infer<typeof SettingsSchema>
 
 const DEFAULT_SETTINGS: Settings = {
   theme: 'system',
+  language: 'system',
+  welcomed: false,
   claudeDir: null,
   viewer: { ...DEFAULT_VIEWER },
   chat: { ...DEFAULT_CHAT_SETTINGS },

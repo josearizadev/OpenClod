@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import {
   DialogClose,
   DialogContent,
@@ -55,32 +56,32 @@ async function save(): Promise<void> {
         class="fixed top-1/2 left-1/2 z-50 w-[min(26.25rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-dialog bg-surface p-5 text-text shadow-float"
         @open-auto-focus.prevent="input?.select()"
       >
-        <DialogTitle class="font-serif text-lg">Renombrar sesión</DialogTitle>
+        <DialogTitle class="font-serif text-lg">{{ t('Renombrar sesión') }}</DialogTitle>
         <form class="mt-4 flex flex-col gap-2" @submit.prevent="save">
           <input
             ref="input"
             v-model="title"
             type="text"
             maxlength="200"
-            aria-label="Título de la sesión"
+            :aria-label="t('Título de la sesión')"
             class="h-9 w-full rounded-item border border-border bg-bg px-3 text-text outline-none focus-visible:border-accent"
           />
           <DialogDescription class="text-sm text-muted">
-            Déjalo vacío para usar el título automático.
+            {{ t('Déjalo vacío para usar el título automático.') }}
           </DialogDescription>
           <div class="mt-3 flex justify-end gap-2">
             <DialogClose
               type="button"
               class="h-8 rounded-item px-3 transition-colors duration-150 hover:bg-surface-hover"
             >
-              Cancelar
+              {{ t('Cancelar') }}
             </DialogClose>
             <button
               type="submit"
               :disabled="saving"
               class="h-8 rounded-item bg-accent px-3 text-on-accent transition-colors duration-150 hover:bg-accent-hover disabled:opacity-60"
             >
-              Guardar
+              {{ t('Guardar') }}
             </button>
           </div>
         </form>

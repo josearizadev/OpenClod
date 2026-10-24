@@ -1,6 +1,8 @@
 /**
- * Fechas de la lista de sesiones, en `es-ES` y con la hora local.
+ * Fechas de la lista de sesiones, en el idioma de la interfaz y con la hora local.
  */
+
+import { t, tag } from '../i18n'
 
 const DAY_MS = 86_400_000
 
@@ -24,14 +26,14 @@ function parse(iso: string | null | undefined): Date | null {
   return Number.isNaN(date.getTime()) ? null : date
 }
 
-const monthFormat = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' })
+const monthFormat = new Intl.DateTimeFormat(tag, { month: 'long', year: 'numeric' })
 
 function groupLabel(date: Date, now: Date): string {
   const days = calendarDaysAgo(date, now)
-  if (days <= 0) return 'Hoy'
-  if (days === 1) return 'Ayer'
-  if (days <= 7) return 'Últimos 7 días'
-  if (days <= 30) return 'Últimos 30 días'
+  if (days <= 0) return t('Hoy')
+  if (days === 1) return t('Ayer')
+  if (days <= 7) return t('Últimos 7 días')
+  if (days <= 30) return t('Últimos 30 días')
   return monthFormat.format(date)
 }
 
@@ -59,15 +61,15 @@ export function groupByDate<T>(
     else groups.set(label, { label, items: [item] })
   }
   const out = [...groups.values()]
-  if (undated.length > 0) out.push({ label: 'Sin fecha', items: undated })
+  if (undated.length > 0) out.push({ label: t('Sin fecha'), items: undated })
   return out
 }
 
 // Minutos y horas abreviados («hace 5 min»); días completos («hace 3 días», «ayer»).
-const relativeShort = new Intl.RelativeTimeFormat('es-ES', { numeric: 'auto', style: 'short' })
-const relativeLong = new Intl.RelativeTimeFormat('es-ES', { numeric: 'auto' })
-const shortDate = new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'short' })
-const shortDateYear = new Intl.DateTimeFormat('es-ES', {
+const relativeShort = new Intl.RelativeTimeFormat(tag, { numeric: 'auto', style: 'short' })
+const relativeLong = new Intl.RelativeTimeFormat(tag, { numeric: 'auto' })
+const shortDate = new Intl.DateTimeFormat(tag, { day: 'numeric', month: 'short' })
+const shortDateYear = new Intl.DateTimeFormat(tag, {
   day: 'numeric',
   month: 'short',
   year: 'numeric'
@@ -88,7 +90,7 @@ export function relativeTime(iso: string | null | undefined, now: Date): string 
   return (date.getFullYear() === now.getFullYear() ? shortDate : shortDateYear).format(date)
 }
 
-const longDate = new Intl.DateTimeFormat('es-ES', { dateStyle: 'long', timeStyle: 'short' })
+const longDate = new Intl.DateTimeFormat(tag, { dateStyle: 'long', timeStyle: 'short' })
 
 /** «14 de octubre de 2026 a las 11:30» (ficha de la sesión). */
 export function longDateTime(iso: string | null | undefined): string {
@@ -96,19 +98,19 @@ export function longDateTime(iso: string | null | undefined): string {
   return date ? longDate.format(date) : '—'
 }
 
-const timeFormat = new Intl.DateTimeFormat('es-ES', { hour: '2-digit', minute: '2-digit' })
-const dayFormat = new Intl.DateTimeFormat('es-ES', {
+const timeFormat = new Intl.DateTimeFormat(tag, { hour: '2-digit', minute: '2-digit' })
+const dayFormat = new Intl.DateTimeFormat(tag, {
   weekday: 'long',
   day: 'numeric',
   month: 'long'
 })
-const dayFormatYear = new Intl.DateTimeFormat('es-ES', {
+const dayFormatYear = new Intl.DateTimeFormat(tag, {
   weekday: 'long',
   day: 'numeric',
   month: 'long',
   year: 'numeric'
 })
-const shortDateTimeFormat = new Intl.DateTimeFormat('es-ES', {
+const shortDateTimeFormat = new Intl.DateTimeFormat(tag, {
   day: 'numeric',
   month: 'short',
   hour: '2-digit',

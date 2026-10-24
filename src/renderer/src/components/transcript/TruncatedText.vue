@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { computed, ref } from 'vue'
 import { formatNumber } from '../../lib/tokens'
 import { truncateText } from '../../lib/transcript/truncate'
@@ -30,8 +31,10 @@ const visible = computed(() => (showAll.value ? props.text : cut.value.head))
     >
       {{
         showAll
-          ? 'Mostrar menos'
-          : `Mostrar todo (${formatNumber(cut.totalLines)} ${cut.totalLines === 1 ? 'línea' : 'líneas'})`
+          ? t('Mostrar menos')
+          : cut.totalLines === 1
+            ? t('Mostrar todo (1 línea)')
+            : t('Mostrar todo ({n} líneas)', { n: formatNumber(cut.totalLines) })
       }}
     </button>
   </div>

@@ -1,7 +1,8 @@
 import { randomUUID } from 'node:crypto'
 import type { TerminalInfo, TerminalKind, TerminalOpenInput } from '../../shared/terminal'
 import type { Logger } from './logger'
-import { claudeLine, shellArgs, type ShellInfo } from './shell'
+import { claudeLine, claudeLoginLine, shellArgs, type ShellInfo } from './shell'
+import { t as tr } from '../i18n'
 
 /**
  * Pseudoterminales de la vista Terminal. node-pty llega inyectado como
@@ -128,6 +129,7 @@ export function createTerminalService(deps: TerminalServiceDeps): TerminalServic
 
   function titleOf(kind: TerminalKind, shell: ShellInfo, target: ResolvedTarget): string {
     if (kind === 'shell') return `${shell.label} · ${target.label}`
+    if (kind === 'login') return 'claude auth login'
     return `claude · ${target.label}`
   }
 
@@ -135,7 +137,9 @@ export function createTerminalService(deps: TerminalServiceDeps): TerminalServic
     const target = await deps.resolve(t.input)
     const [shell, env, claude] = await Promise.all([deps.shell(), deps.env(), deps.claude()])
     let command: string | null = null
-    if (t.input.kind !== 'shell') {
+    if (t.input.kind === 'login') {
+      command = claudeLoginLine(shell.kind, claude)
+    } else if (t.input.kind !== 'shell') {
       command = claudeLine(
         shell.kind,
         claude,
@@ -175,7 +179,7 @@ export function createTerminalService(deps: TerminalServiceDeps): TerminalServic
     if (missingClaude) {
       append(
         t,
-        '\r\n\x1b[33mNo se encontró Claude Code (`claude`) en el PATH ni en la app.\x1b[0m\r\n'
+        `\r\n\x1b[33m${tr('No se encontró Claude Code (`claude`) en el PATH ni en la app.')}\x1b[0m\r\n`
       )
     }
 
@@ -206,7 +210,7 @@ export function createTerminalService(deps: TerminalServiceDeps): TerminalServic
 
   function get(id: string): Terminal {
     const t = terminals.get(id)
-    if (!t) throw new TerminalError('Esa terminal ya no existe')
+    if (!t) throw new TerminalError(tr('Esa terminal ya no existe'))
     return t
   }
 
@@ -223,7 +227,8 @@ export function createTerminalService(deps: TerminalServiceDeps): TerminalServic
   const service: TerminalService = {
     async open(owner: number, input: TerminalOpenInput): Promise<TerminalInfo> {
       const alive = [...terminals.values()].filter((t) => t.info.status === 'running').length
-      if (alive >= MAX_TERMINALS) throw new TerminalError(`Máximo de ${MAX_TERMINALS} terminales`)
+      if (alive >= MAX_TERMINALS)
+        throw new TerminalError(tr('Máximo de {n} terminales', { n: MAX_TERMINALS }))
       const id = randomUUID()
       const { pty, info, command } = await launch({ id, input })
       const t: Terminal = {

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { computed } from 'vue'
 import type { FileDiff } from '../../../../shared/files'
 import type { ToolCallView } from '../../lib/transcript/blocks'
@@ -28,18 +29,18 @@ const counts = computed(() => (call.value ? changeCounts('Edit', call.value.inpu
 const label = computed(() => {
   const d = props.diff
   if (d.kind !== 'text') return ''
-  if (d.before === null) return 'Archivo nuevo'
-  if (d.after === null) return 'Archivo borrado'
-  return 'Cambios respecto a HEAD'
+  if (d.before === null) return t('Archivo nuevo')
+  if (d.after === null) return t('Archivo borrado')
+  return t('Cambios respecto a HEAD')
 })
 
 const NOTICE: Partial<Record<FileDiff['kind'], string>> = {
-  unchanged: 'Sin cambios respecto a HEAD.',
-  'not-repo': 'Esta carpeta no es un repositorio Git.',
-  binary: 'Archivo binario: no se puede comparar.',
-  'too-large': 'Archivo demasiado grande para compararlo.',
-  secret: 'Diff desactivado: puede contener secretos.',
-  outside: 'El archivo está fuera de la carpeta de la sesión.'
+  unchanged: t('Sin cambios respecto a HEAD.'),
+  'not-repo': t('Esta carpeta no es un repositorio Git.'),
+  binary: t('Archivo binario: no se puede comparar.'),
+  'too-large': t('Archivo demasiado grande para compararlo.'),
+  secret: t('Diff desactivado: puede contener secretos.'),
+  outside: t('El archivo está fuera de la carpeta de la sesión.')
 }
 </script>
 

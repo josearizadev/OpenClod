@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import type { SearchGroup } from '../../../../shared/search'
 import { relativeTime } from '../../lib/dates'
+import { tag } from '../../i18n'
 import SnippetText from './SnippetText.vue'
 
 /**
@@ -17,7 +19,7 @@ defineEmits<{ pick: [index: number]; hover: [index: number] }>()
 
 const time = (iso?: string): string =>
   iso
-    ? new Date(iso).toLocaleString('es-ES', {
+    ? new Date(iso).toLocaleString(tag, {
         day: 'numeric',
         month: 'short',
         hour: '2-digit',
@@ -25,7 +27,9 @@ const time = (iso?: string): string =>
       })
     : ''
 const count = (): string =>
-  props.group.hitCount === 1 ? '1 coincidencia' : `${props.group.hitCount} coincidencias`
+  props.group.hitCount === 1
+    ? t('1 coincidencia')
+    : t('{n} coincidencias', { n: props.group.hitCount })
 </script>
 
 <template>
@@ -60,7 +64,7 @@ const count = (): string =>
       @click="$emit('pick', first + 1 + i)"
       @mousemove="$emit('hover', first + 1 + i)"
     >
-      <span class="w-12 shrink-0 text-muted">{{ hit.role === 'user' ? 'Tú' : 'Claude' }}</span>
+      <span class="w-12 shrink-0 text-muted">{{ hit.role === 'user' ? t('Tú') : 'Claude' }}</span>
       <span class="line-clamp-2 min-w-0 flex-1"><SnippetText :parts="hit.snippet" /></span>
       <span class="shrink-0 text-xs text-muted">{{ time(hit.timestamp) }}</span>
     </div>

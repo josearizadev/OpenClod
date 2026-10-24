@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { ChevronDown, ChevronUp, X } from 'lucide-vue-next'
 import { onMounted, ref } from 'vue'
 import IconButton from '../ui/IconButton.vue'
@@ -32,33 +33,39 @@ function onKeydown(event: KeyboardEvent): void {
   <div
     class="absolute top-2 right-6 z-20 flex items-center gap-1 rounded-item bg-surface py-1 pr-1 pl-3 shadow-float"
     role="search"
-    aria-label="Buscar en la sesión"
+    :aria-label="t('Buscar en la sesión')"
   >
     <input
       ref="input"
       v-model="query"
       type="text"
       maxlength="200"
-      placeholder="Buscar en la sesión"
-      aria-label="Buscar en la sesión"
+      :placeholder="t('Buscar en la sesión')"
+      :aria-label="t('Buscar en la sesión')"
       class="h-7 w-56 bg-transparent text-sm outline-none placeholder:text-muted"
       @keydown="onKeydown"
     />
     <span class="min-w-16 text-right text-xs text-muted tabular-nums" aria-live="polite">
-      {{ query.trim() ? (total ? `${current} de ${total}` : 'Sin resultados') : '' }}
+      {{
+        query.trim()
+          ? total
+            ? t('{current} de {total}', { current, total })
+            : t('Sin resultados')
+          : ''
+      }}
     </span>
     <IconButton
       :icon="ChevronUp"
-      label="Anterior (Mayús+Intro)"
+      :label="t('Anterior (Mayús+Intro)')"
       :disabled="total === 0"
       @click="emit('previous')"
     />
     <IconButton
       :icon="ChevronDown"
-      label="Siguiente (Intro)"
+      :label="t('Siguiente (Intro)')"
       :disabled="total === 0"
       @click="emit('next')"
     />
-    <IconButton :icon="X" label="Cerrar (Esc)" @click="emit('close')" />
+    <IconButton :icon="X" :label="t('Cerrar (Esc)')" @click="emit('close')" />
   </div>
 </template>

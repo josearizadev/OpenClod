@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import type { MessageKey } from './i18n'
 import { SavedChatModeSchema } from './chat'
 
 /**
@@ -101,8 +102,9 @@ export function effective<T>(
 
 export interface RulePreset {
   id: string
-  label: string
-  hint: string
+  /** Claves de traducción. */
+  label: MessageKey
+  hint: MessageKey
   rules: string[]
 }
 
@@ -110,19 +112,19 @@ export const RULE_PRESETS: RulePreset[] = [
   {
     id: 'shell',
     label: 'Comandos de terminal',
-    hint: 'Ejecutar cualquier comando (Bash y PowerShell)',
+    hint: 'Ejecutar cualquier comando (Bash y PowerShell) sin preguntar',
     rules: ['Bash', 'PowerShell']
   },
   {
     id: 'edit',
     label: 'Editar archivos',
-    hint: 'Crear y modificar archivos del proyecto',
+    hint: 'Crear y modificar archivos del proyecto sin preguntar',
     rules: ['Edit', 'Write', 'NotebookEdit']
   },
   {
     id: 'web',
     label: 'Web',
-    hint: 'Buscar en internet y descargar páginas',
+    hint: 'Buscar en internet y descargar páginas sin preguntar',
     rules: ['WebSearch', 'WebFetch']
   }
 ]

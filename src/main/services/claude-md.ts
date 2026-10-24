@@ -3,6 +3,7 @@ import { readFile, rename, rm, stat, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { CLAUDE_MD_MAX, type ClaudeMdFile, type ClaudeMdWrite } from '../../shared/files'
 import { isInside } from './paths'
+import { t } from '../i18n'
 
 /**
  * `CLAUDE.md` del proyecto. Solo la raíz del proyecto (o su
@@ -36,7 +37,7 @@ async function claudeMdPath(root: string, claudeDir: string): Promise<string> {
   const path = !(await exists(main)) && (await exists(nested)) ? nested : main
   if (isInside(path, claudeDir)) {
     throw new ClaudeMdError(
-      'Ese CLAUDE.md está en la carpeta de Claude Code: no se edita desde aquí.'
+      t('Ese CLAUDE.md está en la carpeta de Claude Code: no se edita desde aquí.')
     )
   }
   return path

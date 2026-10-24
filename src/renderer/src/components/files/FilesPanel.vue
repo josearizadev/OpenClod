@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { ArrowLeft, FileMinus, FilePen, FilePlus, FileQuestion, X } from 'lucide-vue-next'
 import { computed, type Component } from 'vue'
 import type { GitFileChange } from '../../../../shared/git'
@@ -75,31 +76,31 @@ function selectGit(change: GitFileChange): void {
 }
 
 const lists: { id: FilesList; label: string }[] = [
-  { id: 'session', label: 'Sesión' },
+  { id: 'session', label: t('Sesión') },
   { id: 'git', label: 'Git' }
 ]
 
 const STATUS: Record<TouchedFile['status'], { icon: Component; label: string; tone: string }> = {
-  created: { icon: FilePlus, label: 'Creado', tone: 'text-diff-add' },
-  edited: { icon: FilePen, label: 'Editado', tone: 'text-muted' },
-  deleted: { icon: FileMinus, label: 'Borrado', tone: 'text-diff-del' },
-  command: { icon: FileQuestion, label: 'Detectado por comando', tone: 'text-muted' }
+  created: { icon: FilePlus, label: t('Creado'), tone: 'text-diff-add' },
+  edited: { icon: FilePen, label: t('Editado'), tone: 'text-muted' },
+  deleted: { icon: FileMinus, label: t('Borrado'), tone: 'text-diff-del' },
+  command: { icon: FileQuestion, label: t('Detectado por comando'), tone: 'text-muted' }
 }
 </script>
 
 <template>
   <aside
     class="flex h-full w-80 shrink-0 flex-col border-l border-border bg-bg"
-    aria-label="Archivos de la sesión"
+    :aria-label="t('Archivos de la sesión')"
   >
     <header class="flex h-12 shrink-0 items-center gap-1 border-b border-border px-3">
       <template v-if="current">
-        <IconButton :icon="ArrowLeft" label="Volver a la lista" @click="store.reset()" />
+        <IconButton :icon="ArrowLeft" :label="t('Volver a la lista')" @click="store.reset()" />
         <h2 class="min-w-0 flex-1 truncate font-mono text-[13px]" :title="title" dir="rtl">
           <bdi>{{ title }}</bdi>
         </h2>
       </template>
-      <div v-else class="flex flex-1 gap-0.5" role="tablist" aria-label="Lista de archivos">
+      <div v-else class="flex flex-1 gap-0.5" role="tablist" :aria-label="t('Lista de archivos')">
         <button
           v-for="l in lists"
           :key="l.id"
@@ -120,7 +121,7 @@ const STATUS: Record<TouchedFile['status'], { icon: Component; label: string; to
           </span>
         </button>
       </div>
-      <IconButton :icon="X" label="Cerrar el panel de archivos" @click="emit('close')" />
+      <IconButton :icon="X" :label="t('Cerrar el panel de archivos')" @click="emit('close')" />
     </header>
 
     <FileDetail
@@ -135,7 +136,7 @@ const STATUS: Record<TouchedFile['status'], { icon: Component; label: string; to
 
     <template v-else-if="store.list === 'session'">
       <p v-if="files.length === 0" class="p-4 text-sm text-muted">
-        Esta sesión aún no ha creado ni editado archivos.
+        {{ t('Esta sesión aún no ha creado ni editado archivos.') }}
       </p>
       <ul v-else class="min-h-0 flex-1 overflow-y-auto p-1" role="tabpanel">
         <li v-for="file in files" :key="file.key">
@@ -167,10 +168,10 @@ const STATUS: Record<TouchedFile['status'], { icon: Component; label: string; to
 
     <template v-else>
       <p v-if="!status" class="p-4 text-sm text-muted">
-        {{ git.loading ? 'Consultando Git…' : 'Esta carpeta no es un repositorio Git.' }}
+        {{ git.loading ? t('Consultando Git…') : t('Esta carpeta no es un repositorio Git.') }}
       </p>
       <p v-else-if="changes.length === 0" class="p-4 text-sm text-muted">
-        Sin cambios en el repositorio.
+        {{ t('Sin cambios en el repositorio.') }}
       </p>
       <ul v-else class="min-h-0 flex-1 overflow-y-auto p-1" role="tabpanel">
         <li v-for="change in changes" :key="change.path">

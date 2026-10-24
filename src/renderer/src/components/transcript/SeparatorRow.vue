@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { Link2 } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { dayHeading, shortDateTime } from '../../lib/dates'
@@ -15,7 +16,7 @@ const label = computed(() => {
     return day.charAt(0).toUpperCase() + day.slice(1)
   }
   const when = shortDateTime(props.block.date)
-  return when ? `Reanudada aquí · ${when}` : 'Reanudada aquí'
+  return when ? `${t('Reanudada aquí')} · ${when}` : t('Reanudada aquí')
 })
 </script>
 

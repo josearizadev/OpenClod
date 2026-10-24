@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { ClipboardList } from 'lucide-vue-next'
 import { computed, nextTick, ref, useTemplateRef } from 'vue'
 import type { PermissionRequestView } from '../../../../shared/chat'
@@ -27,7 +28,7 @@ async function startComment(): Promise<void> {
 <template>
   <section
     class="flex flex-col gap-3 rounded-menu border border-border bg-surface p-4 shadow-float"
-    aria-label="Plan propuesto"
+    :aria-label="t('Plan propuesto')"
   >
     <header class="flex items-center gap-2 text-sm">
       <ClipboardList
@@ -36,10 +37,10 @@ async function startComment(): Promise<void> {
         :stroke-width="1.75"
         aria-hidden="true"
       />
-      Claude propone este plan
+      {{ t('Claude propone este plan') }}
     </header>
     <div class="max-h-96 overflow-auto rounded-item border border-border px-4 py-2">
-      <MarkdownContent :source="plan || '*(sin texto)*'" />
+      <MarkdownContent :source="plan || `*(${t('sin texto')})*`" />
     </div>
     <form
       v-if="commenting"
@@ -51,8 +52,8 @@ async function startComment(): Promise<void> {
         v-model="comment"
         rows="2"
         maxlength="2000"
-        aria-label="Qué cambiar del plan (opcional)"
-        placeholder="Qué cambiar del plan (opcional)"
+        :aria-label="t('Qué cambiar del plan (opcional)')"
+        :placeholder="t('Qué cambiar del plan (opcional)')"
         class="w-full resize-y rounded-item border border-border bg-bg px-2 py-1.5 text-sm outline-none placeholder:text-muted focus-visible:border-accent"
       />
       <div class="flex gap-2">
@@ -60,14 +61,14 @@ async function startComment(): Promise<void> {
           type="submit"
           class="h-8 rounded-item bg-accent px-3 text-sm text-on-accent hover:bg-accent-hover"
         >
-          Enviar comentario
+          {{ t('Enviar comentario') }}
         </button>
         <button
           type="button"
           class="h-8 rounded-item px-3 text-sm text-muted hover:bg-surface-hover hover:text-text"
           @click="commenting = false"
         >
-          Cancelar
+          {{ t('Cancelar') }}
         </button>
       </div>
     </form>
@@ -77,14 +78,14 @@ async function startComment(): Promise<void> {
         class="h-8 rounded-item bg-accent px-3 text-sm text-on-accent transition-colors duration-150 hover:bg-accent-hover"
         @click="emit('approve')"
       >
-        Aprobar
+        {{ t('Aprobar') }}
       </button>
       <button
         type="button"
         class="h-8 rounded-item border border-border px-3 text-sm hover:bg-surface-hover"
         @click="startComment"
       >
-        Seguir planificando
+        {{ t('Seguir planificando') }}
       </button>
     </div>
   </section>

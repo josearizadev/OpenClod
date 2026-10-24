@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { Bot, ChevronRight } from 'lucide-vue-next'
 import { computed, ref, shallowRef, watch } from 'vue'
 import type { TranscriptItem } from '../../../../shared/sessions'
@@ -103,7 +104,7 @@ const blocks = computed<Block[]>(() => {
 })
 const visible = computed(() => blocks.value.slice(0, limit.value))
 
-const title = computed(() => props.call.subagent.agentType ?? 'Subagente')
+const title = computed(() => props.call.subagent.agentType ?? t('Subagente'))
 const description = computed(() => props.call.subagent.description ?? '')
 </script>
 
@@ -119,9 +120,13 @@ const description = computed(() => props.call.subagent.description ?? '')
       <span class="shrink-0 font-medium">{{ title }}</span>
       <span class="min-w-0 truncate text-muted" :title="description">{{ description }}</span>
       <span v-if="info" class="ml-auto shrink-0 text-xs text-muted">
-        <template v-if="running">En curso · </template>
-        {{ formatNumber(info.messageCount) }} mensajes ·
-        {{ formatNumber(info.toolCallCount) }} herramientas
+        <template v-if="running">{{ t('En curso') }} · </template>
+        {{
+          t('{messages} mensajes · {tools} herramientas', {
+            messages: info.messageCount,
+            tools: info.toolCallCount
+          })
+        }}
       </span>
       <ChevronRight
         :size="14"
@@ -133,27 +138,31 @@ const description = computed(() => props.call.subagent.description ?? '')
     </button>
 
     <div v-if="open" class="flex flex-col gap-4 border-t border-border py-3 pr-3 pl-4">
-      <p v-if="state === 'loading' && !liveItems" class="text-sm text-muted">Cargando…</p>
+      <p v-if="state === 'loading' && !liveItems" class="text-sm text-muted">
+        {{ t('Cargando…') }}
+      </p>
       <div
         v-else-if="state === 'error' && !liveItems"
         class="flex items-center gap-3 text-sm"
         role="alert"
       >
-        <span class="text-danger">No se pudo leer el subagente: {{ error }}</span>
+        <span class="text-danger">{{
+          t('No se pudo leer el subagente: {error}', { error: error ?? '' })
+        }}</span>
         <button
           type="button"
           class="rounded-item border border-border px-2 py-0.5 hover:bg-surface-hover"
           @click="load"
         >
-          Reintentar
+          {{ t('Reintentar') }}
         </button>
       </div>
       <p v-else-if="shown === null" class="text-sm text-muted">
-        No se encontró el transcript del subagente.
+        {{ t('No se encontró el transcript del subagente.') }}
       </p>
       <template v-else-if="shown">
         <p v-if="blocks.length === 0" class="text-sm text-muted">
-          Nada que mostrar con los filtros actuales.
+          {{ t('Nada que mostrar con los filtros actuales.') }}
         </p>
         <TranscriptBlock
           v-for="block in visible"
@@ -168,7 +177,7 @@ const description = computed(() => props.call.subagent.description ?? '')
           class="w-fit rounded-item px-1 text-sm text-muted underline underline-offset-2 hover:text-text"
           @click="limit += PAGE"
         >
-          Mostrar más ({{ formatNumber(blocks.length - limit) }} restantes)
+          {{ t('Mostrar más ({n} restantes)', { n: formatNumber(blocks.length - limit) }) }}
         </button>
       </template>
     </div>

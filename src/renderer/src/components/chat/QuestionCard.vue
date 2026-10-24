@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { CircleHelp } from 'lucide-vue-next'
 import { computed, reactive, ref } from 'vue'
 import type { PermissionRequestView } from '../../../../shared/chat'
@@ -75,11 +76,11 @@ const previewText = computed(() => {
 <template>
   <section
     class="flex flex-col gap-4 rounded-menu border border-border bg-surface p-4 shadow-float"
-    aria-label="Pregunta de Claude"
+    :aria-label="t('Pregunta de Claude')"
   >
     <header class="flex items-center gap-2 text-sm">
       <CircleHelp class="shrink-0 text-accent" :size="18" :stroke-width="1.75" aria-hidden="true" />
-      Claude te pregunta
+      {{ t('Claude te pregunta') }}
     </header>
 
     <fieldset v-for="(q, i) in questions" :key="q.question" class="flex flex-col gap-2">
@@ -117,11 +118,11 @@ const previewText = computed(() => {
           :checked="(picked[i] ?? []).includes(OTHER)"
           @change="toggle(i, OTHER, q.multiSelect)"
         />
-        <span class="shrink-0">Otra:</span>
+        <span class="shrink-0">{{ t('Otra:') }}</span>
         <input
           v-model="other[i]"
           maxlength="2000"
-          :aria-label="`Otra respuesta a «${q.question}»`"
+          :aria-label="t('Otra respuesta a «{question}»', { question: q.question })"
           class="h-8 min-w-0 flex-1 rounded-item border border-border bg-bg px-2 outline-none focus-visible:border-accent"
           @focus="(picked[i] ?? []).includes(OTHER) || toggle(i, OTHER, q.multiSelect)"
         />
@@ -140,14 +141,14 @@ const previewText = computed(() => {
         class="h-8 rounded-item bg-accent px-3 text-sm text-on-accent transition-colors duration-150 hover:bg-accent-hover disabled:opacity-40 disabled:hover:bg-accent"
         @click="submit"
       >
-        Responder
+        {{ t('Responder') }}
       </button>
       <button
         type="button"
         class="h-8 rounded-item px-3 text-sm text-muted hover:bg-surface-hover hover:text-text"
         @click="emit('skip')"
       >
-        No responder
+        {{ t('No responder') }}
       </button>
     </div>
   </section>

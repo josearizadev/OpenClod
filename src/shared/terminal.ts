@@ -5,7 +5,8 @@ import { FileTargetSchema } from './files'
  * Terminal de respaldo. El renderer pide un **tipo** y un destino; qué shell,
  * qué carpeta y qué orden se ejecutan lo decide el main.
  */
-export const TerminalKindSchema = z.enum(['shell', 'claude', 'resume'])
+/** `login`: `claude auth login` en la carpeta personal; se cierra al terminar. */
+export const TerminalKindSchema = z.enum(['shell', 'claude', 'resume', 'login'])
 export type TerminalKind = z.infer<typeof TerminalKindSchema>
 
 export const TerminalIdSchema = z.string().uuid()

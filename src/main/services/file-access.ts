@@ -3,6 +3,7 @@ import { basename, extname, isAbsolute, relative, resolve } from 'node:path'
 import { unsafeToOpen, type FileTarget } from '../../shared/files'
 import { checkCwd } from './chat/claude-runtime'
 import { isInside } from './paths'
+import { t } from '../i18n'
 
 /**
  * Qué archivos puede leer la app. El renderer manda un destino; el
@@ -31,14 +32,14 @@ export interface RootDeps {
 export async function resolveRoot(target: FileTarget, deps: RootDeps): Promise<string> {
   const root =
     'sessionId' in target ? deps.sessionCwd(target.sessionId) : deps.projectPath(target.projectId)
-  if (!root) throw new FileAccessError('NOT_FOUND', 'No se encontró la carpeta')
+  if (!root) throw new FileAccessError('NOT_FOUND', t('No se encontró la carpeta'))
   const checked = await checkCwd(root, deps.claudeDir())
   if (!checked.ok) {
     throw new FileAccessError(
       'INVALID_CWD',
       checked.reason === 'claude-dir'
-        ? 'No se puede leer la carpeta de Claude Code.'
-        : 'La carpeta ya no existe.'
+        ? t('No se puede leer la carpeta de Claude Code.')
+        : t('La carpeta ya no existe.')
     )
   }
   return checked.path

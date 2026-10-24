@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { Check, Copy } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { useCopy } from '../../composables/useCopy'
@@ -30,8 +31,8 @@ const time = computed(() => timeOfDay(props.timestamp))
     </time>
     <button
       type="button"
-      :aria-label="copied ? 'Copiado' : label"
-      :title="copied ? 'Copiado' : label"
+      :aria-label="copied ? t('Copiado') : label"
+      :title="copied ? t('Copiado') : label"
       class="inline-flex size-6 items-center justify-center rounded-[6px] transition-colors duration-150 hover:bg-surface-hover hover:text-text"
       @click="copy(props.text)"
     >

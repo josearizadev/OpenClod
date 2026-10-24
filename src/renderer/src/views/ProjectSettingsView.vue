@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../i18n'
 import { Plus, X } from 'lucide-vue-next'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
@@ -51,7 +52,7 @@ async function load(): Promise<void> {
 
 watch(projectId, () => void load())
 onMounted(() => {
-  ui.pageTitle = 'Ajustes del proyecto'
+  ui.pageTitle = t('Ajustes del proyecto')
   void load()
 })
 onBeforeUnmount(() => (ui.pageTitle = null))
@@ -77,13 +78,15 @@ async function save(
   })
   saving.value = false
   if (!result.ok) {
-    ui.toast(`No se pudo guardar: ${result.error.message}`, { tone: 'danger' })
+    ui.toast(t('No se pudo guardar: {error}', { error: result.error.message }), { tone: 'danger' })
     return false
   }
   settings.value = result.data.settings
   if (!result.data.ok) {
     ui.toast(
-      'Los ajustes cambiaron en disco (quizá desde una sesión). Se han recargado: repite el cambio.',
+      t(
+        'Los ajustes cambiaron en disco (quizá desde una sesión). Se han recargado: repite el cambio.'
+      ),
       {
         tone: 'danger'
       }
@@ -124,7 +127,7 @@ function setMode(value: string): void {
 }
 
 function modeLabel(mode: string): string {
-  return mode in MODE_LABELS ? MODE_LABELS[mode as ChatMode] : mode
+  return mode in MODE_LABELS ? t(MODE_LABELS[mode as ChatMode]) : mode
 }
 
 // --- Accesos rápidos y reglas ----------------------------------------------
@@ -143,16 +146,20 @@ function togglePreset(preset: RulePreset, on: boolean): void {
 }
 
 const KINDS: { kind: RuleKind; label: string; hint: string }[] = [
-  { kind: 'allow', label: 'Permitir', hint: 'Sin preguntar' },
-  { kind: 'ask', label: 'Preguntar', hint: 'Siempre pide permiso, aunque otra regla lo permita' },
-  { kind: 'deny', label: 'Denegar', hint: 'Claude no puede usarlo' }
+  { kind: 'allow', label: t('Permitir'), hint: t('Sin preguntar') },
+  {
+    kind: 'ask',
+    label: t('Preguntar'),
+    hint: t('Siempre pide permiso, aunque otra regla lo permita')
+  },
+  { kind: 'deny', label: t('Denegar'), hint: t('Claude no puede usarlo') }
 ]
 
 const newRule = ref('')
 const newKind = ref<RuleKind>('allow')
 const ruleError = computed(() =>
   newRule.value.trim() !== '' && !isValidRule(newRule.value)
-    ? 'Formato: Herramienta o Herramienta(patrón), p. ej. Bash(npm run test *)'
+    ? t('Formato: Herramienta o Herramienta(patrón), p. ej. Bash(npm run test *)')
     : null
 )
 
@@ -178,8 +185,8 @@ const inherited = computed(() => {
   if (!s) return []
   const out: { source: string; kind: RuleKind; rule: string }[] = []
   for (const [source, layer] of [
-    ['Compartido del proyecto', s.shared],
-    ['Del usuario', s.user]
+    [t('Compartido del proyecto'), s.shared],
+    [t('Del usuario'), s.user]
   ] as const) {
     for (const { kind } of KINDS) for (const rule of layer[kind]) out.push({ source, kind, rule })
   }
@@ -195,10 +202,10 @@ const coAuthor = computed({
 })
 
 const GIT_STATES: { value: GitRuleState; label: string }[] = [
-  { value: 'inherit', label: 'Según las demás reglas' },
-  { value: 'ask', label: 'Preguntar siempre' },
-  { value: 'allow', label: 'Permitir sin preguntar' },
-  { value: 'deny', label: 'No permitir' }
+  { value: 'inherit', label: t('Según las demás reglas') },
+  { value: 'ask', label: t('Preguntar siempre') },
+  { value: 'allow', label: t('Permitir sin preguntar') },
+  { value: 'deny', label: t('No permitir') }
 ]
 
 function gitState(action: GitAction): GitRuleState {
@@ -217,7 +224,9 @@ const chrome = computed({
   set: async (value: boolean) => {
     const result = await window.api.projectSettings.setChrome(projectId.value, value)
     if (!result.ok)
-      return ui.toast(`No se pudo guardar: ${result.error.message}`, { tone: 'danger' })
+      return ui.toast(t('No se pudo guardar: {error}', { error: result.error.message }), {
+        tone: 'danger'
+      })
     if (settings.value) settings.value = { ...settings.value, chrome: value }
   }
 })
@@ -230,7 +239,7 @@ const select = 'h-8 rounded-item border border-border bg-surface px-2 text-sm di
 <template>
   <div class="mx-auto flex w-full max-w-[40rem] flex-col gap-8 px-6 py-8">
     <header class="flex flex-col gap-0.5">
-      <h2 class="font-serif text-2xl">{{ project?.name ?? 'Proyecto' }}</h2>
+      <h2 class="font-serif text-2xl">{{ project?.name ?? t('Proyecto') }}</h2>
       <p class="truncate font-mono text-xs text-muted" :title="local?.path">
         {{ local?.path ?? project?.path ?? '' }}
       </p>
@@ -242,25 +251,28 @@ const select = 'h-8 rounded-item border border-border bg-surface px-2 text-sm di
       class="rounded-item border border-warning px-3 py-2 text-sm"
       role="alert"
     >
-      <code class="font-mono">settings.local.json</code> no es JSON válido. Corrígelo a mano para
-      poder cambiar aquí los ajustes.
+      <code class="font-mono">settings.local.json</code>
+      {{ t('no es JSON válido. Corrígelo a mano para poder cambiar aquí los ajustes.') }}
     </p>
 
     <template v-if="settings && local">
       <section aria-labelledby="proyecto-permisos">
-        <h2 id="proyecto-permisos" :class="sectionTitle">Permisos</h2>
+        <h2 id="proyecto-permisos" :class="sectionTitle">{{ t('Permisos') }}</h2>
         <p class="mb-2 text-xs text-muted">
-          Se guardan en el archivo personal del proyecto y valen para todas sus sesiones, en la app
-          y en la terminal. Se aplican a las sesiones que empiecen o se reanuden a partir de ahora.
+          {{
+            t(
+              'Se guardan en el archivo personal del proyecto y valen para todas sus sesiones, en la app y en la terminal. Se aplican a las sesiones que empiecen o se reanuden a partir de ahora.'
+            )
+          }}
         </p>
         <div :class="section">
           <SettingRow
-            label="Modo al empezar"
+            :label="t('Modo al empezar')"
             for="proyecto-modo"
             :description="
               inheritedMode && !local.defaultMode
-                ? `Heredado: ${modeLabel(inheritedMode)}`
-                : 'Modo de permisos de las sesiones nuevas.'
+                ? t('Heredado: {mode}', { mode: modeLabel(inheritedMode) })
+                : t('Modo de permisos de las sesiones nuevas.')
             "
           >
             <select
@@ -270,9 +282,9 @@ const select = 'h-8 rounded-item border border-border bg-surface px-2 text-sm di
               :class="select"
               @change="setMode(($event.target as HTMLSelectElement).value)"
             >
-              <option value="">La última que elegí</option>
+              <option value="">{{ t('La última que elegí') }}</option>
               <option v-for="mode in MODES" :key="mode" :value="mode">
-                {{ MODE_LABELS[mode] }}
+                {{ t(MODE_LABELS[mode]) }}
               </option>
               <option v-if="otherMode" :value="otherMode">{{ otherMode }}</option>
             </select>
@@ -280,8 +292,8 @@ const select = 'h-8 rounded-item border border-border bg-surface px-2 text-sm di
           <SettingRow
             v-for="preset in RULE_PRESETS"
             :key="preset.id"
-            :label="preset.label"
-            :description="`${preset.hint} sin preguntar · ${preset.rules.join(', ')}`"
+            :label="t(preset.label)"
+            :description="`${t(preset.hint)} · ${preset.rules.join(', ')}`"
             :for="`preset-${preset.id}`"
           >
             <SettingSwitch
@@ -295,10 +307,13 @@ const select = 'h-8 rounded-item border border-border bg-surface px-2 text-sm di
       </section>
 
       <section aria-labelledby="proyecto-reglas">
-        <h2 id="proyecto-reglas" :class="sectionTitle">Reglas</h2>
+        <h2 id="proyecto-reglas" :class="sectionTitle">{{ t('Reglas') }}</h2>
         <p class="mb-2 text-xs text-muted">
-          Denegar manda sobre preguntar, y preguntar sobre permitir. «Permitir siempre» en una
-          petición de permiso con «en este proyecto» también las añade aquí.
+          {{
+            t(
+              'Denegar manda sobre preguntar, y preguntar sobre permitir. «Permitir siempre» en una petición de permiso con «en este proyecto» también las añade aquí.'
+            )
+          }}
         </p>
         <div class="flex flex-col gap-3 rounded-item border border-border bg-surface p-4">
           <div v-for="k in KINDS" :key="k.kind" class="flex flex-col gap-1">
@@ -315,7 +330,7 @@ const select = 'h-8 rounded-item border border-border bg-surface px-2 text-sm di
                 <button
                   type="button"
                   class="inline-flex size-5 shrink-0 items-center justify-center rounded-[4px] text-muted hover:bg-surface-hover hover:text-text disabled:opacity-50"
-                  :aria-label="`Quitar ${rule}`"
+                  :aria-label="t('Quitar {name}', { name: rule })"
                   :disabled="readOnly || saving"
                   @click="removeRule(k.kind, rule)"
                 >
@@ -323,14 +338,14 @@ const select = 'h-8 rounded-item border border-border bg-surface px-2 text-sm di
                 </button>
               </li>
             </ul>
-            <p v-else class="text-xs text-muted">Ninguna.</p>
+            <p v-else class="text-xs text-muted">{{ t('Ninguna.') }}</p>
           </div>
 
           <form class="flex flex-col gap-1 border-t border-border pt-3" @submit.prevent="addRule">
             <div class="flex gap-2">
               <select
                 v-model="newKind"
-                aria-label="Tipo de regla"
+                :aria-label="t('Tipo de regla')"
                 :class="select"
                 :disabled="readOnly"
               >
@@ -340,7 +355,7 @@ const select = 'h-8 rounded-item border border-border bg-surface px-2 text-sm di
                 v-model="newRule"
                 maxlength="600"
                 spellcheck="false"
-                aria-label="Regla"
+                :aria-label="t('Regla')"
                 placeholder="Bash(npm run test *)"
                 :disabled="readOnly"
                 class="h-8 min-w-0 flex-1 rounded-item border border-border bg-bg px-2 font-mono text-[13px] outline-none placeholder:text-muted focus-visible:border-accent"
@@ -350,7 +365,7 @@ const select = 'h-8 rounded-item border border-border bg-surface px-2 text-sm di
                 class="inline-flex h-8 items-center gap-1 rounded-item bg-accent px-3 text-sm text-on-accent hover:bg-accent-hover disabled:opacity-50"
                 :disabled="readOnly || saving || !newRule.trim() || !!ruleError"
               >
-                <Plus :size="14" :stroke-width="2" aria-hidden="true" /> Añadir
+                <Plus :size="14" :stroke-width="2" aria-hidden="true" /> {{ t('Añadir') }}
               </button>
             </div>
             <p v-if="ruleError" class="text-xs text-danger">{{ ruleError }}</p>
@@ -358,7 +373,7 @@ const select = 'h-8 rounded-item border border-border bg-surface px-2 text-sm di
 
           <details v-if="inherited.length > 0" class="border-t border-border pt-3 text-sm">
             <summary class="cursor-default text-muted">
-              Reglas de otros archivos ({{ inherited.length }}, solo lectura)
+              {{ t('Reglas de otros archivos ({n}, solo lectura)', { n: inherited.length }) }}
             </summary>
             <ul class="mt-2 flex flex-col gap-1">
               <li
@@ -378,9 +393,11 @@ const select = 'h-8 rounded-item border border-border bg-surface px-2 text-sm di
         <h2 id="proyecto-git" :class="sectionTitle">Git</h2>
         <div :class="section">
           <SettingRow
-            label="Coautoría de Claude"
+            :label="t('Coautoría de Claude')"
             for="proyecto-coautor"
-            description="Añadir «Co-Authored-By: Claude» a los commits y la firma de Claude Code a los PR."
+            :description="
+              t('Añadir «Co-Authored-By: Claude» a los commits y la firma de Claude Code a los PR.')
+            "
           >
             <SettingSwitch
               id="proyecto-coautor"
@@ -391,12 +408,12 @@ const select = 'h-8 rounded-item border border-border bg-surface px-2 text-sm di
           <SettingRow
             v-for="action in ['commit', 'push'] as const"
             :key="action"
-            :label="action === 'commit' ? 'Hacer commit' : 'Hacer push'"
+            :label="action === 'commit' ? t('Hacer commit') : t('Hacer push')"
             :for="`proyecto-git-${action}`"
             :description="
               action === 'commit'
-                ? 'Si Claude puede ejecutar git commit por su cuenta.'
-                : 'Si Claude puede ejecutar git push por su cuenta.'
+                ? t('Si Claude puede ejecutar git commit por su cuenta.')
+                : t('Si Claude puede ejecutar git push por su cuenta.')
             "
           >
             <select
@@ -413,12 +430,16 @@ const select = 'h-8 rounded-item border border-border bg-surface px-2 text-sm di
       </section>
 
       <section aria-labelledby="proyecto-chrome">
-        <h2 id="proyecto-chrome" :class="sectionTitle">Claude en Chrome</h2>
+        <h2 id="proyecto-chrome" :class="sectionTitle">{{ t('Claude en Chrome') }}</h2>
         <div :class="section">
           <SettingRow
-            label="Usar Claude en Chrome"
+            :label="t('Usar Claude en Chrome')"
             for="proyecto-chrome-switch"
-            description="Las sesiones del proyecto pueden manejar tu Chrome (necesita la extensión Claude in Chrome). En una sesión, también con /chrome."
+            :description="
+              t(
+                'Las sesiones del proyecto pueden manejar tu Chrome (necesita la extensión Claude in Chrome). En una sesión, también con /chrome.'
+              )
+            "
           >
             <SettingSwitch id="proyecto-chrome-switch" v-model="chrome" />
           </SettingRow>

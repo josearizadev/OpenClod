@@ -1,5 +1,6 @@
 import type { MenuItemConstructorOptions } from 'electron'
 import type { AppCommand } from '../shared/types'
+import { t } from './i18n'
 
 /**
  * Menú de la aplicación. Puro: devuelve la plantilla. Los
@@ -28,12 +29,12 @@ export function buildMenuTemplate(deps: MenuDeps): MenuItemConstructorOptions[] 
     click: () => deps.send(command)
   })
   const quit: MenuItemConstructorOptions = {
-    label: mac ? `Salir de ${deps.appName}` : 'Salir',
+    label: mac ? t('Salir de {app}', { app: deps.appName }) : t('Salir'),
     accelerator: 'CmdOrCtrl+Q',
     click: () => deps.quit()
   }
-  const about = ui(`Acerca de ${deps.appName}`, 'about')
-  const settings = ui('Ajustes…', 'settings', 'CmdOrCtrl+,')
+  const about = ui(t('Acerca de {app}', { app: deps.appName }), 'about')
+  const settings = ui(t('Ajustes…'), 'settings', 'CmdOrCtrl+,')
 
   const template: MenuItemConstructorOptions[] = []
   if (mac) {
@@ -44,9 +45,9 @@ export function buildMenuTemplate(deps: MenuDeps): MenuItemConstructorOptions[] 
         { type: 'separator' },
         settings,
         { type: 'separator' },
-        { role: 'hide', label: `Ocultar ${deps.appName}` },
-        { role: 'hideOthers', label: 'Ocultar otras' },
-        { role: 'unhide', label: 'Mostrar todo' },
+        { role: 'hide', label: t('Ocultar {app}', { app: deps.appName }) },
+        { role: 'hideOthers', label: t('Ocultar otras') },
+        { role: 'unhide', label: t('Mostrar todo') },
         { type: 'separator' },
         quit
       ]
@@ -54,59 +55,59 @@ export function buildMenuTemplate(deps: MenuDeps): MenuItemConstructorOptions[] 
   }
   template.push(
     {
-      label: 'Archivo',
+      label: t('Archivo'),
       submenu: [
-        ui('Nueva sesión', 'new-session', 'CmdOrCtrl+N'),
-        ui('Importar carpeta de proyecto…', 'open-project'),
-        ui('Terminal', 'terminal', 'CmdOrCtrl+`'),
+        ui(t('Nueva sesión'), 'new-session', 'CmdOrCtrl+N'),
+        ui(t('Importar carpeta de proyecto…'), 'open-project'),
+        ui(t('Terminal'), 'terminal', 'CmdOrCtrl+`'),
         ...(mac ? [] : ([{ type: 'separator' }, settings, { type: 'separator' }, quit] as const))
       ]
     },
     {
-      label: 'Editar',
+      label: t('Editar'),
       submenu: [
-        { role: 'undo', label: 'Deshacer' },
-        { role: 'redo', label: 'Rehacer' },
+        { role: 'undo', label: t('Deshacer') },
+        { role: 'redo', label: t('Rehacer') },
         { type: 'separator' },
-        { role: 'cut', label: 'Cortar' },
-        { role: 'copy', label: 'Copiar' },
-        { role: 'paste', label: 'Pegar' },
-        { role: 'selectAll', label: 'Seleccionar todo' }
+        { role: 'cut', label: t('Cortar') },
+        { role: 'copy', label: t('Copiar') },
+        { role: 'paste', label: t('Pegar') },
+        { role: 'selectAll', label: t('Seleccionar todo') }
       ]
     },
     {
-      label: 'Ver',
+      label: t('Ver'),
       submenu: [
-        ui('Buscar', 'search', 'CmdOrCtrl+K'),
+        ui(t('Buscar'), 'search', 'CmdOrCtrl+K'),
         { type: 'separator' },
-        { role: 'zoomIn', label: 'Acercar' },
-        { role: 'zoomOut', label: 'Alejar' },
-        { role: 'resetZoom', label: 'Tamaño real' },
+        { role: 'zoomIn', label: t('Acercar') },
+        { role: 'zoomOut', label: t('Alejar') },
+        { role: 'resetZoom', label: t('Tamaño real') },
         { type: 'separator' },
-        { role: 'togglefullscreen', label: 'Pantalla completa' },
+        { role: 'togglefullscreen', label: t('Pantalla completa') },
         ...(deps.dev
           ? ([
               { type: 'separator' },
-              { role: 'reload', label: 'Recargar' },
-              { role: 'toggleDevTools', label: 'Herramientas de desarrollo' }
+              { role: 'reload', label: t('Recargar') },
+              { role: 'toggleDevTools', label: t('Herramientas de desarrollo') }
             ] as const)
           : [])
       ]
     },
     {
-      label: 'Ir',
+      label: t('Ir'),
       submenu: [
-        ui('Uso', 'usage', 'CmdOrCtrl+U'),
-        ui('Terminal', 'terminal'),
-        ui('Diagnóstico', 'diagnostics')
+        ui(t('Uso'), 'usage', 'CmdOrCtrl+U'),
+        ui(t('Terminal'), 'terminal'),
+        ui(t('Diagnóstico'), 'diagnostics')
       ]
     },
     {
       role: 'help',
-      label: 'Ayuda',
+      label: t('Ayuda'),
       submenu: [
         ...(mac ? [] : [about]),
-        { label: 'Abrir la carpeta de registros', click: () => deps.openLogs() }
+        { label: t('Abrir la carpeta de registros'), click: () => deps.openLogs() }
       ]
     }
   )

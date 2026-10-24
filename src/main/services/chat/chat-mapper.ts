@@ -3,6 +3,8 @@ import type { LimitWindow } from '../../../shared/usage'
 import { readRateLimitEvent } from '../sdk-usage'
 import type { TranscriptItem } from '../../../shared/sessions'
 import { SdkRecords } from './sdk-records'
+import type { MessageKey } from '../../../shared/i18n'
+import { t } from '../../i18n'
 
 /**
  * Traducción de los mensajes del Agent SDK. Tolerante: recibe `unknown`,
@@ -50,8 +52,8 @@ const AUTH_ERRORS = new Set([
   'verification_required'
 ])
 
-const CHAT_ERROR_MESSAGES: Record<ChatErrorCode, string> = {
-  auth: 'Claude Code no tiene una sesión iniciada. Abre una terminal, ejecuta `claude` e inicia sesión.',
+const CHAT_ERROR_MESSAGES: Record<ChatErrorCode, MessageKey> = {
+  auth: 'Claude Code no tiene una sesión iniciada. Pulsa «Iniciar sesión» o ejecuta `claude auth login` en una terminal.',
   'cli-missing': 'No se encuentra el ejecutable de Claude Code.',
   'invalid-cwd': 'La carpeta de trabajo no existe.',
   process:
@@ -60,8 +62,8 @@ const CHAT_ERROR_MESSAGES: Record<ChatErrorCode, string> = {
   unknown: 'Algo ha fallado al hablar con Claude Code.'
 }
 
-/** Texto en español del motivo de un `result` de error. */
-const RESULT_ERRORS: Record<string, string> = {
+/** Texto del motivo de un `result` de error (clave de traducción). */
+const RESULT_ERRORS: Record<string, MessageKey> = {
   error_max_turns: 'Se alcanzó el límite de turnos.',
   error_max_budget_usd: 'Se alcanzó el límite de gasto.',
   error_during_execution: 'Error durante la ejecución.',
@@ -71,13 +73,13 @@ const RESULT_ERRORS: Record<string, string> = {
 export function chatError(code: ChatErrorCode, detail?: string, message?: string): ChatErrorView {
   return {
     code,
-    message: message ?? CHAT_ERROR_MESSAGES[code],
+    message: message ?? t(CHAT_ERROR_MESSAGES[code]),
     ...(detail ? { detail } : {})
   }
 }
 
 export function resultErrorMessage(subtype: string): string {
-  return RESULT_ERRORS[subtype] ?? CHAT_ERROR_MESSAGES.turn
+  return t(RESULT_ERRORS[subtype] ?? CHAT_ERROR_MESSAGES.turn)
 }
 
 /** Tipo de bloque del streaming → actividad; los demás no cuentan. */

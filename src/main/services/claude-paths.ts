@@ -2,6 +2,7 @@ import { readdir, stat } from 'node:fs/promises'
 import { basename, join, resolve } from 'node:path'
 import type { ClaudeDirSource } from '../../shared/sessions'
 import { logger as defaultLogger, type Logger } from './logger'
+import { t } from '../i18n'
 
 /**
  * Ubicación de los datos de Claude Code. Solo `readdir` y `stat`: este
@@ -122,8 +123,8 @@ export async function listProjects(
   } catch (error) {
     const reason =
       errorCode(error) === 'ENOENT'
-        ? `No existe la carpeta ${projectsDir}`
-        : `No se puede leer la carpeta ${projectsDir}`
+        ? t('No existe la carpeta {dir}', { dir: projectsDir })
+        : t('No se puede leer la carpeta {dir}', { dir: projectsDir })
     return { ok: false, projectsDir, reason }
   }
   const projects: ProjectDir[] = []

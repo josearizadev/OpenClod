@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { X } from 'lucide-vue-next'
 import { onBeforeUnmount, ref, watch } from 'vue'
 import { useUiStore, type Toast } from '../../stores/ui'
@@ -54,7 +55,7 @@ function act(): void {
       <button
         type="button"
         class="inline-flex size-7 shrink-0 items-center justify-center rounded-item text-muted hover:bg-surface-hover hover:text-text"
-        aria-label="Cerrar el aviso"
+        :aria-label="t('Cerrar el aviso')"
         @click="hide"
       >
         <X :size="16" :stroke-width="1.75" />

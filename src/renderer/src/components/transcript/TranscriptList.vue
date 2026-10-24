@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { useVirtualizer } from '@tanstack/vue-virtual'
 import { computed, nextTick, onBeforeUnmount, ref, toRef, watch } from 'vue'
 import { useTextHighlight } from '../../composables/useTextHighlight'
@@ -319,7 +320,7 @@ defineExpose({
       class="h-full overflow-y-auto focus-visible:outline-offset-[-2px]"
       tabindex="0"
       role="feed"
-      aria-label="Transcript"
+      :aria-label="t('Transcript')"
       @scroll.passive="onScroll"
       @keydown="onKeydown"
     >

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { Compass } from 'lucide-vue-next'
 import type { Block } from '../../lib/transcript/blocks'
 import UserMessage from '../chat/UserMessage.vue'
@@ -43,13 +44,17 @@ defineProps<{
       :size="18"
       :stroke-width="1.75"
       role="img"
-      aria-label="Claude está escribiendo"
+      :aria-label="t('Claude está escribiendo')"
     />
   </div>
 
   <div v-else-if="block.kind === 'assistant'" class="group relative">
     <MarkdownContent :source="block.text" />
-    <MessageActions :text="block.text" :timestamp="block.timestamp" label="Copiar respuesta" />
+    <MessageActions
+      :text="block.text"
+      :timestamp="block.timestamp"
+      :label="t('Copiar respuesta')"
+    />
   </div>
 
   <ThinkingLine v-else-if="block.kind === 'thinking'" :fold-key="block.key" :text="block.text" />

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../../i18n'
 import { computed } from 'vue'
 import type { ToolCallView } from '../../../lib/transcript/blocks'
 import CodeBlock from '../CodeBlock.vue'
@@ -22,5 +23,5 @@ const lang = computed(() => (props.call.name === 'PowerShell' ? 'powershell' : '
 <template>
   <p v-if="description" class="text-sm text-muted">{{ description }}</p>
   <CodeBlock v-if="command" :code="command" :lang="lang" />
-  <ToolResult :call="call" label="Salida" />
+  <ToolResult :call="call" :label="t('Salida')" />
 </template>

@@ -2,6 +2,7 @@ import { readFile, realpath, stat } from 'node:fs/promises'
 import { extname, isAbsolute } from 'node:path'
 import { IMAGE_MAX_BYTES, type ChatAttachment, type ImageMediaType } from '../../../shared/chat'
 import { isInside } from '../paths'
+import { t } from '../../i18n'
 
 /**
  * Adjuntos de un mensaje. Las imágenes van a Claude como
@@ -47,12 +48,16 @@ export function sniffImage(bytes: Uint8Array): ImageMediaType | null {
 }
 
 function imageBlock(bytes: Buffer, name: string, declared?: ImageMediaType): ImageBlock {
-  if (bytes.length === 0) throw new AttachmentError(`«${name}» está vacía.`)
+  if (bytes.length === 0) throw new AttachmentError(t('«{name}» está vacía.', { name }))
   if (bytes.length > IMAGE_MAX_BYTES)
-    throw new AttachmentError(`«${name}» pesa más de 5 MB: no se puede enviar como imagen.`)
+    throw new AttachmentError(
+      t('«{name}» pesa más de 5 MB: no se puede enviar como imagen.', { name })
+    )
   const real = sniffImage(bytes)
   if (!real || (declared && real !== declared))
-    throw new AttachmentError(`«${name}» no es una imagen PNG, JPEG, GIF o WebP válida.`)
+    throw new AttachmentError(
+      t('«{name}» no es una imagen PNG, JPEG, GIF o WebP válida.', { name })
+    )
   return {
     type: 'image',
     source: { type: 'base64', media_type: real, data: bytes.toString('base64') }
@@ -61,7 +66,7 @@ function imageBlock(bytes: Buffer, name: string, declared?: ImageMediaType): Ima
 
 function decodeBase64(data: string, name: string): Buffer {
   if (!/^[A-Za-z0-9+/]+={0,2}$/.test(data) || data.length % 4 !== 0)
-    throw new AttachmentError(`«${name}» no tiene datos de imagen válidos.`)
+    throw new AttachmentError(t('«{name}» no tiene datos de imagen válidos.', { name }))
   return Buffer.from(data, 'base64')
 }
 
@@ -71,7 +76,8 @@ async function checkFile(
   name: string,
   claudeDir: string
 ): Promise<{ real: string; size: number }> {
-  if (!isAbsolute(path)) throw new AttachmentError(`«${name}» no tiene una ruta válida.`)
+  if (!isAbsolute(path))
+    throw new AttachmentError(t('«{name}» no tiene una ruta válida.', { name }))
   let real: string
   let size: number
   try {
@@ -80,11 +86,11 @@ async function checkFile(
     if (!info.isFile()) throw new Error('no es un archivo')
     size = info.size
   } catch {
-    throw new AttachmentError(`«${name}» ya no existe o no es un archivo.`)
+    throw new AttachmentError(t('«{name}» ya no existe o no es un archivo.', { name }))
   }
   const claudeReal = await realpath(claudeDir).catch(() => claudeDir)
   if (isInside(real, claudeReal))
-    throw new AttachmentError('No se pueden adjuntar archivos de la carpeta de Claude Code.')
+    throw new AttachmentError(t('No se pueden adjuntar archivos de la carpeta de Claude Code.'))
   return { real, size }
 }
 
@@ -116,7 +122,7 @@ export async function buildUserContent(
     }
   }
   const list =
-    paths.length > 0 ? `Archivos adjuntos:\n${paths.map((p) => `- ${p}`).join('\n')}` : ''
+    paths.length > 0 ? `${t('Archivos adjuntos:')}\n${paths.map((p) => `- ${p}`).join('\n')}` : ''
   const body = text.trim()
   return { text: [body, list].filter(Boolean).join('\n\n'), images }
 }

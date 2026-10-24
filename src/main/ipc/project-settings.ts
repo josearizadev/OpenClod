@@ -7,6 +7,7 @@ import {
   writeProjectSettings
 } from '../services/project-settings'
 import { handle, IpcError } from './handle'
+import { t } from '../i18n'
 
 /** Traduce los rechazos previstos a errores IPC con su mensaje. */
 async function guarded<T>(fn: () => Promise<T>): Promise<T> {
@@ -51,7 +52,7 @@ export function registerProjectSettingsIpc(deps: RootDeps & { store: AppStore })
   handle('projectSettings:setChrome', ({ projectId, enabled }) => {
     const state = deps.store.get()
     if (!state.projects.some((p) => p.id === projectId))
-      throw new IpcError('NOT_FOUND', 'El proyecto ya no existe')
+      throw new IpcError('NOT_FOUND', t('El proyecto ya no existe'))
     const prefs = { ...state.projectPrefs }
     if (enabled) prefs[projectId] = { chrome: true }
     else delete prefs[projectId]

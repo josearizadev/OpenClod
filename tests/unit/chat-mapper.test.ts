@@ -131,7 +131,7 @@ describe('SdkMapper con mensajes inventados', () => {
         kind: 'error',
         error: {
           code: 'auth',
-          message: expect.stringContaining('ejecuta `claude`'),
+          message: expect.stringContaining('`claude auth login`'),
           detail: 'authentication_failed: Invalid API key'
         }
       }

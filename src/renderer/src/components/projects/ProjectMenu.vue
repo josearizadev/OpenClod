@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import {
   DropdownMenuContent,
   DropdownMenuItem,
@@ -25,8 +26,8 @@ const itemClass =
 <template>
   <DropdownMenuRoot>
     <DropdownMenuTrigger
-      aria-label="Configuración del proyecto"
-      title="Configuración del proyecto"
+      :aria-label="t('Configuración del proyecto')"
+      :title="t('Configuración del proyecto')"
       class="no-drag inline-flex size-8 shrink-0 items-center justify-center rounded-item text-muted transition-colors duration-150 hover:bg-surface-hover hover:text-text data-[state=open]:bg-surface-hover data-[state=open]:text-text"
     >
       <Settings2 :size="18" :stroke-width="1.75" />
@@ -41,12 +42,12 @@ const itemClass =
       >
         <DropdownMenuItem :class="itemClass" @select="go('instrucciones')">
           <ScrollText :size="16" :stroke-width="1.75" class="shrink-0" />
-          <span class="flex-1">Instrucciones</span>
+          <span class="flex-1">{{ t('Instrucciones') }}</span>
           <span class="pl-4 text-xs text-muted">CLAUDE.md</span>
         </DropdownMenuItem>
         <DropdownMenuItem :class="itemClass" @select="go('ajustes')">
           <SlidersHorizontal :size="16" :stroke-width="1.75" class="shrink-0" />
-          <span class="flex-1">Ajustes del proyecto</span>
+          <span class="flex-1">{{ t('Ajustes del proyecto') }}</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenuPortal>

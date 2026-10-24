@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../../i18n'
 import { computed, ref } from 'vue'
 import type { ToolCallView } from '../../../lib/transcript/blocks'
 import { lineDiff, type DiffRow } from '../../../lib/transcript/diff'
@@ -53,7 +54,8 @@ function sign(row: DiffRow): string {
           <div v-if="index > 0" class="my-1 border-t border-border" />
           <template v-for="(row, rowIndex) in hunk" :key="rowIndex">
             <div v-if="row.type === 'skip'" class="px-3 text-xs text-muted select-none">
-              ⋯ {{ row.count }} {{ row.count === 1 ? 'línea sin cambios' : 'líneas sin cambios' }}
+              ⋯ {{ row.count }}
+              {{ row.count === 1 ? t('línea sin cambios') : t('líneas sin cambios') }}
             </div>
             <div
               v-else
@@ -74,7 +76,7 @@ function sign(row: DiffRow): string {
                 v-text="sign(row)"
               />
               <span v-if="row.type !== 'ctx'" class="sr-only">{{
-                row.type === 'add' ? 'Añadida:' : 'Quitada:'
+                row.type === 'add' ? t('Añadida:') : t('Quitada:')
               }}</span>
               <span v-text="row.text || ' '" />
             </div>
@@ -89,7 +91,7 @@ function sign(row: DiffRow): string {
       :aria-expanded="showAll"
       @click="showAll = !showAll"
     >
-      {{ showAll ? 'Mostrar menos' : `Mostrar todo (${total} líneas)` }}
+      {{ showAll ? t('Mostrar menos') : t('Mostrar todo ({n} líneas)', { n: total }) }}
     </button>
   </div>
   <ToolResult v-if="!call.result || call.result.isError" :call="call" />

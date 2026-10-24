@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { Check, ChevronDown, ClipboardList, FilePen, Hand, ShieldOff } from 'lucide-vue-next'
 import {
   DropdownMenuContent,
@@ -22,9 +23,9 @@ defineProps<{ disabled?: boolean }>()
 const mode = defineModel<ChatMode>({ required: true })
 
 const MODES: { value: ChatMode; icon: Component; hint: string }[] = [
-  { value: 'default', icon: Hand, hint: 'Pide permiso antes de editar o ejecutar' },
-  { value: 'acceptEdits', icon: FilePen, hint: 'Edita archivos sin preguntar' },
-  { value: 'plan', icon: ClipboardList, hint: 'Solo investiga y propone un plan' }
+  { value: 'default', icon: Hand, hint: t('Pide permiso antes de editar o ejecutar') },
+  { value: 'acceptEdits', icon: FilePen, hint: t('Edita archivos sin preguntar') },
+  { value: 'plan', icon: ClipboardList, hint: t('Solo investiga y propone un plan') }
 ]
 
 const icon = computed(() => MODES.find((m) => m.value === mode.value)?.icon ?? ShieldOff)
@@ -55,10 +56,10 @@ const itemClass =
             ? 'text-danger'
             : 'text-text'
       "
-      :aria-label="`Modo de permisos: ${MODE_LABELS[mode]}`"
+      :aria-label="t('Modo de permisos: {mode}', { mode: t(MODE_LABELS[mode]) })"
     >
       <component :is="icon" :size="16" :stroke-width="1.75" aria-hidden="true" />
-      <span v-if="mode !== 'default'">{{ MODE_LABELS[mode] }}</span>
+      <span v-if="mode !== 'default'">{{ t(MODE_LABELS[mode]) }}</span>
       <ChevronDown :size="14" :stroke-width="1.75" aria-hidden="true" />
     </DropdownMenuTrigger>
     <DropdownMenuPortal>
@@ -83,7 +84,7 @@ const itemClass =
             aria-hidden="true"
           />
           <span class="flex min-w-0 flex-1 flex-col">
-            <span>{{ MODE_LABELS[option.value] }}</span>
+            <span>{{ t(MODE_LABELS[option.value]) }}</span>
             <span class="text-xs text-muted">{{ option.hint }}</span>
           </span>
           <Check
@@ -102,8 +103,10 @@ const itemClass =
             aria-hidden="true"
           />
           <span class="flex min-w-0 flex-1 flex-col">
-            <span class="text-danger">{{ MODE_LABELS.bypassPermissions }}</span>
-            <span class="text-xs text-muted">Usa todas las herramientas sin preguntar</span>
+            <span class="text-danger">{{ t(MODE_LABELS.bypassPermissions) }}</span>
+            <span class="text-xs text-muted">{{
+              t('Usa todas las herramientas sin preguntar')
+            }}</span>
           </span>
           <Check
             v-if="mode === 'bypassPermissions'"
@@ -117,9 +120,13 @@ const itemClass =
   </DropdownMenuRoot>
   <ConfirmDialog
     v-model:open="confirming"
-    title="¿Saltar los permisos?"
-    description="Claude podrá editar archivos, ejecutar comandos y usar cualquier herramienta sin pedirte permiso en esta sesión. No se guarda como preferencia."
-    confirm-label="Saltar permisos"
+    :title="t('¿Saltar los permisos?')"
+    :description="
+      t(
+        'Claude podrá editar archivos, ejecutar comandos y usar cualquier herramienta sin pedirte permiso en esta sesión. No se guarda como preferencia.'
+      )
+    "
+    :confirm-label="t('Saltar permisos')"
     danger
     @confirm="mode = 'bypassPermissions'"
   />

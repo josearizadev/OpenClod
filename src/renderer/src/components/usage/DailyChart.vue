@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { computed, ref } from 'vue'
 import type { UsageDay } from '../../../../shared/usage'
 import { formatDay, formatInteger, formatTokens } from '../../lib/usage-format'
@@ -11,7 +12,7 @@ import { formatDay, formatInteger, formatTokens } from '../../lib/usage-format'
 const props = defineProps<{ days: UsageDay[]; models: string[] }>()
 
 const SLOTS = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)']
-const OTHER = 'Otros'
+const OTHER = t('Otros')
 const series = computed(() => {
   const list = props.models
     .slice(0, 4)
@@ -73,16 +74,16 @@ function onKey(event: KeyboardEvent): void {
 <template>
   <section aria-labelledby="usage-daily">
     <div class="mb-2 flex items-center justify-between gap-2">
-      <h3 id="usage-daily" class="text-sm font-medium">Tokens por día</h3>
+      <h3 id="usage-daily" class="text-sm font-medium">{{ t('Tokens por día') }}</h3>
       <button
         type="button"
         class="text-xs text-muted underline-offset-2 hover:text-text hover:underline"
         @click="showTable = !showTable"
       >
-        {{ showTable ? 'Ver como gráfica' : 'Ver como tabla' }}
+        {{ showTable ? t('Ver como gráfica') : t('Ver como tabla') }}
       </button>
     </div>
-    <ul class="mb-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted" aria-label="Leyenda">
+    <ul class="mb-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted" :aria-label="t('Leyenda')">
       <li v-for="s in series" :key="s.key" class="flex items-center gap-1.5">
         <span class="size-2.5 rounded-sm" :style="{ background: s.color }" aria-hidden="true" />
         {{ s.label }}
@@ -94,7 +95,7 @@ function onKey(event: KeyboardEvent): void {
         class="h-48 w-full overflow-visible"
         role="img"
         tabindex="0"
-        aria-label="Gráfica de tokens por día; usa las flechas para recorrer los días"
+        :aria-label="t('Gráfica de tokens por día; usa las flechas para recorrer los días')"
         preserveAspectRatio="none"
         @keydown="onKey"
         @blur="focused = null"
@@ -146,15 +147,17 @@ function onKey(event: KeyboardEvent): void {
     </div>
     <table :class="showTable ? 'w-full text-xs' : 'sr-only'">
       <caption class="sr-only">
-        Tokens por día y modelo
+        {{
+          t('Tokens por día y modelo')
+        }}
       </caption>
       <thead>
         <tr class="text-left text-muted">
-          <th class="py-1 font-normal">Día</th>
+          <th class="py-1 font-normal">{{ t('Día') }}</th>
           <th v-for="s in series" :key="s.key" class="py-1 text-right font-normal">
             {{ s.label }}
           </th>
-          <th class="py-1 text-right font-normal">Total</th>
+          <th class="py-1 text-right font-normal">{{ t('Total') }}</th>
         </tr>
       </thead>
       <tbody>

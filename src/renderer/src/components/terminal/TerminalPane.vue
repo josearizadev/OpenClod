@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { FitAddon } from '@xterm/addon-fit'
 import { WebLinksAddon } from '@xterm/addon-web-links'
 import { Terminal, type ITheme } from '@xterm/xterm'
@@ -158,7 +159,7 @@ onBeforeUnmount(() => {
   <div
     ref="host"
     class="terminal-host h-full w-full overflow-hidden"
-    :aria-label="`Terminal: ${info.title}`"
+    :aria-label="t('Terminal: {title}', { title: info.title })"
   />
 </template>
 

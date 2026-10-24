@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { ExternalLink, FolderOpen } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
 import {
@@ -41,10 +42,10 @@ const tabs = computed(() => {
   const list: { id: Tab; label: string }[] = []
   const f = props.sessionFile
   if (f && (f.changes.length > 0 || f.commands.length > 0)) {
-    list.push({ id: 'changes', label: 'Cambios' })
+    list.push({ id: 'changes', label: t('Cambios') })
   }
-  list.push({ id: 'content', label: 'Contenido' })
-  if (props.gitChange) list.push({ id: 'git', label: 'Diff Git' })
+  list.push({ id: 'content', label: t('Contenido') })
+  if (props.gitChange) list.push({ id: 'git', label: t('Diff Git') })
   return list
 })
 
@@ -116,26 +117,28 @@ async function open(how: 'editor' | 'folder'): Promise<void> {
     <div class="flex shrink-0 items-center gap-1 border-b border-border px-2 py-1.5">
       <div class="flex gap-0.5 rounded-item bg-surface-hover p-0.5" role="tablist">
         <button
-          v-for="t in tabs"
-          :key="t.id"
+          v-for="tabItem in tabs"
+          :key="tabItem.id"
           type="button"
           role="tab"
-          :aria-selected="tab === t.id"
+          :aria-selected="tab === tabItem.id"
           class="rounded-[6px] px-2 py-0.5 text-xs transition-colors duration-150"
-          :class="tab === t.id ? 'bg-surface text-text shadow-float' : 'text-muted hover:text-text'"
-          @click="tab = t.id"
+          :class="
+            tab === tabItem.id ? 'bg-surface text-text shadow-float' : 'text-muted hover:text-text'
+          "
+          @click="tab = tabItem.id"
         >
-          {{ t.label }}
+          {{ tabItem.label }}
         </button>
       </div>
       <span class="flex-1" />
       <IconButton
         v-if="canEdit"
         :icon="ExternalLink"
-        label="Abrir en el editor"
+        :label="t('Abrir en el editor')"
         @click="open('editor')"
       />
-      <IconButton :icon="FolderOpen" label="Mostrar en la carpeta" @click="open('folder')" />
+      <IconButton :icon="FolderOpen" :label="t('Mostrar en la carpeta')" @click="open('folder')" />
     </div>
 
     <div class="min-h-0 flex-1 overflow-y-auto p-3" role="tabpanel">

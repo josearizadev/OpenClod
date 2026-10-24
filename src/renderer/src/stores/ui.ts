@@ -1,4 +1,5 @@
 import type { SearchScope } from '../../../shared/search'
+import type { Language } from '../../../shared/i18n'
 import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
 import {
@@ -60,9 +61,18 @@ export const useUiStore = defineStore('ui', () => {
     immediate: true
   })
 
+  /** Idioma elegido (`system` = el del sistema) y bienvenida ya vista. */
+  const language = ref<Language>('system')
+  const welcomed = ref(true)
+  /** Los ajustes ya se leyeron: hasta entonces no se sabe si toca la bienvenida. */
+  const settingsLoaded = ref(false)
+
   async function loadSettings(): Promise<void> {
     const result = await window.api.settings.get()
+    settingsLoaded.value = true
     if (result.ok) {
+      language.value = result.data.language
+      welcomed.value = result.data.welcomed
       theme.value = result.data.theme
       viewer.value = result.data.viewer
       chat.value = result.data.chat
@@ -164,6 +174,24 @@ export const useUiStore = defineStore('ui', () => {
     }
   }
 
+  /**
+   * Cambiar de idioma recarga la ventana: los textos se fijan al cargar. Los chats y las
+   * terminales viven en el main y siguen como estaban.
+   */
+  async function setLanguage(next: Language): Promise<void> {
+    if (next === language.value) return
+    const result = await window.api.settings.set({ language: next })
+    if (!result.ok) return console.error('No se pudo guardar el idioma:', result.error.message)
+    language.value = next
+    window.location.reload()
+  }
+
+  async function finishWelcome(): Promise<void> {
+    welcomed.value = true
+    const result = await window.api.settings.set({ welcomed: true })
+    if (!result.ok) console.error('No se pudo guardar la bienvenida:', result.error.message)
+  }
+
   /** Diálogo «Acerca de OpenClod». */
   const aboutOpen = ref(false)
 
@@ -186,6 +214,11 @@ export const useUiStore = defineStore('ui', () => {
   return {
     theme,
     isDark,
+    language,
+    welcomed,
+    settingsLoaded,
+    setLanguage,
+    finishWelcome,
     loadSettings,
     setTheme,
     viewer,

@@ -1,12 +1,12 @@
 /** Utilidades del panel de archivos. Puro. */
+import { tag } from '../i18n'
 
 export function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
   const kb = bytes / 1024
-  if (kb < 1024)
-    return `${kb.toLocaleString('es-ES', { maximumFractionDigits: kb < 10 ? 1 : 0 })} kB`
+  if (kb < 1024) return `${kb.toLocaleString(tag, { maximumFractionDigits: kb < 10 ? 1 : 0 })} kB`
   const mb = kb / 1024
-  return `${mb.toLocaleString('es-ES', { maximumFractionDigits: mb < 10 ? 1 : 0 })} MB`
+  return `${mb.toLocaleString(tag, { maximumFractionDigits: mb < 10 ? 1 : 0 })} MB`
 }
 
 /** ¿Es una ruta absoluta (Windows o POSIX)? */

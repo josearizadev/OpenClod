@@ -1,6 +1,7 @@
 import type { IndexStatus, IndexUpdated } from '../../shared/projects'
 import type { PassResult } from './indexer'
 import { logger as defaultLogger, type Logger, type LogLevel } from './logger'
+import { t } from '../i18n'
 
 /**
  * Ciclo de vida del worker del índice. Como mucho una pasada en curso y una
@@ -152,7 +153,8 @@ export function createIndexService(options: IndexServiceOptions): IndexService {
       if (disposed) return
       log.error('index', `El worker del índice terminó: ${reason}`)
       // Se recrea en la siguiente petición (o ya, si había una pendiente).
-      if (current) settle({ error: new Error(`El worker del índice terminó: ${reason}`) })
+      if (current)
+        settle({ error: new Error(t('El worker del índice terminó: {reason}', { reason })) })
     }
     created.on('error', (error) => lost(error.message))
     created.on('exit', (code) => lost(`código ${code}`))
@@ -174,7 +176,7 @@ export function createIndexService(options: IndexServiceOptions): IndexService {
   }
 
   function request(kind: PassKind): Promise<PassResult> {
-    if (disposed) return Promise.reject(new Error('El índice se está cerrando'))
+    if (disposed) return Promise.reject(new Error(t('El índice se está cerrando')))
     return new Promise<PassResult>((resolve, reject) => {
       const waiter = { resolve, reject }
       if (!current) {
@@ -199,7 +201,7 @@ export function createIndexService(options: IndexServiceOptions): IndexService {
     },
     async dispose() {
       disposed = true
-      const closing = new Error('El índice se está cerrando')
+      const closing = new Error(t('El índice se está cerrando'))
       for (const job of [current, pending]) for (const w of job?.waiters ?? []) w.reject(closing)
       current = null
       pending = null

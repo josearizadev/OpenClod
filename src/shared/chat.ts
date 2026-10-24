@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import type { MessageKey } from './i18n'
 import type { LimitWindow } from './usage'
 import type { TranscriptItem } from './sessions'
 
@@ -334,8 +335,8 @@ export const ChatReconciledInputSchema = z
   .object({ sessionId: SessionIdSchema, uuids: z.array(z.string().max(100)).max(100_000) })
   .strict()
 
-/** Nombre legible de cada modo. */
-export const MODE_LABELS: Record<ChatMode, string> = {
+/** Nombre legible de cada modo (clave de traducción). */
+export const MODE_LABELS: Record<ChatMode, MessageKey> = {
   default: 'Preguntar',
   acceptEdits: 'Aceptar ediciones',
   plan: 'Planificar',

@@ -2,6 +2,7 @@ import type { TerminalShells } from '../../shared/terminal'
 import { FileAccessError } from '../services/file-access'
 import { TerminalError, type TerminalService } from '../services/terminal'
 import { handle, IpcError } from './handle'
+import { t } from '../i18n'
 
 async function guarded<T>(fn: () => T | Promise<T>): Promise<T> {
   try {
@@ -22,7 +23,7 @@ export function registerTerminalIpc(
   shells: () => Promise<TerminalShells>
 ): void {
   const need = (): TerminalService => {
-    if (!service) throw new IpcError('INTERNAL', 'La terminal no está disponible')
+    if (!service) throw new IpcError('INTERNAL', t('La terminal no está disponible'))
     return service
   }
   handle('terminal:shells', () => shells())

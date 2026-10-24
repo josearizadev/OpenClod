@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../i18n'
 import { onMounted, ref } from 'vue'
 import type { SystemInfo } from '../../../shared/types'
 import ClaudeDataPanel from '../components/diagnostics/ClaudeDataPanel.vue'
@@ -28,7 +29,7 @@ async function ping(): Promise<void> {
   const ms = Math.round(performance.now() - started)
   pingOk.value = result.ok
   pingResult.value = result.ok
-    ? `Respuesta «${result.data.pong}» en ${ms} ms`
+    ? t('Respuesta «{pong}» en {ms} ms', { pong: result.data.pong, ms })
     : `${result.error.code}: ${result.error.message}`
   pinging.value = false
 }
@@ -37,8 +38,10 @@ async function ping(): Promise<void> {
 <template>
   <div class="mx-auto flex max-w-chat flex-col gap-8 px-6 py-8">
     <section aria-labelledby="diag-versions">
-      <h2 id="diag-versions" class="mb-3 font-serif text-xl">Versiones</h2>
-      <p v-if="infoError" class="text-danger">No se pudieron leer: {{ infoError }}</p>
+      <h2 id="diag-versions" class="mb-3 font-serif text-xl">{{ t('Versiones') }}</h2>
+      <p v-if="infoError" class="text-danger">
+        {{ t('No se pudieron leer: {error}', { error: infoError }) }}
+      </p>
       <dl
         v-else
         class="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 rounded-dialog bg-surface p-4 shadow-float"
@@ -55,11 +58,13 @@ async function ping(): Promise<void> {
     </section>
 
     <section aria-labelledby="diag-data">
-      <h2 id="diag-data" class="mb-3 font-serif text-xl">Datos locales</h2>
+      <h2 id="diag-data" class="mb-3 font-serif text-xl">{{ t('Datos locales') }}</h2>
       <IndexPanel />
       <p class="mt-3 text-sm text-muted">
-        Logs:
-        <span class="font-mono break-all">{{ info ? (info.logFile ?? 'Solo consola') : '…' }}</span>
+        {{ t('Logs:') }}
+        <span class="font-mono break-all">{{
+          info ? (info.logFile ?? t('Solo consola')) : '…'
+        }}</span>
       </p>
     </section>
 
@@ -68,15 +73,15 @@ async function ping(): Promise<void> {
     <UsagePanel />
 
     <section aria-labelledby="diag-chat">
-      <h2 id="diag-chat" class="mb-3 font-serif text-xl">Chat</h2>
+      <h2 id="diag-chat" class="mb-3 font-serif text-xl">{{ t('Chat') }}</h2>
       <dl
         class="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 rounded-dialog bg-surface p-4 shadow-float"
       >
-        <dt class="text-muted">Sesiones de chat activas</dt>
+        <dt class="text-muted">{{ t('Sesiones de chat activas') }}</dt>
         <dd class="tabular-nums">{{ chat.activeCount }}</dd>
-        <dt class="text-muted">Trabajando o esperando permiso</dt>
+        <dt class="text-muted">{{ t('Trabajando o esperando permiso') }}</dt>
         <dd class="tabular-nums">{{ chat.workingCount }}</dd>
-        <dt class="text-muted">Modelos y comandos conocidos</dt>
+        <dt class="text-muted">{{ t('Modelos y comandos conocidos') }}</dt>
         <dd class="tabular-nums">
           {{ chat.catalog.models.length }} · {{ chat.catalog.commands.length }}
         </dd>
@@ -84,7 +89,9 @@ async function ping(): Promise<void> {
     </section>
 
     <section aria-labelledby="diag-ipc">
-      <h2 id="diag-ipc" class="mb-3 font-serif text-xl">Comunicación con el proceso principal</h2>
+      <h2 id="diag-ipc" class="mb-3 font-serif text-xl">
+        {{ t('Comunicación con el proceso principal') }}
+      </h2>
       <div class="flex flex-wrap items-center gap-4">
         <button
           type="button"
@@ -92,7 +99,7 @@ async function ping(): Promise<void> {
           class="rounded-item bg-accent px-4 py-2 text-on-accent transition-colors duration-150 hover:bg-accent-hover disabled:opacity-40"
           @click="ping"
         >
-          Hacer ping
+          {{ t('Hacer ping') }}
         </button>
         <p v-if="pingResult" :class="pingOk ? 'text-text' : 'text-danger'" role="status">
           {{ pingResult }}

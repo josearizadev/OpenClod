@@ -1,6 +1,15 @@
 import type Database from 'better-sqlite3'
 import { query as sdkQuery } from '@anthropic-ai/claude-agent-sdk'
-import { app, BrowserWindow, Menu, nativeTheme, Notification, screen, shell } from 'electron'
+import {
+  app,
+  BrowserWindow,
+  ipcMain,
+  Menu,
+  nativeTheme,
+  Notification,
+  screen,
+  shell
+} from 'electron'
 import trayIcon from '../../resources/tray.png?asset'
 import type { AppCommand } from '../shared/types'
 import { buildMenuTemplate } from './menu'
@@ -48,6 +57,10 @@ import { createMainWindow, hardenSession } from './window'
 import { autoUpdater } from 'electron-updater'
 import { registerUpdateIpc } from './ipc/update'
 import { createAppUpdater } from './services/updater'
+import { mainLocale, setMainLocale, t } from './i18n'
+import { registerAuthIpc } from './ipc/auth'
+import { readAuthStatus } from './services/auth'
+import { isAppUrl } from './window'
 
 // En desarrollo, `userData` propia: la versión instalada y la de desarrollo no comparten
 // `state.json`, índice ni logs. Tiene que ir antes de cualquier uso de `userData`.
@@ -88,6 +101,14 @@ app.whenReady().then(() => {
   // título ya son los correctos y no hay destello al arrancar.
   const store = createAppStore(join(app.getPath('userData'), 'state.json'))
   nativeTheme.themeSource = store.get().theme
+  const applyLocale = (): void =>
+    void setMainLocale(store.get().language, app.getPreferredSystemLanguages())
+  applyLocale()
+  // El preload lo pide de forma síncrona al cargar cada página.
+  ipcMain.on('i18n:locale', (event) => {
+    const url = event.senderFrame?.url
+    event.returnValue = typeof url === 'string' && isAppUrl(url) ? mainLocale() : 'es'
+  })
 
   // El índice se comprueba antes de crear la ventana: si está corrupto o es de otra versión se
   // recrea. Si ni así se puede abrir, se registra y la app sigue sin índice.
@@ -112,7 +133,7 @@ app.whenReady().then(() => {
   const watcher = createClaudeWatcher({ projectsDir: () => projectsDirOf(claudeDir()), onBatch })
 
   const statusOf = (running: boolean): IndexStatus => {
-    if (!reader) return errorStatus(dbFile, opened.error ?? 'No se pudo abrir el índice')
+    if (!reader) return errorStatus(dbFile, opened.error ?? t('No se pudo abrir el índice'))
     try {
       return { ...indexStatus(reader, { path: dbFile, running }), watch: watcher.status() }
     } catch (error) {
@@ -354,8 +375,13 @@ app.whenReady().then(() => {
     const { working, waiting } = chat.busy()
     const parts: string[] = []
     if (working)
-      parts.push(working === 1 ? '1 sesión trabajando' : `${working} sesiones trabajando`)
-    if (waiting) parts.push(waiting === 1 ? '1 esperando permiso' : `${waiting} esperando permiso`)
+      parts.push(
+        working === 1 ? t('1 sesión trabajando') : t('{n} sesiones trabajando', { n: working })
+      )
+    if (waiting)
+      parts.push(
+        waiting === 1 ? t('1 esperando permiso') : t('{n} esperando permiso', { n: waiting })
+      )
     return parts.length ? parts.join(' · ') : null
   }
   const scheduleTrayUpdate = (): void => {
@@ -406,6 +432,21 @@ app.whenReady().then(() => {
     sessionTitle: (id) => projectsService.session(id)?.title ?? null
   })
 
+  // Menú nativo: en Windows y Linux no se ve; da los atajos. Se rehace al cambiar de idioma.
+  const buildMenu = (): void =>
+    Menu.setApplicationMenu(
+      Menu.buildFromTemplate(
+        buildMenuTemplate({
+          platform: process.platform,
+          dev: is.dev,
+          appName: 'OpenClod',
+          send: sendCommand,
+          quit: requestQuit,
+          openLogs: () => void shell.openPath(join(app.getPath('userData'), 'logs'))
+        })
+      )
+    )
+
   hardenSession()
   registerSettingsIpc(
     store,
@@ -413,7 +454,26 @@ app.whenReady().then(() => {
       watcher.restart()
       indexService?.rebuild().catch((error) => logger.error('index', error))
     },
-    (settings) => syncTray(settings.window.closeToTray)
+    (settings) => {
+      const before = mainLocale()
+      applyLocale()
+      if (mainLocale() !== before) {
+        buildMenu()
+        // La bandeja se vuelve a crear con los textos nuevos.
+        tray?.dispose()
+        tray = null
+      }
+      syncTray(settings.window.closeToTray)
+    }
+  )
+  registerAuthIpc(() =>
+    readAuthStatus({
+      claudePath: claudePath ?? null,
+      customClaudeDir: () => {
+        const resolved = resolvedClaudeDir()
+        return resolved.source === 'settings' ? resolved.dir : null
+      }
+    })
   )
   registerSystemIpc({ gitVersion: () => git.version() })
   registerUpdateIpc(updater, { restart: requestRestart })
@@ -457,19 +517,7 @@ app.whenReady().then(() => {
     },
     onQuit: quit
   })
-  // Menú nativo: en Windows y Linux no se ve; da los atajos.
-  Menu.setApplicationMenu(
-    Menu.buildFromTemplate(
-      buildMenuTemplate({
-        platform: process.platform,
-        dev: is.dev,
-        appName: 'OpenClod',
-        send: sendCommand,
-        quit: requestQuit,
-        openLogs: () => void shell.openPath(join(app.getPath('userData'), 'logs'))
-      })
-    )
-  )
+  buildMenu()
 
   // Ventana con el tamaño y la posición de la última vez.
   const restored = restoreBounds(

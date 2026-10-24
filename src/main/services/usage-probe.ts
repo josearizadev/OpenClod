@@ -1,5 +1,6 @@
 import type { Options } from '@anthropic-ai/claude-agent-sdk'
 import { callUsage } from './sdk-usage'
+import { t } from '../i18n'
 
 /**
  * Proceso sonda de Claude Code: sin prompt, sin persistir sesión, solo para
@@ -45,12 +46,12 @@ export async function runUsageProbe(
   try {
     const call = callUsage(query)
     if (!call)
-      throw new ProbeUnsupported('Esta versión de Claude Code no ofrece la consulta de uso')
+      throw new ProbeUnsupported(t('Esta versión de Claude Code no ofrece la consulta de uso'))
     return await Promise.race([
       call,
       new Promise((_, reject) => {
         timer = setTimeout(
-          () => reject(new Error('La consulta de uso no respondió a tiempo')),
+          () => reject(new Error(t('La consulta de uso no respondió a tiempo'))),
           timeoutMs
         )
       })

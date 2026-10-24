@@ -6,6 +6,7 @@ import { logger as defaultLogger, type Logger } from './logger'
 import { loadSession } from './session-loader'
 import { compareVersions } from './session-parser'
 import { UsageLedger } from './usage'
+import { t } from '../i18n'
 
 /**
  * Análisis de toda la carpeta de Claude Code para Diagnóstico. Lee las
@@ -97,10 +98,12 @@ export async function scanClaude(
     report.brokenLinks += graph.brokenLinks.length
     const issues = [
       ...graph.unlinkedOverlaps.map(
-        (o) => `${project.name}: ${o.a} y ${o.b} comparten ${o.lines} líneas sin enlace`
+        (o) =>
+          `${project.name}: ${t('{a} y {b} comparten {n} líneas sin enlace', { a: o.a, b: o.b, n: o.lines })}`
       ),
       ...graph.brokenLinks.map(
-        (b) => `${project.name}: ${b.sessionId} continúa en ${b.missing}, que no está`
+        (b) =>
+          `${project.name}: ${t('{a} continúa en {b}, que no está', { a: b.sessionId, b: b.missing })}`
       )
     ]
     report.linkIssues.push(...issues.slice(0, MAX_ISSUES - report.linkIssues.length))

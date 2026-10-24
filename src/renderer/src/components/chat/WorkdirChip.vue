@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { FolderOpen, Pencil } from 'lucide-vue-next'
 import { nextTick, ref, useTemplateRef } from 'vue'
 import IconButton from '../ui/IconButton.vue'
@@ -46,8 +47,8 @@ function cancel(): void {
       v-if="editing"
       ref="input"
       v-model="typed"
-      aria-label="Ruta de la carpeta de trabajo"
-      placeholder="C:\ruta\a\la\carpeta"
+      :aria-label="t('Ruta de la carpeta de trabajo')"
+      :placeholder="t('C:\\ruta\\a\\la\\carpeta')"
       class="h-8 w-[28rem] max-w-full rounded-item bg-surface px-2.5 font-mono text-[13px] text-text shadow-float outline-none placeholder:text-muted"
       @keydown.enter.prevent="commit"
       @keydown.esc.prevent="cancel"
@@ -57,15 +58,20 @@ function cancel(): void {
       <button
         type="button"
         :disabled="readonly"
-        :title="readonly ? (path ?? undefined) : 'Elegir carpeta de trabajo'"
+        :title="readonly ? (path ?? undefined) : t('Elegir carpeta de trabajo')"
         class="inline-flex h-8 min-w-0 items-center gap-1.5 rounded-item px-2.5 transition-colors duration-150 enabled:hover:bg-surface-hover enabled:hover:text-text"
         @click="emit('pick')"
       >
         <FolderOpen class="shrink-0" :size="16" :stroke-width="1.75" aria-hidden="true" />
         <span v-if="path" class="truncate font-mono text-[13px]">{{ path }}</span>
-        <span v-else>Elegir carpeta de trabajo</span>
+        <span v-else>{{ t('Elegir carpeta de trabajo') }}</span>
       </button>
-      <IconButton v-if="!readonly" :icon="Pencil" label="Escribir la ruta" @click="startEditing" />
+      <IconButton
+        v-if="!readonly"
+        :icon="Pencil"
+        :label="t('Escribir la ruta')"
+        @click="startEditing"
+      />
     </template>
   </div>
 </template>

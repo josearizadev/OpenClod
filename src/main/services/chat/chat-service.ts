@@ -13,6 +13,7 @@ import { logger as defaultLogger, type Logger } from '../logger'
 import { AttachmentError, buildUserContent, type UserContent } from './attachments'
 import { checkCwd, cwdErrorMessage } from './claude-runtime'
 import { ChatSession, type QueryFactory } from './chat-session'
+import { t } from '../../i18n'
 
 /**
  * Registro de las sesiones de chat activas. Varias a la vez, sin límite
@@ -115,7 +116,7 @@ export class ChatService {
     let session = this.bySessionId.get(args.sessionId)
     if (!session) {
       const target = this.deps.resumeTarget(args.sessionId)
-      if (!target) throw new ChatServiceError('NOT_FOUND', 'La sesión ya no existe.')
+      if (!target) throw new ChatServiceError('NOT_FOUND', t('La sesión ya no existe.'))
       session = this.bySessionId.get(target.sessionId)
       if (!session) {
         const check = await checkCwd(target.cwd, this.deps.claudeDir())
@@ -123,7 +124,7 @@ export class ChatService {
           throw new ChatServiceError(
             'INVALID_CWD',
             check.reason === 'missing'
-              ? 'La carpeta de esta sesión ya no existe.'
+              ? t('La carpeta de esta sesión ya no existe.')
               : cwdErrorMessage(check.reason)
           )
         }
@@ -161,7 +162,7 @@ export class ChatService {
 
   require(sessionId: string): ChatSession {
     const session = this.bySessionId.get(sessionId)
-    if (!session) throw new ChatServiceError('NOT_FOUND', 'La sesión no está activa.')
+    if (!session) throw new ChatServiceError('NOT_FOUND', t('La sesión no está activa.'))
     return session
   }
 
@@ -188,7 +189,7 @@ export class ChatService {
 
   async setModel(sessionId: string, model: string | null): Promise<void> {
     if (model !== null && this.validModel(model) === undefined)
-      throw new ChatServiceError('INVALID_ARGS', 'Modelo desconocido.')
+      throw new ChatServiceError('INVALID_ARGS', t('Modelo desconocido.'))
     await this.require(sessionId).setModel(model)
   }
 

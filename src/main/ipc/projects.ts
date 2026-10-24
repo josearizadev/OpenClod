@@ -3,6 +3,7 @@ import { TranscriptReadError, type TranscriptService } from '../services/transcr
 import type { TranscriptFollower } from '../services/transcript-follower'
 import type { SessionTrashResult } from '../../shared/projects'
 import { handle, IpcError } from './handle'
+import { t } from '../i18n'
 
 /** Traduce los rechazos previstos del servicio a errores IPC con su mensaje. */
 async function guarded<T>(fn: () => T | Promise<T>): Promise<T> {
@@ -38,7 +39,7 @@ export function registerProjectsIpc(
   handle('sessions:get', ({ sessionId }) => service.session(sessionId))
   handle('sessions:update', (patch) => service.update(patch))
   handle('sessions:trash', ({ sessionIds }) => {
-    if (!trash) throw new IpcError('INTERNAL', 'El índice no está disponible.')
+    if (!trash) throw new IpcError('INTERNAL', t('El índice no está disponible.'))
     return trash(sessionIds)
   })
   handle('sessions:metaStats', () => service.metaStats())

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { Globe } from 'lucide-vue-next'
 import { computed } from 'vue'
 import type { ChromeState } from '../../../../shared/chat'
@@ -9,10 +10,10 @@ defineEmits<{ open: [] }>()
 
 const title = computed(() =>
   props.chrome.status === 'connected'
-    ? 'Claude en Chrome: conectado'
+    ? t('Claude en Chrome: conectado')
     : props.chrome.status === 'failed'
-      ? 'Claude en Chrome: no conecta'
-      : 'Claude en Chrome: se conecta al enviar'
+      ? t('Claude en Chrome: no conecta')
+      : t('Claude en Chrome: se conecta al enviar')
 )
 </script>
 

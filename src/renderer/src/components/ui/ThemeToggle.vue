@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { ToggleGroupItem, ToggleGroupRoot, type AcceptableValue } from 'reka-ui'
 import { Monitor, Moon, Sun } from 'lucide-vue-next'
 import type { Theme } from '../../../../shared/types'
@@ -12,9 +13,9 @@ const { vertical = false } = defineProps<{
 const ui = useUiStore()
 
 const options = [
-  { value: 'system', label: 'Sistema', icon: Monitor },
-  { value: 'light', label: 'Claro', icon: Sun },
-  { value: 'dark', label: 'Oscuro', icon: Moon }
+  { value: 'system', label: t('Sistema'), icon: Monitor },
+  { value: 'light', label: t('Claro'), icon: Sun },
+  { value: 'dark', label: t('Oscuro'), icon: Moon }
 ] as const satisfies readonly { value: Theme; label: string; icon: unknown }[]
 
 function isTheme(value: AcceptableValue | AcceptableValue[]): value is Theme {
@@ -31,7 +32,7 @@ function onChange(value: AcceptableValue | AcceptableValue[]): void {
   <ToggleGroupRoot
     type="single"
     :model-value="ui.theme"
-    aria-label="Tema"
+    :aria-label="t('Tema')"
     :orientation="vertical ? 'vertical' : 'horizontal'"
     :class="[
       'no-drag inline-flex gap-0.5 rounded-item bg-surface-hover p-0.5',

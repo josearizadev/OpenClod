@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { ChevronRight, CircleAlert, FileSearch, LoaderCircle } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { useChatContext } from '../../composables/useChatContext'
@@ -40,10 +41,10 @@ const icon = computed(() => toolIcon(props.call.name))
 
 /** Decisión de su tarjeta de permiso. */
 const DECISIONS = {
-  allowed: { label: 'Permitido', tone: 'text-muted' },
-  always: { label: 'Siempre', tone: 'text-muted' },
-  denied: { label: 'Denegado', tone: 'text-danger' },
-  cancelled: { label: 'Cancelado', tone: 'text-muted' }
+  allowed: { label: t('Permitido'), tone: 'text-muted' },
+  always: { label: t('Siempre'), tone: 'text-muted' },
+  denied: { label: t('Denegado'), tone: 'text-danger' },
+  cancelled: { label: t('Cancelado'), tone: 'text-muted' }
 } as const
 const decision = computed(() => (props.call.decision ? DECISIONS[props.call.decision] : null))
 
@@ -85,8 +86,8 @@ const detail = computed<Detail>(() => {
       v-if="filePath && chat.openFile"
       type="button"
       class="absolute top-1 right-6 rounded-item p-0.5 text-muted opacity-0 transition-opacity duration-150 group-hover/call:opacity-100 hover:text-text focus-visible:opacity-100"
-      title="Ver en el panel de archivos"
-      aria-label="Ver en el panel de archivos"
+      :title="t('Ver en el panel de archivos')"
+      :aria-label="t('Ver en el panel de archivos')"
       @click="chat.openFile(filePath)"
     >
       <FileSearch :size="14" :stroke-width="1.75" aria-hidden="true" />
@@ -105,10 +106,10 @@ const detail = computed<Detail>(() => {
         class="flex shrink-0 items-center gap-1 text-xs text-danger"
       >
         <CircleAlert :size="14" :stroke-width="1.75" aria-hidden="true" />
-        Error
+        {{ t('Error') }}
       </span>
       <span v-else-if="call.status === 'missing'" class="shrink-0 text-xs text-muted">
-        sin resultado
+        {{ t('sin resultado') }}
       </span>
       <span
         v-else-if="call.status === 'running'"
@@ -120,7 +121,8 @@ const detail = computed<Detail>(() => {
           :stroke-width="1.75"
           aria-hidden="true"
         />
-        en ejecución<template v-if="call.elapsedMs && call.elapsedMs >= 1000">
+        {{ t('en ejecución')
+        }}<template v-if="call.elapsedMs && call.elapsedMs >= 1000">
           · {{ formatDuration(call.elapsedMs) }}</template
         >
       </span>

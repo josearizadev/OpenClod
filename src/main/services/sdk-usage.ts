@@ -1,4 +1,5 @@
 import type { LimitKind, LimitWindow, LimitWindowStatus } from '../../shared/usage'
+import { t } from '../i18n'
 
 /**
  * Guardas tolerantes para los datos de límites del Agent SDK. Solo copian
@@ -80,9 +81,9 @@ export function readUsageResponse(
   raw: unknown,
   now = Date.now()
 ): UsageResponse | { unavailable: string } {
-  if (!isObj(raw)) return { unavailable: 'Respuesta de la consulta de uso no reconocida' }
+  if (!isObj(raw)) return { unavailable: t('Respuesta de la consulta de uso no reconocida') }
   if (raw['rate_limits_available'] === false || !isObj(raw['rate_limits']))
-    return { unavailable: 'Los límites del plan no se aplican a esta cuenta' }
+    return { unavailable: t('Los límites del plan no se aplican a esta cuenta') }
   const at = new Date(now).toISOString()
   const limits = raw['rate_limits']
   const perModel: LimitWindow[] = []

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { Image, Pencil, SendHorizontal, X } from 'lucide-vue-next'
 import type { QueuedMessage } from '../../../../shared/chat'
 import IconButton from '../ui/IconButton.vue'
@@ -22,25 +23,29 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <ul v-if="queue.length > 0" class="flex flex-col gap-1" aria-label="Mensajes en cola">
+  <ul v-if="queue.length > 0" class="flex flex-col gap-1" :aria-label="t('Mensajes en cola')">
     <li
       v-for="item in queue"
       :key="item.uuid"
       class="flex min-w-0 items-center gap-2 rounded-item bg-surface px-3 py-1 text-sm shadow-float"
       :class="editing === item.uuid ? 'ring-2 ring-accent' : ''"
     >
-      <span class="shrink-0 text-xs text-muted">En cola</span>
+      <span class="shrink-0 text-xs text-muted">{{ t('En cola') }}</span>
       <span
         v-if="item.images"
         class="flex shrink-0 items-center gap-1 text-xs text-muted"
-        :aria-label="item.images === 1 ? '1 imagen' : `${item.images} imágenes`"
+        :aria-label="item.images === 1 ? t('1 imagen') : t('{n} imágenes', { n: item.images })"
       >
         <Image :size="12" :stroke-width="1.75" aria-hidden="true" />{{ item.images }}
       </span>
       <span class="min-w-0 flex-1 truncate text-text" :title="item.text">{{ item.text }}</span>
-      <IconButton :icon="Pencil" label="Editar" @click="emit('edit', item.uuid)" />
-      <IconButton :icon="SendHorizontal" label="Enviar ya" @click="emit('sendNow', item.uuid)" />
-      <IconButton :icon="X" label="Quitar de la cola" @click="emit('remove', item.uuid)" />
+      <IconButton :icon="Pencil" :label="t('Editar')" @click="emit('edit', item.uuid)" />
+      <IconButton
+        :icon="SendHorizontal"
+        :label="t('Enviar ya')"
+        @click="emit('sendNow', item.uuid)"
+      />
+      <IconButton :icon="X" :label="t('Quitar de la cola')" @click="emit('remove', item.uuid)" />
     </li>
   </ul>
 </template>

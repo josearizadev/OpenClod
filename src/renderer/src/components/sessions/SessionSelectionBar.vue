@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { CheckCheck, Eye, EyeOff, Trash2, X } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { useSessionsStore } from '../../stores/sessions'
@@ -24,17 +25,17 @@ const button =
   <div
     class="sticky top-0 z-10 mt-2 flex items-center gap-0.5 rounded-item bg-surface py-1 pr-1 pl-2 shadow-float"
     role="toolbar"
-    aria-label="Sesiones seleccionadas"
+    :aria-label="t('Sesiones seleccionadas')"
   >
     <span class="mr-auto text-xs font-medium" aria-live="polite">
-      {{ count === 1 ? '1 seleccionada' : `${count} seleccionadas` }}
+      {{ count === 1 ? t('1 seleccionada') : t('{n} seleccionadas', { n: count }) }}
     </span>
     <button
       type="button"
       :class="button"
       :disabled="allSelected"
-      aria-label="Seleccionar todo"
-      title="Seleccionar todo"
+      :aria-label="t('Seleccionar todo')"
+      :title="t('Seleccionar todo')"
       @click="sessions.selectAll(order)"
     >
       <CheckCheck :size="16" :stroke-width="1.75" />
@@ -42,8 +43,8 @@ const button =
     <button
       type="button"
       :class="button"
-      :aria-label="allHidden ? 'Mostrar en la lista' : 'Ocultar'"
-      :title="allHidden ? 'Mostrar en la lista' : 'Ocultar'"
+      :aria-label="allHidden ? t('Mostrar en la lista') : t('Ocultar')"
+      :title="allHidden ? t('Mostrar en la lista') : t('Ocultar')"
       @click="sessions.setHiddenMany(sessions.selected, !allHidden)"
     >
       <component :is="allHidden ? Eye : EyeOff" :size="16" :stroke-width="1.75" />
@@ -51,8 +52,8 @@ const button =
     <button
       type="button"
       :class="[button, 'hover:text-danger']"
-      aria-label="Eliminar…"
-      title="Eliminar… (Supr)"
+      :aria-label="t('Eliminar…')"
+      :title="t('Eliminar… (Supr)')"
       @click="sessions.askTrash(sessions.selected)"
     >
       <Trash2 :size="16" :stroke-width="1.75" />
@@ -60,8 +61,8 @@ const button =
     <button
       type="button"
       :class="button"
-      aria-label="Quitar la selección"
-      title="Quitar la selección (Esc)"
+      :aria-label="t('Quitar la selección')"
+      :title="t('Quitar la selección (Esc)')"
       @click="sessions.clearSelection()"
     >
       <X :size="16" :stroke-width="1.75" />

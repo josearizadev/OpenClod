@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { Bot, ChevronDown, LoaderCircle, SquareTerminal, Wrench } from 'lucide-vue-next'
 import { computed, onBeforeUnmount, ref, watch, type Component } from 'vue'
 import type { TaskView } from '../../../../shared/chat'
@@ -38,10 +39,10 @@ const ICONS: Record<TaskView['type'], Component> = {
 }
 
 const STATUS: Record<TaskView['status'], string> = {
-  running: 'En curso',
-  completed: 'Terminada',
-  failed: 'Fallida',
-  stopped: 'Detenida'
+  running: t('En curso'),
+  completed: t('Terminada'),
+  failed: t('Fallida'),
+  stopped: t('Detenida')
 }
 
 function elapsed(task: TaskView): string {
@@ -50,8 +51,8 @@ function elapsed(task: TaskView): string {
 
 const label = computed(() => {
   const n = running.value.length
-  if (n === 0) return 'Tareas en segundo plano terminadas'
-  return n === 1 ? '1 tarea en segundo plano' : `${n} tareas en segundo plano`
+  if (n === 0) return t('Tareas en segundo plano terminadas')
+  return n === 1 ? t('1 tarea en segundo plano') : t('{n} tareas en segundo plano', { n })
 })
 </script>
 
@@ -82,7 +83,7 @@ const label = computed(() => {
     <ul
       v-if="open"
       class="flex flex-col gap-1 rounded-menu bg-surface p-2 shadow-float"
-      aria-label="Tareas en segundo plano"
+      :aria-label="t('Tareas en segundo plano')"
     >
       <li
         v-for="task in tasks"
@@ -105,7 +106,7 @@ const label = computed(() => {
             @click="task.toolUseId && emit('open', task.toolUseId)"
           >
             <span v-if="task.subagentType" class="text-muted">{{ task.subagentType }} · </span
-            >{{ task.description || 'Tarea' }}
+            >{{ task.description || t('Tarea') }}
           </button>
           <span class="min-w-0 truncate text-xs text-muted">
             <span
@@ -128,7 +129,7 @@ const label = computed(() => {
           class="h-7 shrink-0 rounded-item px-2 text-xs text-muted hover:bg-surface-hover hover:text-text"
           @click="emit('stop', task.taskId)"
         >
-          Detener
+          {{ t('Detener') }}
         </button>
       </li>
     </ul>

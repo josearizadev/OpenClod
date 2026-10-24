@@ -1,6 +1,7 @@
 import type { ChatActivity, ChatDraft, ChatStatus } from '../../../shared/chat'
 import type { TranscriptItem } from '../../../shared/sessions'
 import { toolCategory, toolSummary, type ToolCategory } from './transcript/tools'
+import { t } from '../i18n'
 
 /**
  * Qué está haciendo Claude ahora mismo: «Pensando…», «Ejecutando npm test»,
@@ -8,14 +9,14 @@ import { toolCategory, toolSummary, type ToolCategory } from './transcript/tools
  */
 
 const GERUNDS: Record<ToolCategory, string> = {
-  read: 'Leyendo',
-  search: 'Buscando',
-  edit: 'Editando',
-  write: 'Escribiendo',
-  run: 'Ejecutando',
-  web: 'Consultando',
-  agent: 'Subagente:',
-  other: 'Usando'
+  read: t('Leyendo'),
+  search: t('Buscando'),
+  edit: t('Editando'),
+  write: t('Escribiendo'),
+  run: t('Ejecutando'),
+  web: t('Consultando'),
+  agent: t('Subagente:'),
+  other: t('Usando')
 }
 
 /** Longitud máxima del argumento: la etiqueta va en una línea. */
@@ -48,7 +49,7 @@ function toolLabel(name: string, input: unknown, cwd: string | undefined): strin
   const category = toolCategory(name)
   let summary = toolSummary(name, input, cwd)
   if (summary.length > MAX) summary = `${summary.slice(0, MAX - 1)}…`
-  if (category === 'other') return `Usando ${name}${summary ? ` · ${summary}` : ''}`
+  if (category === 'other') return `${t('Usando')} ${name}${summary ? ` · ${summary}` : ''}`
   return summary ? `${GERUNDS[category]} ${summary}` : `${GERUNDS[category]}…`
 }
 
@@ -56,25 +57,25 @@ function toolLabel(name: string, input: unknown, cwd: string | undefined): strin
 export function activityLabel(input: ActivityInput): string | null {
   switch (input.status) {
     case 'starting':
-      return 'Iniciando…'
+      return t('Iniciando…')
     case 'waiting':
-      return 'Esperando permiso'
+      return t('Esperando permiso')
     case 'working':
       break
     default:
       return null
   }
-  if (input.draft?.text.trim()) return 'Escribiendo…'
+  if (input.draft?.text.trim()) return t('Escribiendo…')
   const tool = runningTool(input.live)
   if (tool) return toolLabel(tool.name, tool.input, input.cwd)
   switch (input.activity) {
     case 'thinking':
-      return 'Pensando…'
+      return t('Pensando…')
     case 'writing':
-      return 'Escribiendo…'
+      return t('Escribiendo…')
     case 'tool':
-      return 'Preparando una herramienta…'
+      return t('Preparando una herramienta…')
     default:
-      return 'Trabajando…'
+      return t('Trabajando…')
   }
 }

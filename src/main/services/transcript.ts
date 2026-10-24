@@ -11,6 +11,7 @@ import { logger as defaultLogger, type Logger } from './logger'
 import { isInside } from './paths'
 import { loadSession, loadSubagent } from './session-loader'
 import type { TranscriptFollower } from './transcript-follower'
+import { t } from '../i18n'
 
 /**
  * Transcript de una sesión para el visor. El archivo se localiza **a partir
@@ -133,7 +134,7 @@ export function createTranscriptService(options: TranscriptServiceOptions): Tran
     sessionId: string
   ): Promise<{ row: LocatedRow; ref: SessionFileRef } | null> {
     const reader = options.reader
-    if (!reader) throw new TranscriptReadError('El índice no está disponible')
+    if (!reader) throw new TranscriptReadError(t('El índice no está disponible'))
     const row = reader
       .prepare<[string], LocatedRow>(
         'SELECT file, conversation_id FROM sessions WHERE session_id = ?'
@@ -149,7 +150,7 @@ export function createTranscriptService(options: TranscriptServiceOptions): Tran
     } catch (error) {
       if (errorCode(error) === 'ENOENT') return null
       log.error('transcript', error)
-      throw new TranscriptReadError('No se pudo leer la sesión')
+      throw new TranscriptReadError(t('No se pudo leer la sesión'))
     }
   }
 
@@ -195,7 +196,7 @@ export function createTranscriptService(options: TranscriptServiceOptions): Tran
       } catch (error) {
         if (errorCode(error) === 'ENOENT') return null
         log.error('transcript', error)
-        throw new TranscriptReadError('No se pudo leer la sesión')
+        throw new TranscriptReadError(t('No se pudo leer la sesión'))
       }
       const { items, segments } = segmentsOf(
         sessionId,
@@ -273,7 +274,7 @@ export function createTranscriptService(options: TranscriptServiceOptions): Tran
       } catch (error) {
         if (errorCode(error) === 'ENOENT') return null
         log.error('transcript', error)
-        throw new TranscriptReadError('No se pudo leer el subagente')
+        throw new TranscriptReadError(t('No se pudo leer el subagente'))
       }
     }
   }

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import {
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
@@ -56,9 +57,9 @@ const props = defineProps<{
 }>()
 
 const CHAT_STATUS: Partial<Record<ChatStatus, { label: string; tone: string }>> = {
-  starting: { label: 'Iniciando…', tone: 'text-muted' },
-  working: { label: 'Trabajando…', tone: 'text-accent' },
-  waiting: { label: 'Esperando permiso', tone: 'text-warning' }
+  starting: { label: t('Iniciando…'), tone: 'text-muted' },
+  working: { label: t('Trabajando…'), tone: 'text-accent' },
+  waiting: { label: t('Esperando permiso'), tone: 'text-warning' }
 }
 const chatBadge = computed(() => {
   const badge = props.chatStatus ? CHAT_STATUS[props.chatStatus] : undefined
@@ -82,9 +83,9 @@ const live = computed(
 const tokens = computed(() => formatTokens(totalTokens(props.detail.usage)))
 
 const filters = [
-  { key: 'tools', label: 'Herramientas' },
-  { key: 'thinking', label: 'Thinking' },
-  { key: 'internal', label: 'Avisos internos' }
+  { key: 'tools', label: t('Herramientas') },
+  { key: 'thinking', label: t('Thinking') },
+  { key: 'internal', label: t('Avisos internos') }
 ] as const
 
 const menuItem =
@@ -115,10 +116,10 @@ const menuItem =
           <span
             v-if="live"
             class="inline-flex shrink-0 items-center gap-1.5 text-live"
-            title="En vivo: se está escribiendo fuera de la app"
+            :title="t('En vivo: se está escribiendo fuera de la app')"
           >
             <span class="live-dot" aria-hidden="true" />
-            En vivo
+            {{ t('En vivo') }}
           </span>
           <template v-if="detail.gitBranch">
             <span aria-hidden="true">·</span>
@@ -128,8 +129,12 @@ const menuItem =
           <span aria-hidden="true">·</span>
           <TooltipRoot :delay-duration="300">
             <TooltipTrigger as-child>
-              <span class="shrink-0 tabular-nums" tabindex="0" :aria-label="`${tokens} tokens`">
-                {{ tokens }} tokens
+              <span
+                class="shrink-0 tabular-nums"
+                tabindex="0"
+                :aria-label="t('{n} tokens', { n: tokens })"
+              >
+                {{ t('{n} tokens', { n: tokens }) }}
               </span>
             </TooltipTrigger>
             <TooltipPortal>
@@ -139,7 +144,7 @@ const menuItem =
                 :collision-padding="8"
                 class="z-30 rounded-menu bg-surface px-3 py-2 text-text shadow-float"
               >
-                <p class="mb-1 text-xs font-medium">Tokens</p>
+                <p class="mb-1 text-xs font-medium">{{ t('Tokens') }}</p>
                 <TokenBreakdown :usage="detail.usage" />
               </TooltipContent>
             </TooltipPortal>
@@ -149,7 +154,7 @@ const menuItem =
 
       <IconButton
         :icon="Star"
-        :label="detail.favorite ? 'Quitar de favoritas' : 'Marcar como favorita'"
+        :label="detail.favorite ? t('Quitar de favoritas') : t('Marcar como favorita')"
         :class="detail.favorite ? '[&_svg]:fill-current text-accent hover:text-accent' : ''"
         :aria-pressed="detail.favorite"
         @click="emit('favorite', !detail.favorite)"
@@ -157,7 +162,7 @@ const menuItem =
 
       <DropdownMenuRoot>
         <DropdownMenuTrigger as-child>
-          <IconButton :icon="SlidersHorizontal" label="Filtros" />
+          <IconButton :icon="SlidersHorizontal" :label="t('Filtros')" />
         </DropdownMenuTrigger>
         <DropdownMenuPortal>
           <DropdownMenuContent
@@ -166,7 +171,9 @@ const menuItem =
             :collision-padding="8"
             class="z-30 min-w-52 rounded-menu bg-surface p-1 text-text shadow-float"
           >
-            <DropdownMenuLabel class="px-2 py-1 text-xs text-muted">Mostrar</DropdownMenuLabel>
+            <DropdownMenuLabel class="px-2 py-1 text-xs text-muted">{{
+              t('Mostrar')
+            }}</DropdownMenuLabel>
             <DropdownMenuCheckboxItem
               v-for="filter in filters"
               :key="filter.key"
@@ -185,11 +192,11 @@ const menuItem =
             <DropdownMenuSeparator class="my-1 h-px bg-border" />
             <DropdownMenuItem :class="menuItem" @select="emit('foldAll', true)">
               <ChevronsUpDown :size="16" :stroke-width="1.75" aria-hidden="true" />
-              Desplegar todo
+              {{ t('Desplegar todo') }}
             </DropdownMenuItem>
             <DropdownMenuItem :class="menuItem" @select="emit('foldAll', false)">
               <ChevronsDownUp :size="16" :stroke-width="1.75" aria-hidden="true" />
-              Plegar todo
+              {{ t('Plegar todo') }}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenuPortal>
@@ -197,7 +204,7 @@ const menuItem =
 
       <PopoverRoot>
         <PopoverTrigger as-child>
-          <IconButton :icon="Info" label="Detalles" />
+          <IconButton :icon="Info" :label="t('Detalles')" />
         </PopoverTrigger>
         <PopoverPortal>
           <PopoverContent

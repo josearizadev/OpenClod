@@ -1,6 +1,8 @@
 import { relative, isAbsolute } from 'node:path'
 import type { SessionDetail } from '../../shared/projects'
 import type { TranscriptItem, TranscriptPayload } from '../../shared/sessions'
+import { localeTag } from '../../shared/i18n'
+import { mainLocale, t } from '../i18n'
 
 /**
  * Exportar una sesión a Markdown. Puro: el main pide la ruta
@@ -21,7 +23,7 @@ function dateTime(iso: string | undefined, timeZone?: string): string {
   if (!iso) return ''
   const date = new Date(iso)
   if (Number.isNaN(date.getTime())) return ''
-  return date.toLocaleString('es-ES', {
+  return date.toLocaleString(localeTag(mainLocale()), {
     dateStyle: 'medium',
     timeStyle: 'short',
     ...(timeZone ? { timeZone } : {})
@@ -32,7 +34,7 @@ function time(iso: string | undefined, timeZone?: string): string {
   if (!iso) return ''
   const date = new Date(iso)
   if (Number.isNaN(date.getTime())) return ''
-  return date.toLocaleTimeString('es-ES', {
+  return date.toLocaleTimeString(localeTag(mainLocale()), {
     hour: '2-digit',
     minute: '2-digit',
     ...(timeZone ? { timeZone } : {})
@@ -47,7 +49,9 @@ export function fence(text: string, lang = ''): string {
 }
 
 function clip(text: string, max = DETAIL_MAX): string {
-  return text.length > max ? `${text.slice(0, max)}\n… (${text.length - max} caracteres más)` : text
+  return text.length > max
+    ? `${text.slice(0, max)}\n… (${t('{n} caracteres más', { n: text.length - max })})`
+    : text
 }
 
 function str(value: unknown): string | undefined {
@@ -84,21 +88,23 @@ function header(
   payload: TranscriptPayload,
   opts: ExportOptions
 ): string[] {
-  const lines = [`# ${detail?.title ?? 'Sesión de Claude Code'}`, '']
+  const lines = [`# ${detail?.title ?? t('Sesión de Claude Code')}`, '']
   const start = dateTime(detail?.startedAt, opts.timeZone)
   const end = dateTime(detail?.updatedAt, opts.timeZone)
-  if (start) lines.push(`- **Fecha:** ${start}${end && end !== start ? ` – ${end}` : ''}`)
+  if (start) lines.push(`- **${t('Fecha')}:** ${start}${end && end !== start ? ` – ${end}` : ''}`)
   const cwd = payload.cwd ?? detail?.cwd
-  if (cwd) lines.push(`- **Carpeta:** \`${cwd}\``)
-  if (detail?.gitBranch) lines.push(`- **Rama:** \`${detail.gitBranch}\``)
-  if (detail?.models.length) lines.push(`- **Modelo:** ${detail.models.join(', ')}`)
+  if (cwd) lines.push(`- **${t('Carpeta')}:** \`${cwd}\``)
+  if (detail?.gitBranch) lines.push(`- **${t('Rama')}:** \`${detail.gitBranch}\``)
+  if (detail?.models.length) lines.push(`- **${t('Modelo')}:** ${detail.models.join(', ')}`)
   if (detail) {
     const u = detail.usage
     const total = u.input + u.output + u.cacheCreation + u.cacheRead
-    lines.push(`- **Tokens:** ${total.toLocaleString('es-ES')}`)
+    lines.push(`- **Tokens:** ${total.toLocaleString(localeTag(mainLocale()))}`)
   }
-  lines.push(`- **Sesión:** \`${payload.sessionId}\``)
-  lines.push(`- **Exportada:** ${dateTime(opts.now.toISOString(), opts.timeZone)} con OpenClod`)
+  lines.push(`- **${t('Sesión')}:** \`${payload.sessionId}\``)
+  lines.push(
+    `- **${t('Exportada')}:** ${t('{date} con OpenClod', { date: dateTime(opts.now.toISOString(), opts.timeZone) })}`
+  )
   lines.push('', '---', '')
   return lines
 }
@@ -122,7 +128,7 @@ export function toMarkdown(
     if (speaker === who) return
     speaker = who
     const at = time(iso, opts.timeZone)
-    out.push(`### ${who === 'user' ? 'Tú' : 'Claude'}${at ? ` · ${at}` : ''}`, '')
+    out.push(`### ${who === 'user' ? t('Tú') : 'Claude'}${at ? ` · ${at}` : ''}`, '')
   }
 
   for (const item of payload.items) {
@@ -130,7 +136,7 @@ export function toMarkdown(
     if (segment) {
       segmentStarts.delete(item.line)
       const at = dateTime(segment.startedAt, opts.timeZone)
-      out.push('---', '', `_Continuación${at ? ` · ${at}` : ''}_`, '')
+      out.push('---', '', `_${t('Continuación')}${at ? ` · ${at}` : ''}_`, '')
       speaker = null
     }
     if (item.sidechain) continue
@@ -138,9 +144,12 @@ export function toMarkdown(
       case 'user-prompt': {
         speaker = null
         heading('user', item.timestamp)
-        out.push(item.text.trim() || '_(sin texto)_')
+        out.push(item.text.trim() || `_(${t('sin texto')})_`)
         if (item.images > 0)
-          out.push('', `_(${item.images} ${item.images === 1 ? 'imagen' : 'imágenes'})_`)
+          out.push(
+            '',
+            `_(${item.images === 1 ? t('1 imagen') : t('{n} imágenes', { n: item.images })})_`
+          )
         out.push('')
         break
       }
@@ -163,7 +172,7 @@ export function toMarkdown(
           const result = results.get(item.id)
           if (result && result.text.trim()) {
             out.push(
-              result.isError ? '**Error:**' : '**Resultado:**',
+              result.isError ? `**${t('Error')}:**` : `**${t('Resultado')}:**`,
               '',
               fence(clip(result.text)),
               ''
@@ -179,11 +188,11 @@ export function toMarkdown(
       case 'subagent-ref': {
         heading('claude', item.timestamp)
         const label = item.description ?? item.agentType ?? item.agentId
-        out.push(`> 🤖 Subagente: ${label}`, '')
+        out.push(`> 🤖 ${t('Subagente')}: ${label}`, '')
         break
       }
       case 'interrupted': {
-        out.push('_(interrumpido por el usuario)_', '')
+        out.push(`_(${t('interrumpido por el usuario')})_`, '')
         speaker = null
         break
       }

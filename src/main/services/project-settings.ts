@@ -8,6 +8,7 @@ import type {
 } from '../../shared/project-settings'
 import { hashText } from './claude-md'
 import { isInside } from './paths'
+import { t } from '../i18n'
 
 /**
  * Ajustes del proyecto. Lee tres capas de ajustes de Claude Code
@@ -93,7 +94,7 @@ function layerOf(path: string, raw: RawFile): SettingsLayer {
 function checkPath(path: string, claudeDir: string): void {
   if (isInside(path, claudeDir)) {
     throw new ProjectSettingsError(
-      'Los ajustes de este proyecto están en la carpeta de Claude Code: no se editan desde aquí.'
+      t('Los ajustes de este proyecto están en la carpeta de Claude Code: no se editan desde aquí.')
     )
   }
 }
@@ -173,7 +174,9 @@ export async function writeProjectSettings(
   }
   if (raw.invalid) {
     throw new ProjectSettingsError(
-      `${path} no es JSON válido: corrígelo a mano antes de cambiar los ajustes desde aquí.`
+      t('{path} no es JSON válido: corrígelo a mano antes de cambiar los ajustes desde aquí.', {
+        path
+      })
     )
   }
   const next = applyPatch(raw.data ?? {}, patch)

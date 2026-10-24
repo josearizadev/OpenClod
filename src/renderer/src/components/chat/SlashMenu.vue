@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { SOURCE_LABELS, type SlashEntry } from '../../lib/slash-commands'
 
 /**
@@ -20,7 +21,7 @@ const emit = defineEmits<{ pick: [name: string]; hover: [index: number] }>()
     v-if="commands.length > 0"
     id="slash-menu"
     role="listbox"
-    aria-label="Comandos"
+    :aria-label="t('Comandos')"
     class="flex max-h-60 flex-col overflow-y-auto border-b border-border pb-1"
   >
     <li
@@ -41,8 +42,8 @@ const emit = defineEmits<{ pick: [name: string]; hover: [index: number] }>()
         class="shrink-0 rounded-[4px] border border-border px-1 text-[11px] leading-4 text-muted"
         :title="
           command.source === 'app'
-            ? 'Lo resuelve OpenClod'
-            : 'Solo funciona en la terminal de Claude Code'
+            ? t('Lo resuelve OpenClod')
+            : t('Solo funciona en la terminal de Claude Code')
         "
         >{{ SOURCE_LABELS[command.source] }}</span
       >

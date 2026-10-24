@@ -12,6 +12,7 @@ import {
   type PermissionKind,
   type PermissionRequestView
 } from '../../../shared/chat'
+import { t } from '../../i18n'
 
 /**
  * Peticiones de permiso de una sesión de chat. `canUseTool` abre una
@@ -59,7 +60,7 @@ function kindOf(toolName: string): PermissionKind {
 }
 
 function modeLabel(mode: PermissionMode): string {
-  return KNOWN_MODES.has(mode) ? MODE_LABELS[mode as ChatMode] : mode
+  return KNOWN_MODES.has(mode) ? t(MODE_LABELS[mode as ChatMode]) : mode
 }
 
 /** Texto de lo que añadiría cada sugerencia, para la tarjeta. */
@@ -141,7 +142,7 @@ export class PermissionBroker {
       const onAbort = (): void =>
         this.finish(view.requestId, 'cancelled', {
           behavior: 'deny',
-          message: 'El usuario ha detenido el turno.'
+          message: t('El usuario ha detenido el turno.')
         })
       options.signal.addEventListener('abort', onAbort, { once: true })
       this.pending.set(view.requestId, {
@@ -172,7 +173,7 @@ export class PermissionBroker {
       if (answer.decision === 'deny' || Object.keys(answers).length === 0) {
         this.finish(view.requestId, 'denied', {
           behavior: 'deny',
-          message: answer.message?.trim() || 'El usuario no ha querido responder.'
+          message: answer.message?.trim() || t('El usuario no ha querido responder.')
         })
       } else {
         this.finish(view.requestId, 'allowed', {
@@ -187,7 +188,7 @@ export class PermissionBroker {
       if (answer.decision === 'deny') {
         this.finish(view.requestId, 'denied', {
           behavior: 'deny',
-          message: answer.message?.trim() || 'El usuario quiere seguir planificando.'
+          message: answer.message?.trim() || t('El usuario quiere seguir planificando.')
         })
       } else {
         const setMode = suggestions.filter((s) => s.type === 'setMode')
@@ -205,7 +206,7 @@ export class PermissionBroker {
     if (answer.decision === 'deny') {
       this.finish(view.requestId, 'denied', {
         behavior: 'deny',
-        message: answer.message?.trim() || 'El usuario ha denegado el permiso.'
+        message: answer.message?.trim() || t('El usuario ha denegado el permiso.')
       })
       return true
     }
@@ -231,7 +232,7 @@ export class PermissionBroker {
     for (const id of [...this.pending.keys()]) {
       this.finish(id, 'cancelled', {
         behavior: 'deny',
-        message: 'El usuario ha detenido el turno.'
+        message: t('El usuario ha detenido el turno.')
       })
     }
   }

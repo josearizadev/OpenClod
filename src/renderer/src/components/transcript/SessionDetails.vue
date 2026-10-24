@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { computed, ref, watch } from 'vue'
 import type { CostTotal } from '../../../../shared/usage'
 import { formatUsd } from '../../lib/usage-format'
@@ -33,24 +34,29 @@ watch(
 const facts = computed(() => {
   const d = props.detail
   return [
-    { label: 'Inicio', value: longDateTime(d.startedAt) },
-    { label: 'Última actividad', value: longDateTime(d.updatedAt) },
-    { label: 'Rama', value: d.gitBranch ?? '—', mono: true },
-    { label: 'Carpeta', value: d.cwd ?? '—', mono: true },
-    { label: d.models.length === 1 ? 'Modelo' : 'Modelos', value: d.models.join(', ') || '—' },
-    { label: 'Mensajes', value: formatNumber(d.messageCount) },
-    { label: 'Llamadas a herramientas', value: formatNumber(d.toolCallCount) },
-    { label: 'Subagentes', value: formatNumber(d.subagentCount) },
+    { label: t('Inicio'), value: longDateTime(d.startedAt) },
+    { label: t('Última actividad'), value: longDateTime(d.updatedAt) },
+    { label: t('Rama'), value: d.gitBranch ?? '—', mono: true },
+    { label: t('Carpeta'), value: d.cwd ?? '—', mono: true },
+    {
+      label: d.models.length === 1 ? t('Modelo') : t('Modelos'),
+      value: d.models.join(', ') || '—'
+    },
+    { label: t('Mensajes'), value: formatNumber(d.messageCount) },
+    { label: t('Llamadas a herramientas'), value: formatNumber(d.toolCallCount) },
+    { label: t('Subagentes'), value: formatNumber(d.subagentCount) },
     ...(cost.value
       ? [
           {
-            label: 'Coste equivalente',
-            value: `${cost.value.partial ? '≥ ' : ''}${formatUsd(cost.value.usd)} según Claude Code`
+            label: t('Coste equivalente'),
+            value: t('{cost} según Claude Code', {
+              cost: `${cost.value.partial ? '≥ ' : ''}${formatUsd(cost.value.usd)}`
+            })
           }
         ]
       : []),
     ...(props.invalidLines
-      ? [{ label: 'Líneas no válidas', value: formatNumber(props.invalidLines) }]
+      ? [{ label: t('Líneas no válidas'), value: formatNumber(props.invalidLines) }]
       : [])
   ]
 })
@@ -72,12 +78,16 @@ const facts = computed(() => {
     <div class="flex flex-wrap gap-6">
       <div>
         <p class="mb-2 font-medium">
-          {{ detail.chainLength > 1 ? `Conversación de ${detail.chainLength} sesiones` : 'Tokens' }}
+          {{
+            detail.chainLength > 1
+              ? t('Conversación de {n} sesiones', { n: detail.chainLength })
+              : t('Tokens')
+          }}
         </p>
         <TokenBreakdown :usage="detail.usage" />
       </div>
       <div v-if="detail.chainLength > 1">
-        <p class="mb-2 font-medium">Solo esta sesión</p>
+        <p class="mb-2 font-medium">{{ t('Solo esta sesión') }}</p>
         <TokenBreakdown :usage="detail.ownUsage" />
       </div>
     </div>

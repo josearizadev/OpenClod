@@ -1,5 +1,7 @@
 import type { ChatEvent, TaskView } from '../../shared/chat'
 import type { NotificationSettings } from '../../shared/types'
+import { mainLocale, t } from '../i18n'
+import { localeTag } from '../../shared/i18n'
 
 /**
  * Notificaciones del sistema. Observa los eventos que ya
@@ -50,7 +52,7 @@ function clock(iso: string): string | null {
   const date = new Date(iso)
   return Number.isNaN(date.getTime())
     ? null
-    : date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+    : date.toLocaleTimeString(localeTag(mainLocale()), { hour: '2-digit', minute: '2-digit' })
 }
 
 export function createNotifier(options: NotifierOptions): Notifier {
@@ -68,7 +70,7 @@ export function createNotifier(options: NotifierOptions): Notifier {
     const previous = last.get(key)
     if (previous !== undefined && now() - previous < MIN_GAP_MS) return
     last.set(key, now())
-    const title = (sessionId && options.titleOf(sessionId)) || 'Sesión nueva'
+    const title = (sessionId && options.titleOf(sessionId)) || t('Sesión nueva')
     options.show({ kind, title, body, sessionId })
   }
 
@@ -80,19 +82,23 @@ export function createNotifier(options: NotifierOptions): Notifier {
           break
         case 'turn-end':
           if (event.result === 'success') {
-            emit(event.chatId, 'turnEnd', `Ha terminado · ${formatDuration(event.durationMs)}`)
+            emit(
+              event.chatId,
+              'turnEnd',
+              t('Ha terminado · {duration}', { duration: formatDuration(event.durationMs) })
+            )
           } else if (event.result === 'error') {
-            emit(event.chatId, 'turnEnd', 'Terminó con un error')
+            emit(event.chatId, 'turnEnd', t('Terminó con un error'))
           }
           break
         case 'permission': {
           const { request } = event
           const body =
             request.kind === 'question'
-              ? 'Te hace una pregunta'
+              ? t('Te hace una pregunta')
               : request.kind === 'plan'
-                ? 'Tiene un plan para revisar'
-                : `Pide permiso: ${request.toolName}`
+                ? t('Tiene un plan para revisar')
+                : t('Pide permiso: {tool}', { tool: request.toolName })
           emit(event.chatId, 'permission', body)
           break
         }
@@ -104,9 +110,17 @@ export function createNotifier(options: NotifierOptions): Notifier {
             const was = before.get(task.taskId)
             if (!task.background || was !== 'running') continue
             if (task.status === 'completed') {
-              emit(event.chatId, 'tasks', `Tarea terminada: ${clip(task.description, 60)}`)
+              emit(
+                event.chatId,
+                'tasks',
+                t('Tarea terminada: {task}', { task: clip(task.description, 60) })
+              )
             } else if (task.status === 'failed') {
-              emit(event.chatId, 'tasks', `Tarea fallida: ${clip(task.description, 60)}`)
+              emit(
+                event.chatId,
+                'tasks',
+                t('Tarea fallida: {task}', { task: clip(task.description, 60) })
+              )
             }
           }
           tasks.set(event.chatId, after)
@@ -118,7 +132,9 @@ export function createNotifier(options: NotifierOptions): Notifier {
             emit(
               event.chatId,
               'limit',
-              reset ? `Límite alcanzado · se renueva a las ${reset}` : 'Límite alcanzado'
+              reset
+                ? t('Límite alcanzado · se renueva a las {time}', { time: reset })
+                : t('Límite alcanzado')
             )
           }
           break

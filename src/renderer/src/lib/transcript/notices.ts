@@ -1,3 +1,4 @@
+import { t } from '../../i18n'
 /**
  * Textos de los avisos del transcript: Claude Code los guarda con etiquetas
  * pseudo-XML (`<task-notification>`, `<local-command-stdout>`…) que no se muestran tal cual.
@@ -18,10 +19,10 @@ export interface TaskNotice {
 }
 
 const STATUS_LABELS: Record<string, string> = {
-  completed: 'Terminó',
-  failed: 'Falló',
-  killed: 'Detenida',
-  stopped: 'Detenida'
+  completed: t('Terminó'),
+  failed: t('Falló'),
+  killed: t('Detenida'),
+  stopped: t('Detenida')
 }
 
 /** Resumen de una notificación de tarea en segundo plano, su estado y su llamada, si vienen. */

@@ -117,6 +117,8 @@ describe('AppStore', () => {
       notifications: { ...DEFAULT_NOTIFICATIONS },
       terminal: { ...DEFAULT_TERMINAL },
       window: { closeToTray: false },
+      language: 'system',
+      welcomed: false,
       limitsCache: null,
       windowState: null,
       projectPrefs: {}
@@ -151,6 +153,8 @@ describe('AppStore', () => {
       notifications: { ...DEFAULT_NOTIFICATIONS },
       terminal: { ...DEFAULT_TERMINAL },
       window: { closeToTray: false },
+      language: 'system',
+      welcomed: false,
       limitsCache: null,
       windowState: null,
       projectPrefs: {}
@@ -179,6 +183,8 @@ describe('AppStore', () => {
       notifications: { ...DEFAULT_NOTIFICATIONS },
       terminal: { ...DEFAULT_TERMINAL },
       window: { closeToTray: false },
+      language: 'system',
+      welcomed: false,
       limitsCache: null,
       windowState: null,
       projectPrefs: {}

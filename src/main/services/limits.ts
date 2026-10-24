@@ -3,6 +3,7 @@ import type { LimitKind, LimitsSnapshot, LimitSource, LimitWindow } from '../../
 import type { Logger } from './logger'
 import { readUsageResponse } from './sdk-usage'
 import { ProbeUnsupported } from './usage-probe'
+import { t } from '../i18n'
 
 /**
  * Estado de los límites: fusiona las fuentes por prioridad y caducidad,
@@ -151,7 +152,7 @@ export class LimitsService {
     this.inflight = call
       .then((raw) => this.applyUsage(raw))
       .catch((error: unknown) => {
-        const reason = error instanceof Error ? error.message : 'La consulta de uso falló'
+        const reason = error instanceof Error ? error.message : t('La consulta de uso falló')
         if (error instanceof ProbeUnsupported) this.unavailable = true
         this.probeState = {
           state: error instanceof ProbeUnsupported ? 'unavailable' : 'error',

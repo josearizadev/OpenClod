@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import {
   DialogClose,
   DialogContent,
@@ -20,9 +21,9 @@ const emit = defineEmits<{ pick: [name: string] }>()
 const query = ref('')
 
 const GROUPS: { source: SlashSource; hint: string }[] = [
-  { source: 'claude', hint: 'Los ejecuta Claude Code en la sesión.' },
-  { source: 'app', hint: 'Los resuelve OpenClod con su propia interfaz.' },
-  { source: 'terminal', hint: 'Solo funcionan en la terminal: se ofrece abrir la sesión allí.' }
+  { source: 'claude', hint: t('Los ejecuta Claude Code en la sesión.') },
+  { source: 'app', hint: t('Los resuelve OpenClod con su propia interfaz.') },
+  { source: 'terminal', hint: t('Solo funcionan en la terminal: se ofrece abrir la sesión allí.') }
 ]
 
 const groups = computed(() => {
@@ -50,15 +51,16 @@ function pick(name: string): void {
         class="fixed top-1/2 left-1/2 z-50 flex max-h-[min(36rem,calc(100vh-4rem))] w-[min(36rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 flex-col gap-3 rounded-dialog bg-surface p-5 text-text shadow-float"
       >
         <div>
-          <DialogTitle class="font-serif text-lg">Comandos</DialogTitle>
+          <DialogTitle class="font-serif text-lg">{{ t('Comandos') }}</DialogTitle>
           <DialogDescription class="text-sm text-muted">
-            Escribe <code class="font-mono">/</code> en el mensaje para usarlos.
+            {{ t('Escribe') }} <code class="font-mono">/</code>
+            {{ t('en el mensaje para usarlos.') }}
           </DialogDescription>
         </div>
         <input
           v-model="query"
-          aria-label="Filtrar comandos"
-          placeholder="Filtrar…"
+          :aria-label="t('Filtrar comandos')"
+          :placeholder="t('Filtrar…')"
           class="h-8 rounded-item border border-border bg-bg px-2 text-sm outline-none placeholder:text-muted focus-visible:border-accent"
         />
         <div class="-mx-1 min-h-0 flex-1 overflow-y-auto px-1">
@@ -78,11 +80,13 @@ function pick(name: string): void {
               </li>
             </ul>
           </section>
-          <p v-if="groups.length === 0" class="text-sm text-muted">Ningún comando coincide.</p>
+          <p v-if="groups.length === 0" class="text-sm text-muted">
+            {{ t('Ningún comando coincide.') }}
+          </p>
         </div>
         <div class="flex justify-end">
           <DialogClose class="h-8 rounded-item px-3 text-sm hover:bg-surface-hover">
-            Cerrar
+            {{ t('Cerrar') }}
           </DialogClose>
         </div>
       </DialogContent>

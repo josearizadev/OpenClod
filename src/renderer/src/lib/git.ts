@@ -1,4 +1,5 @@
 import type { GitChangeKind, GitFileChange } from '../../../shared/git'
+import { t } from '../i18n'
 
 /** Presentación de los cambios de Git. Puro. */
 
@@ -14,14 +15,14 @@ const LETTERS: Record<GitChangeKind, string> = {
 }
 
 const LABELS: Record<GitChangeKind, string> = {
-  modified: 'Modificado',
-  added: 'Añadido',
-  deleted: 'Borrado',
-  renamed: 'Renombrado',
-  copied: 'Copiado',
-  typechange: 'Cambio de tipo',
-  untracked: 'Sin seguimiento',
-  conflict: 'En conflicto'
+  modified: t('Modificado'),
+  added: t('Añadido'),
+  deleted: t('Borrado'),
+  renamed: t('Renombrado'),
+  copied: t('Copiado'),
+  typechange: t('Cambio de tipo'),
+  untracked: t('Sin seguimiento'),
+  conflict: t('En conflicto')
 }
 
 export function gitChangeLetter(kind: GitChangeKind): string {
@@ -30,8 +31,8 @@ export function gitChangeLetter(kind: GitChangeKind): string {
 
 export function gitChangeLabel(change: GitFileChange): string {
   const base = LABELS[change.kind]
-  const from = change.origPath ? ` desde ${change.origPath}` : ''
-  return change.staged && !change.unstaged ? `${base}${from} (preparado)` : `${base}${from}`
+  const from = change.origPath ? ` ${t('desde {path}', { path: change.origPath })}` : ''
+  return change.staged && !change.unstaged ? `${base}${from} (${t('preparado')})` : `${base}${from}`
 }
 
 export function gitChangeTone(kind: GitChangeKind): string {

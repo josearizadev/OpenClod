@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from './i18n'
 import { TooltipProvider } from 'reka-ui'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -12,6 +13,7 @@ import AboutDialog from './components/ui/AboutDialog.vue'
 import AppToast from './components/ui/AppToast.vue'
 import type { AppCommand } from '../../shared/types'
 import ConfirmDialog from './components/ui/ConfirmDialog.vue'
+import WelcomeScreen from './components/welcome/WelcomeScreen.vue'
 import { useShortcut } from './composables/useShortcut'
 import { useChatStore } from './stores/chat'
 import { useGitStore } from './stores/git'
@@ -54,16 +56,29 @@ const closeText = computed(() => {
   if (!c) return ''
   const parts: string[] = []
   if (c.working)
-    parts.push(c.working === 1 ? '1 sesión trabajando' : `${c.working} sesiones trabajando`)
+    parts.push(
+      c.working === 1 ? t('1 sesión trabajando') : t('{n} sesiones trabajando', { n: c.working })
+    )
   if (c.waiting)
     parts.push(
-      c.waiting === 1 ? '1 sesión esperando permiso' : `${c.waiting} sesiones esperando permiso`
+      c.waiting === 1
+        ? t('1 sesión esperando permiso')
+        : t('{n} sesiones esperando permiso', { n: c.waiting })
     )
   if (c.terminals)
-    parts.push(c.terminals === 1 ? '1 terminal abierta' : `${c.terminals} terminales abiertas`)
+    parts.push(
+      c.terminals === 1 ? t('1 terminal abierta') : t('{n} terminales abiertas', { n: c.terminals })
+    )
+  const list = parts.join(` ${t('y')} `)
   return c.restart
-    ? `Hay ${parts.join(' y ')}. Al reiniciar se detendrán; las sesiones podrás continuarlas cuando se abra la versión nueva.`
-    : `Hay ${parts.join(' y ')}. Al salir se detendrán; las sesiones podrás continuarlas al volver a abrir la app.`
+    ? t(
+        'Hay {list}. Al reiniciar se detendrán; las sesiones podrás continuarlas cuando se abra la versión nueva.',
+        { list }
+      )
+    : t(
+        'Hay {list}. Al salir se detendrán; las sesiones podrás continuarlas al volver a abrir la app.',
+        { list }
+      )
 })
 
 function quit(): void {
@@ -165,7 +180,10 @@ onBeforeUnmount(() => {
 
 <template>
   <TooltipProvider>
-    <div class="flex h-full overflow-hidden">
+    <!-- Hasta leer los ajustes no se sabe si toca la bienvenida: no se pinta nada. -->
+    <div v-if="!ui.settingsLoaded" class="h-full bg-bg" />
+    <WelcomeScreen v-else-if="!ui.welcomed" />
+    <div v-else class="flex h-full overflow-hidden">
       <AppSidebar />
       <div class="flex min-w-0 flex-1 flex-col bg-bg">
         <MainHeader :title="title" />
@@ -182,16 +200,20 @@ onBeforeUnmount(() => {
     <AboutDialog v-model:open="ui.aboutOpen" />
     <ConfirmDialog
       v-model:open="resumeOpen"
-      title="¿Continuar en la terminal?"
-      description="La sesión está abierta en la app; escribir en los dos sitios a la vez mezclaría los mensajes. Se cerrará el chat de la app y se abrirá con claude --resume."
-      confirm-label="Cerrar el chat y abrir"
+      :title="t('¿Continuar en la terminal?')"
+      :description="
+        t(
+          'La sesión está abierta en la app; escribir en los dos sitios a la vez mezclaría los mensajes. Se cerrará el chat de la app y se abrirá con claude --resume.'
+        )
+      "
+      :confirm-label="t('Cerrar el chat y abrir')"
       @confirm="confirmResume"
     />
     <ConfirmDialog
       v-model:open="closeOpen"
-      :title="closing?.restart ? '¿Reiniciar para actualizar?' : '¿Salir de OpenClod?'"
+      :title="closing?.restart ? t('¿Reiniciar para actualizar?') : t('¿Salir de OpenClod?')"
       :description="closeText"
-      :confirm-label="closing?.restart ? 'Reiniciar' : 'Salir'"
+      :confirm-label="closing?.restart ? t('Reiniciar') : t('Salir')"
       danger
       @confirm="quit"
     />

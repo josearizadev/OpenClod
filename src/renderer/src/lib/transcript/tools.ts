@@ -14,6 +14,7 @@ import {
   Wrench
 } from 'lucide-vue-next'
 import type { Component } from 'vue'
+import { locale } from '../../i18n'
 
 /**
  * Presentación de las herramientas de Claude Code: argumento principal,
@@ -171,7 +172,7 @@ export function toolSummary(name: string, input: unknown, cwd?: string): string 
   }
 }
 
-const VERBS: Record<ToolCategory, [string, string, string]> = {
+const VERBS_ES: Record<ToolCategory, [string, string, string]> = {
   // [verbo, singular, plural]
   read: ['leyó', 'archivo', 'archivos'],
   search: ['buscó', 'vez', 'veces'],
@@ -182,6 +183,19 @@ const VERBS: Record<ToolCategory, [string, string, string]> = {
   agent: ['lanzó', 'subagente', 'subagentes'],
   other: ['usó', 'herramienta', 'herramientas']
 }
+
+const VERBS_EN: Record<ToolCategory, [string, string, string]> = {
+  read: ['read', 'file', 'files'],
+  search: ['searched', 'time', 'times'],
+  edit: ['edited', 'file', 'files'],
+  write: ['wrote', 'file', 'files'],
+  run: ['ran', 'command', 'commands'],
+  web: ['fetched', 'page', 'pages'],
+  agent: ['launched', 'subagent', 'subagents'],
+  other: ['used', 'tool', 'tools']
+}
+
+const VERBS = locale === 'en' ? VERBS_EN : VERBS_ES
 
 /**
  * «Leyó 3 archivos, editó 1 y ejecutó 2 comandos» (orden de primera aparición). Con
@@ -203,9 +217,12 @@ export function groupLabel(
     const noun = previous && previous[1] === one ? '' : ` ${n === 1 ? one : many}`
     return `${verb} ${n}${noun}`
   })
-  if (opts.thought) parts.unshift('pensó')
+  if (opts.thought) parts.unshift(locale === 'en' ? 'thought' : 'pensó')
+  const and = locale === 'en' ? 'and' : 'y'
   const text =
-    parts.length > 1 ? `${parts.slice(0, -1).join(', ')} y ${parts[parts.length - 1]}` : parts[0]
+    parts.length > 1
+      ? `${parts.slice(0, -1).join(', ')} ${and} ${parts[parts.length - 1]}`
+      : parts[0]
   if (!text) return ''
   return text.charAt(0).toUpperCase() + text.slice(1)
 }
@@ -261,16 +278,28 @@ export function languageOf(path: string): string {
   return LANGUAGES[name.slice(dot + 1).toLowerCase()] ?? 'text'
 }
 
-const PERMISSION_VERBS: Record<ToolCategory, string> = {
-  read: 'leer',
-  search: 'buscar en',
-  edit: 'editar',
-  write: 'escribir',
-  run: 'ejecutar',
-  web: 'consultar',
-  agent: 'lanzar un subagente para',
-  other: 'usar'
-}
+const PERMISSION_VERBS: Record<ToolCategory, string> =
+  locale === 'en'
+    ? {
+        read: 'read',
+        search: 'search in',
+        edit: 'edit',
+        write: 'write',
+        run: 'run',
+        web: 'fetch',
+        agent: 'launch a subagent for',
+        other: 'use'
+      }
+    : {
+        read: 'leer',
+        search: 'buscar en',
+        edit: 'editar',
+        write: 'escribir',
+        run: 'ejecutar',
+        web: 'consultar',
+        agent: 'lanzar un subagente para',
+        other: 'usar'
+      }
 
 /** Verbo de la petición de permiso: «Claude quiere **editar** `src/auth.ts`». */
 export function permissionVerb(name: string): string {

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { ChevronDown, ShieldQuestion } from 'lucide-vue-next'
 import {
   DropdownMenuContent,
@@ -89,7 +90,7 @@ const itemClass =
 <template>
   <section
     class="flex flex-col gap-3 rounded-menu border border-border bg-surface p-4 shadow-float"
-    aria-label="Petición de permiso"
+    :aria-label="t('Petición de permiso')"
     @keydown.enter.self.prevent="emit('allow')"
   >
     <header class="flex items-start gap-2">
@@ -102,7 +103,7 @@ const itemClass =
       <div class="flex min-w-0 flex-col gap-0.5">
         <p v-if="request.title" class="text-sm">{{ request.title }}</p>
         <p v-else class="text-sm">
-          Claude quiere <strong>{{ verb }}</strong>
+          {{ t('Claude quiere') }} <strong>{{ verb }}</strong>
           <code v-if="summary" class="ml-1 font-mono text-[13px]">{{ summary }}</code>
           <span v-else class="ml-1 font-medium">{{ request.toolName }}</span>
         </p>
@@ -113,7 +114,7 @@ const itemClass =
           {{ request.decisionReason }}
         </p>
         <p v-if="request.blockedPath" class="text-xs text-muted">
-          Ruta bloqueada: <code class="font-mono">{{ request.blockedPath }}</code>
+          {{ t('Ruta bloqueada:') }} <code class="font-mono">{{ request.blockedPath }}</code>
         </p>
       </div>
     </header>
@@ -130,8 +131,8 @@ const itemClass =
         ref="reasonInput"
         v-model="reason"
         maxlength="2000"
-        aria-label="Motivo (opcional)"
-        placeholder="Motivo para Claude (opcional)"
+        :aria-label="t('Motivo (opcional)')"
+        :placeholder="t('Motivo para Claude (opcional)')"
         class="h-8 min-w-0 flex-1 rounded-item border border-border bg-bg px-2 text-sm outline-none placeholder:text-muted focus-visible:border-accent"
         @keydown.esc.prevent="denying = false"
       />
@@ -139,14 +140,14 @@ const itemClass =
         type="submit"
         class="h-8 shrink-0 rounded-item bg-danger px-3 text-sm text-on-accent hover:opacity-90"
       >
-        Denegar
+        {{ t('Denegar') }}
       </button>
       <button
         type="button"
         class="h-8 shrink-0 rounded-item px-2 text-sm text-muted hover:bg-surface-hover hover:text-text"
         @click="denying = false"
       >
-        Cancelar
+        {{ t('Cancelar') }}
       </button>
     </form>
 
@@ -157,13 +158,13 @@ const itemClass =
         class="h-8 rounded-item bg-accent px-3 text-sm text-on-accent transition-colors duration-150 hover:bg-accent-hover"
         @click="emit('allow')"
       >
-        Permitir una vez
+        {{ t('Permitir una vez') }}
       </button>
       <DropdownMenuRoot v-if="!request.noAlways && request.alwaysLabels.length > 0">
         <DropdownMenuTrigger
           class="inline-flex h-8 items-center gap-1 rounded-item border border-border px-3 text-sm transition-colors duration-150 hover:bg-surface-hover"
         >
-          Permitir siempre
+          {{ t('Permitir siempre') }}
           <ChevronDown :size="14" :stroke-width="1.75" aria-hidden="true" />
         </DropdownMenuTrigger>
         <DropdownMenuPortal>
@@ -174,16 +175,18 @@ const itemClass =
             class="z-30 w-80 rounded-menu bg-surface p-1 text-text shadow-float"
           >
             <DropdownMenuLabel class="px-2 py-1 text-xs text-muted">
-              Se añade: {{ request.alwaysLabels.join(', ') }}
+              {{ t('Se añade: {rules}', { rules: request.alwaysLabels.join(', ') }) }}
             </DropdownMenuLabel>
             <DropdownMenuItem :class="itemClass" @select="emit('always', 'session')">
-              <span>En esta sesión</span>
-              <span class="text-xs text-muted">Hasta que se cierre; no se guarda nada</span>
+              <span>{{ t('En esta sesión') }}</span>
+              <span class="text-xs text-muted">{{
+                t('Hasta que se cierre; no se guarda nada')
+              }}</span>
             </DropdownMenuItem>
             <DropdownMenuItem :class="itemClass" @select="emit('always', 'project')">
-              <span>En este proyecto</span>
+              <span>{{ t('En este proyecto') }}</span>
               <span class="text-xs text-muted"
-                >Claude Code lo guarda en <code>.claude/settings.local.json</code></span
+                >{{ t('Claude Code lo guarda en') }} <code>.claude/settings.local.json</code></span
               >
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -194,7 +197,7 @@ const itemClass =
         class="h-8 rounded-item px-3 text-sm text-muted transition-colors duration-150 hover:bg-surface-hover hover:text-text"
         @click="startDeny"
       >
-        Denegar
+        {{ t('Denegar') }}
       </button>
     </div>
   </section>

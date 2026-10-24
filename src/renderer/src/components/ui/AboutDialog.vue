@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import {
   DialogClose,
   DialogContent,
@@ -43,11 +44,11 @@ const rows = computed(() => {
   const i = info.value
   if (!i) return []
   return [
-    ['Claude Code (incluido)', i.claudeCode ?? '—'],
+    [t('Claude Code (incluido)'), i.claudeCode ?? '—'],
     ['Electron', i.electron],
     ['Chromium', i.chrome],
     ['Node.js', i.node],
-    ['Git', i.git ?? 'No encontrado']
+    ['Git', i.git ?? t('No encontrado')]
   ] as const
 })
 
@@ -56,17 +57,17 @@ const updateText = computed(() => {
   const s = update.status
   switch (s.state) {
     case 'disabled':
-      return 'Las actualizaciones solo funcionan en la versión instalada.'
+      return t('Las actualizaciones solo funcionan en la versión instalada.')
     case 'idle':
       return ''
     case 'checking':
-      return 'Buscando actualizaciones…'
+      return t('Buscando actualizaciones…')
     case 'latest':
-      return 'Tienes la última versión.'
+      return t('Tienes la última versión.')
     case 'downloading':
-      return `Descargando la ${s.version}… ${s.percent} %`
+      return t('Descargando la {version}… {pct} %', { version: s.version, pct: s.percent })
     case 'ready':
-      return `La ${s.version} está lista para instalarse.`
+      return t('La {version} está lista para instalarse.', { version: s.version })
     case 'error':
       return s.message
   }
@@ -109,7 +110,7 @@ function copyInfo(): void {
           <div class="min-w-0">
             <DialogTitle class="font-serif text-2xl leading-tight">OpenClod</DialogTitle>
             <DialogDescription class="mt-0.5 text-sm text-muted">
-              Versión {{ info?.app ?? '…' }}
+              {{ t('Versión {version}', { version: info?.app ?? '…' }) }}
             </DialogDescription>
           </div>
         </header>
@@ -131,7 +132,7 @@ function copyInfo(): void {
             ]"
           />
           <p class="min-w-0 flex-1 text-muted">
-            {{ updateText || 'Comprueba si hay una versión nueva.' }}
+            {{ updateText || t('Comprueba si hay una versión nueva.') }}
           </p>
           <button
             v-if="update.status.state === 'ready'"
@@ -139,7 +140,7 @@ function copyInfo(): void {
             class="h-7 shrink-0 rounded-item bg-accent px-2.5 text-xs text-on-accent transition-colors duration-150 hover:bg-accent-hover"
             @click="update.install()"
           >
-            Reiniciar
+            {{ t('Reiniciar') }}
           </button>
           <button
             v-else-if="update.status.state !== 'disabled'"
@@ -149,7 +150,7 @@ function copyInfo(): void {
             @click="update.check()"
           >
             <RefreshCw :size="13" :stroke-width="1.75" aria-hidden="true" />
-            Buscar
+            {{ t('Buscar') }}
           </button>
         </section>
 
@@ -164,7 +165,7 @@ function copyInfo(): void {
           </div>
         </dl>
 
-        <nav class="grid grid-cols-2 gap-2 text-sm" aria-label="Enlaces">
+        <nav class="grid grid-cols-2 gap-2 text-sm" :aria-label="t('Enlaces')">
           <a
             :href="REPO_URL"
             target="_blank"
@@ -197,7 +198,7 @@ function copyInfo(): void {
 
         <footer class="flex items-center gap-2 border-t border-border pt-4">
           <p class="mr-auto text-xs text-muted">
-            Código abierto (MIT).<br />No afiliado a Anthropic.
+            {{ t('Código abierto (MIT).') }}<br />{{ t('No afiliado a Anthropic.') }}
           </p>
           <button
             type="button"
@@ -205,12 +206,12 @@ function copyInfo(): void {
             @click="copyInfo"
           >
             <Copy :size="14" :stroke-width="1.75" aria-hidden="true" />
-            {{ copied ? 'Copiado' : 'Copiar' }}
+            {{ copied ? t('Copiado') : t('Copiar') }}
           </button>
           <DialogClose
             class="h-8 rounded-item bg-accent px-4 text-sm text-on-accent transition-colors duration-150 hover:bg-accent-hover"
           >
-            Cerrar
+            {{ t('Cerrar') }}
           </DialogClose>
         </footer>
       </DialogContent>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { FileText, X } from 'lucide-vue-next'
 import { computed } from 'vue'
 import type { ChatAttachment } from '../../../../shared/chat'
@@ -38,7 +39,7 @@ const hint = computed(() =>
     <span class="min-w-0 truncate text-sm">{{ attachment.name }}</span>
     <button
       type="button"
-      :aria-label="`Quitar «${attachment.name}»`"
+      :aria-label="t('Quitar «{name}»', { name: attachment.name })"
       class="absolute top-1 right-1 inline-flex size-5 items-center justify-center rounded-full text-muted opacity-0 transition-opacity duration-150 group-focus-within:opacity-100 group-hover:opacity-100 hover:bg-surface hover:text-text focus-visible:opacity-100"
       @click="emit('remove')"
     >

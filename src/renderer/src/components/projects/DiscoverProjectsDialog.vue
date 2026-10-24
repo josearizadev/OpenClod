@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import {
   DialogClose,
   DialogContent,
@@ -34,11 +35,11 @@ watch(open, async (isOpen) => {
   now.value = new Date()
   const found = await projects.discover()
   if (found) candidates.value = found
-  else error.value = projects.error ?? 'No se pudieron buscar las carpetas.'
+  else error.value = projects.error ?? t('No se pudieron buscar las carpetas.')
 })
 
 function sessionsLabel(n: number): string {
-  return n === 1 ? '1 sesión' : `${n} sesiones`
+  return n === 1 ? t('1 sesión') : t('{n} sesiones', { n })
 }
 
 async function importSelected(): Promise<void> {
@@ -64,13 +65,13 @@ async function importSelected(): Promise<void> {
       >
         <header class="flex items-start gap-3 px-5 pt-5 pb-3">
           <div class="min-w-0 flex-1">
-            <DialogTitle class="font-serif text-lg">Descubrir proyectos</DialogTitle>
+            <DialogTitle class="font-serif text-lg">{{ t('Descubrir proyectos') }}</DialogTitle>
             <DialogDescription class="mt-1 text-muted">
-              Carpetas en las que has usado Claude Code y que aún no están en OpenClod.
+              {{ t('Carpetas en las que has usado Claude Code y que aún no están en OpenClod.') }}
             </DialogDescription>
           </div>
           <DialogClose
-            aria-label="Cerrar"
+            :aria-label="t('Cerrar')"
             class="inline-flex size-8 shrink-0 items-center justify-center rounded-item text-muted transition-colors duration-150 hover:bg-surface-hover hover:text-text"
           >
             <X :size="18" :stroke-width="1.75" />
@@ -79,13 +80,13 @@ async function importSelected(): Promise<void> {
 
         <div class="min-h-0 flex-1 overflow-y-auto px-3">
           <p v-if="candidates === null && !error" class="px-2 py-6 text-center text-muted">
-            Buscando…
+            {{ t('Buscando…') }}
           </p>
           <p
             v-else-if="candidates && candidates.length === 0"
             class="px-2 py-6 text-center text-muted"
           >
-            No hay más carpetas con sesiones de Claude Code.
+            {{ t('No hay más carpetas con sesiones de Claude Code.') }}
           </p>
           <ul v-else-if="candidates" class="flex flex-col gap-0.5 pb-2">
             <li v-for="candidate in candidates" :key="candidate.path">
@@ -118,7 +119,7 @@ async function importSelected(): Promise<void> {
           <DialogClose
             class="h-8 rounded-item px-3 transition-colors duration-150 hover:bg-surface-hover"
           >
-            Cancelar
+            {{ t('Cancelar') }}
           </DialogClose>
           <button
             type="button"
@@ -126,7 +127,7 @@ async function importSelected(): Promise<void> {
             class="h-8 rounded-item bg-accent px-3 text-on-accent transition-colors duration-150 hover:bg-accent-hover disabled:opacity-40"
             @click="importSelected"
           >
-            Importar ({{ count }})
+            {{ t('Importar ({n})', { n: count }) }}
           </button>
         </footer>
       </DialogContent>

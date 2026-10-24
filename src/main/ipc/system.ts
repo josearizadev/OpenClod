@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { logger } from '../services/logger'
 import { handle } from './handle'
+import { t } from '../i18n'
 
 /** `claudeCodeVersion` del `package.json` del Agent SDK (la CLI que trae la app). */
 function claudeCodeVersion(): string | null {
@@ -41,8 +42,8 @@ export function registerSystemIpc(opts: { gitVersion: () => Promise<string | nul
     const options: Electron.OpenDialogOptions = {
       title:
         input?.purpose === 'claudeDir'
-          ? 'Elegir la carpeta de Claude Code'
-          : 'Elegir carpeta de trabajo',
+          ? t('Elegir la carpeta de Claude Code')
+          : t('Elegir carpeta de trabajo'),
       properties: ['openDirectory']
     }
     const owner = BrowserWindow.fromWebContents(event.sender)
@@ -53,7 +54,7 @@ export function registerSystemIpc(opts: { gitVersion: () => Promise<string | nul
   })
   handle('system:pickFiles', async (_input, event) => {
     const options: Electron.OpenDialogOptions = {
-      title: 'Adjuntar archivos',
+      title: t('Adjuntar archivos'),
       properties: ['openFile', 'multiSelections']
     }
     const owner = BrowserWindow.fromWebContents(event.sender)

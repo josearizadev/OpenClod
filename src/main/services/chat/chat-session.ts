@@ -40,6 +40,7 @@ import {
   visibleTasks,
   type TasksState
 } from './tasks'
+import { t } from '../../i18n'
 
 /**
  * Una sesión de chat activa: su `query()` del Agent SDK con entrada en
@@ -254,7 +255,7 @@ export class ChatSession {
     images: readonly ImageBlock[] = []
   ): string {
     this.touch()
-    if (this.closing) throw new Error('La sesión se está cerrando')
+    if (this.closing) throw new Error(t('La sesión se está cerrando'))
     if (images.length > 0) this.images.set(uuid, [...images])
     const extra = images.length > 0 ? { images: images.length } : {}
     if (!this.turnActive && !this.queue.some((q) => q.state === 'sending')) {

@@ -4,6 +4,7 @@ import type { LimitsService } from '../services/limits'
 import { logger } from '../services/logger'
 import { conversationCost, usageReport } from '../services/usage-report'
 import { handle, IpcError } from './handle'
+import { t } from '../i18n'
 
 /** Uso y límites: informe con el lector `readonly` y estado de los límites. */
 export function registerUsageIpc(
@@ -12,7 +13,7 @@ export function registerUsageIpc(
   limits: LimitsService
 ): void {
   handle('usage:report', (query) => {
-    if (!reader) throw new IpcError('INTERNAL', 'El índice no está disponible')
+    if (!reader) throw new IpcError('INTERNAL', t('El índice no está disponible'))
     const state = store.get()
     try {
       return usageReport(reader, query, {
@@ -22,7 +23,7 @@ export function registerUsageIpc(
       })
     } catch (error) {
       logger.error('usage', error)
-      throw new IpcError('INTERNAL', 'No se pudo calcular el uso')
+      throw new IpcError('INTERNAL', t('No se pudo calcular el uso'))
     }
   })
   handle('usage:limits', () => limits.snapshot())

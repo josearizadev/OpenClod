@@ -1,15 +1,18 @@
 <script setup lang="ts">
-import { ChevronRight, TriangleAlert } from 'lucide-vue-next'
+import { t } from '../../i18n'
+import { ChevronRight, LogIn, TriangleAlert } from 'lucide-vue-next'
 import { ref } from 'vue'
 import type { ChatErrorView } from '../../../../shared/chat'
+import { useTerminalStore } from '../../stores/terminal'
 
 /**
- * Error de un turno o de Claude Code: mensaje en español y detalle técnico plegable.
- * Nunca pide ni muestra credenciales.
+ * Error de un turno o de Claude Code: mensaje y detalle técnico plegable. Sin sesión iniciada,
+ * ofrece `claude auth login` en la terminal. Nunca pide ni muestra credenciales.
  */
 defineProps<{ error: ChatErrorView }>()
 const emit = defineEmits<{ dismiss: [] }>()
 const open = ref(false)
+const terminals = useTerminalStore()
 </script>
 
 <template>
@@ -26,11 +29,20 @@ const open = ref(false)
       />
       <p class="min-w-0 flex-1">{{ error.message }}</p>
       <button
+        v-if="error.code === 'auth'"
+        type="button"
+        class="inline-flex shrink-0 items-center gap-1 rounded-item px-1 text-xs font-medium text-accent hover:text-accent-hover"
+        @click="terminals.login()"
+      >
+        <LogIn :size="13" :stroke-width="1.75" aria-hidden="true" />
+        {{ t('Iniciar sesión') }}
+      </button>
+      <button
         type="button"
         class="shrink-0 rounded-item px-1 text-xs text-muted hover:text-text"
         @click="emit('dismiss')"
       >
-        Cerrar
+        {{ t('Cerrar') }}
       </button>
     </div>
     <button
@@ -47,7 +59,7 @@ const open = ref(false)
         class="transition-transform duration-150 motion-reduce:transition-none"
         :class="open ? 'rotate-90' : ''"
       />
-      Detalle técnico
+      {{ t('Detalle técnico') }}
     </button>
     <pre
       v-if="open && error.detail"

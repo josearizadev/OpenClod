@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import {
   ListboxContent,
   ListboxFilter,
@@ -41,10 +42,10 @@ const IMPORT = '__import'
 const DISCOVER = '__discover'
 
 const filtered = computed(() => {
-  const q = query.value.trim().toLocaleLowerCase('es')
+  const q = query.value.trim().toLocaleLowerCase()
   if (!q) return projects.projects
   return projects.projects.filter(
-    (p) => p.name.toLocaleLowerCase('es').includes(q) || p.path.toLocaleLowerCase('es').includes(q)
+    (p) => p.name.toLocaleLowerCase().includes(q) || p.path.toLocaleLowerCase().includes(q)
   )
 })
 
@@ -111,8 +112,12 @@ defineExpose({ show })
         'no-drag flex w-full items-center gap-2.5 rounded-item px-2 text-left transition-colors duration-150 hover:bg-surface-hover data-[state=open]:bg-surface-hover',
         collapsed ? 'h-8 justify-center' : 'min-h-8 py-1'
       ]"
-      :aria-label="collapsed ? `Proyecto: ${projects.active?.name ?? 'ninguno'}` : undefined"
-      :title="collapsed ? (projects.active?.name ?? 'Elegir proyecto') : undefined"
+      :aria-label="
+        collapsed
+          ? t('Proyecto: {name}', { name: projects.active?.name ?? t('ninguno') })
+          : undefined
+      "
+      :title="collapsed ? (projects.active?.name ?? t('Elegir proyecto')) : undefined"
       @click="onTriggerClick"
     >
       <component
@@ -123,9 +128,9 @@ defineExpose({ show })
       />
       <template v-if="!collapsed">
         <span class="min-w-0 flex-1">
-          <span class="block truncate">{{ projects.active?.name ?? 'Elegir proyecto' }}</span>
+          <span class="block truncate">{{ projects.active?.name ?? t('Elegir proyecto') }}</span>
           <span v-if="projects.active?.missing" class="block truncate text-xs text-muted">
-            Carpeta no encontrada
+            {{ t('Carpeta no encontrada') }}
           </span>
         </span>
         <ChevronsUpDown :size="16" :stroke-width="1.75" class="shrink-0 text-muted" />
@@ -148,8 +153,8 @@ defineExpose({ show })
           <ListboxFilter
             v-model="query"
             auto-focus
-            placeholder="Buscar proyecto…"
-            aria-label="Buscar proyecto"
+            :placeholder="t('Buscar proyecto…')"
+            :aria-label="t('Buscar proyecto')"
             class="mb-1 h-8 w-full rounded-item bg-transparent px-2 text-text outline-none placeholder:text-muted"
           />
           <ListboxContent class="max-h-80 overflow-y-auto">
@@ -168,7 +173,7 @@ defineExpose({ show })
               <span class="min-w-0 flex-1">
                 <span class="block truncate">{{ project.name }}</span>
                 <span class="block truncate text-xs text-muted" :title="project.path">
-                  {{ project.missing ? 'Carpeta no encontrada · ' : '' }}{{ project.path }}
+                  {{ project.missing ? `${t('Carpeta no encontrada')} · ` : '' }}{{ project.path }}
                 </span>
               </span>
               <Check
@@ -176,12 +181,12 @@ defineExpose({ show })
                 :size="16"
                 :stroke-width="1.75"
                 class="shrink-0 text-accent"
-                aria-label="Activo"
+                :aria-label="t('Activo')"
               />
               <button
                 type="button"
-                :aria-label="`Quitar ${project.name}`"
-                title="Quitar"
+                :aria-label="t('Quitar {name}', { name: project.name })"
+                :title="t('Quitar')"
                 class="inline-flex size-6 shrink-0 items-center justify-center rounded-[6px] text-muted opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-data-[highlighted]:opacity-100 hover:text-text focus-visible:opacity-100"
                 @pointerdown.stop
                 @click.stop="requestRemove(project)"
@@ -195,7 +200,7 @@ defineExpose({ show })
               v-if="projects.projects.length > 0 && filtered.length === 0"
               class="px-2 py-2 text-muted"
             >
-              Ningún proyecto coincide.
+              {{ t('Ningún proyecto coincide.') }}
             </p>
             <div v-if="projects.projects.length > 0" class="my-1 h-px bg-border" role="separator" />
             <ListboxItem
@@ -203,14 +208,14 @@ defineExpose({ show })
               class="flex h-8 cursor-default items-center gap-2 rounded-item px-2 outline-none data-[highlighted]:bg-surface-hover"
             >
               <FolderPlus :size="16" :stroke-width="1.75" class="shrink-0" />
-              Importar carpeta…
+              {{ t('Importar carpeta…') }}
             </ListboxItem>
             <ListboxItem
               :value="DISCOVER"
               class="flex h-8 cursor-default items-center gap-2 rounded-item px-2 outline-none data-[highlighted]:bg-surface-hover"
             >
               <FolderSearch :size="16" :stroke-width="1.75" class="shrink-0" />
-              Descubrir proyectos…
+              {{ t('Descubrir proyectos…') }}
             </ListboxItem>
           </ListboxContent>
         </ListboxRoot>

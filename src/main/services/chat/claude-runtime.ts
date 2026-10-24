@@ -1,6 +1,7 @@
 import type { Options } from '@anthropic-ai/claude-agent-sdk'
 import { realpath, stat } from 'node:fs/promises'
 import { isAbsolute, relative, sep } from 'node:path'
+import { t } from '../../i18n'
 
 /**
  * Cómo se lanza Claude Code. Cada sesión de chat es un proceso de Claude
@@ -30,8 +31,8 @@ export async function checkCwd(cwd: string, claudeDir: string): Promise<CwdCheck
 
 export function cwdErrorMessage(reason: 'missing' | 'claude-dir'): string {
   return reason === 'claude-dir'
-    ? 'No se puede trabajar dentro de la carpeta de Claude Code.'
-    : 'La carpeta de trabajo no existe o no es una carpeta.'
+    ? t('No se puede trabajar dentro de la carpeta de Claude Code.')
+    : t('La carpeta de trabajo no existe o no es una carpeta.')
 }
 
 /**

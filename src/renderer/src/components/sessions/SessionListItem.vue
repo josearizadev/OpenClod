@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import {
   ContextMenuContent,
   ContextMenuPortal,
@@ -40,16 +41,18 @@ const chat = useChatStore()
 const chatStatus = computed(() => {
   const status = chat.statusOf(props.item.sessionId)
   if (!status || status === 'closed') return null
-  if (status === 'waiting') return { label: 'Esperando permiso', dot: 'bg-warning' }
+  if (status === 'waiting') return { label: t('Esperando permiso'), dot: 'bg-warning' }
   if (status === 'working' || status === 'starting')
-    return { label: 'Trabajando', dot: 'bg-accent motion-safe:animate-pulse' }
-  return { label: 'Activa, en reposo', dot: 'border border-muted' }
+    return { label: t('Trabajando'), dot: 'bg-accent motion-safe:animate-pulse' }
+  return { label: t('Activa, en reposo'), dot: 'border border-muted' }
 })
 const when = computed(() => relativeTime(props.item.updatedAt, props.now))
 /** Escrita hace < 2 min fuera de la app: el chat activo ya tiene su punto. */
 const live = computed(() => !chatStatus.value && isLive(props.item.lastWriteAt, sessions.clock))
 const tokens = computed(() => formatTokens(totalTokens(props.item.usage)))
-const chainTitle = computed(() => `Conversación continuada (${props.item.chainLength} sesiones)`)
+const chainTitle = computed(() =>
+  t('Conversación continuada ({n} sesiones)', { n: props.item.chainLength })
+)
 
 const selected = computed(() => sessions.isSelected(props.item.sessionId))
 
@@ -89,14 +92,14 @@ const menuContent = 'z-30 min-w-56 rounded-menu bg-surface p-1 text-text shadow-
                   :size="14"
                   :stroke-width="2"
                   class="shrink-0 text-accent"
-                  aria-label="Seleccionada"
+                  :aria-label="t('Seleccionada')"
                 />
                 <Star
                   v-if="item.favorite"
                   :size="12"
                   :stroke-width="1.75"
                   class="shrink-0 fill-current text-accent"
-                  aria-label="Favorita"
+                  :aria-label="t('Favorita')"
                 />
                 <span
                   v-if="chatStatus"
@@ -110,8 +113,8 @@ const menuContent = 'z-30 min-w-56 rounded-menu bg-surface p-1 text-text shadow-
                   v-else-if="live"
                   class="live-dot"
                   role="img"
-                  title="En vivo: se está escribiendo fuera de la app"
-                  aria-label="En vivo: se está escribiendo fuera de la app"
+                  :title="t('En vivo: se está escribiendo fuera de la app')"
+                  :aria-label="t('En vivo: se está escribiendo fuera de la app')"
                 />
                 <span class="truncate">{{ item.title }}</span>
                 <span
@@ -128,7 +131,7 @@ const menuContent = 'z-30 min-w-56 rounded-menu bg-surface p-1 text-text shadow-
                   :size="12"
                   :stroke-width="1.75"
                   class="shrink-0 text-muted"
-                  aria-label="Oculta"
+                  :aria-label="t('Oculta')"
                 />
               </span>
               <span class="flex min-w-0 items-center gap-1.5 text-xs text-muted">
@@ -152,7 +155,7 @@ const menuContent = 'z-30 min-w-56 rounded-menu bg-surface p-1 text-text shadow-
               :collision-padding="8"
               class="z-30 rounded-menu bg-surface px-3 py-2 text-text shadow-float"
             >
-              <p class="mb-1 text-xs font-medium">Tokens</p>
+              <p class="mb-1 text-xs font-medium">{{ t('Tokens') }}</p>
               <TokenBreakdown :usage="item.usage" />
             </TooltipContent>
           </TooltipPortal>
@@ -160,7 +163,7 @@ const menuContent = 'z-30 min-w-56 rounded-menu bg-surface p-1 text-text shadow-
 
         <DropdownMenuRoot>
           <DropdownMenuTrigger
-            :aria-label="`Acciones de «${item.title}»`"
+            :aria-label="t('Acciones de «{title}»', { title: item.title })"
             class="no-drag absolute top-1.5 right-1 inline-flex size-6 items-center justify-center rounded-[6px] text-muted opacity-0 transition-opacity duration-150 group-focus-within:opacity-100 group-hover:opacity-100 hover:bg-surface-hover hover:text-text focus-visible:opacity-100 data-[state=open]:opacity-100"
           >
             <Ellipsis :size="16" :stroke-width="1.75" />

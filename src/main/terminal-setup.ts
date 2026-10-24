@@ -12,6 +12,7 @@ import {
   type SpawnPty,
   type TerminalService
 } from './services/terminal'
+import { t } from './i18n'
 
 /**
  * Monta la terminal de respaldo: carga node-pty (si falla, la app sigue sin
@@ -73,7 +74,7 @@ export function setupTerminal(deps: TerminalSetupDeps): TerminalSetup {
     const list = await shellsList()
     const wanted = deps.settings().shell
     const shell = list.find((s) => s.id === wanted) ?? list[0]
-    if (!shell) throw new TerminalError('No se encontró ningún shell')
+    if (!shell) throw new TerminalError(t('No se encontró ningún shell'))
     return shell
   }
 
@@ -111,16 +112,16 @@ export function setupTerminal(deps: TerminalSetupDeps): TerminalSetup {
         const id = input.target.sessionId
         const target = deps.resumeTarget(id)
         const cwd = target?.cwd ?? deps.sessionCwd(id)
-        if (!cwd) throw new TerminalError('No se encontró la carpeta de la sesión')
+        if (!cwd) throw new TerminalError(t('No se encontró la carpeta de la sesión'))
         const checked = await checkCwd(cwd, deps.claudeDir())
-        if (!checked.ok) throw new TerminalError('La carpeta de la sesión ya no existe')
+        if (!checked.ok) throw new TerminalError(t('La carpeta de la sesión ya no existe'))
         return {
           cwd: checked.path,
-          label: deps.sessionTitle(id) ?? 'sesión',
+          label: deps.sessionTitle(id) ?? t('sesión'),
           sessionId: target?.sessionId ?? id
         }
       }
-      if (input.target) {
+      if (input.target && input.kind !== 'login') {
         const cwd = await resolveRoot(input.target, deps)
         return { cwd, label: basename(cwd) || cwd }
       }

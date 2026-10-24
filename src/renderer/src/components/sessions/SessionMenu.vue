@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import {
   ContextMenuItem,
   ContextMenuSeparator,
@@ -71,12 +72,14 @@ const ui = useUiStore()
 async function exportMarkdown(tools: boolean): Promise<void> {
   const result = await window.api.sessions.export({ sessionId: props.sessionId, tools })
   if (!result.ok)
-    return ui.toast(`No se pudo exportar: ${result.error.message}`, { tone: 'danger' })
+    return ui.toast(t('No se pudo exportar: {error}', { error: result.error.message }), {
+      tone: 'danger'
+    })
   const saved = result.data
   if (!saved) return
-  ui.toast('Sesión exportada', {
+  ui.toast(t('Sesión exportada'), {
     action: {
-      label: 'Mostrar en la carpeta',
+      label: t('Mostrar en la carpeta'),
       run: () => void window.api.files.revealExport(saved.path)
     }
   })
@@ -102,42 +105,42 @@ const itemClass =
 <template>
   <component :is="Item" :class="itemClass" @select="rename">
     <Pencil :size="16" :stroke-width="1.75" aria-hidden="true" />
-    Renombrar…
+    {{ t('Renombrar…') }}
     <span class="ml-auto pl-4 text-xs text-muted">F2</span>
   </component>
   <component :is="Item" :class="itemClass" @select="set({ favorite: !favorite })">
     <component :is="favorite ? StarOff : Star" :size="16" :stroke-width="1.75" aria-hidden="true" />
-    {{ favorite ? 'Quitar de favoritas' : 'Marcar como favorita' }}
+    {{ favorite ? t('Quitar de favoritas') : t('Marcar como favorita') }}
   </component>
   <component :is="Item" :class="itemClass" @select="set({ hidden: !hidden })">
     <component :is="hidden ? Eye : EyeOff" :size="16" :stroke-width="1.75" aria-hidden="true" />
-    {{ hidden ? 'Mostrar en la lista' : 'Ocultar' }}
+    {{ hidden ? t('Mostrar en la lista') : t('Ocultar') }}
   </component>
   <component :is="Item" v-if="inList" :class="itemClass" @select="sessions.toggleSelect(sessionId)">
     <SquareCheck :size="16" :stroke-width="1.75" aria-hidden="true" />
-    {{ sessions.isSelected(sessionId) ? 'Quitar de la selección' : 'Seleccionar' }}
-    <span class="ml-auto pl-4 text-xs text-muted">Ctrl+clic</span>
+    {{ sessions.isSelected(sessionId) ? t('Quitar de la selección') : t('Seleccionar') }}
+    <span class="ml-auto pl-4 text-xs text-muted">{{ t('Ctrl+clic') }}</span>
   </component>
   <component :is="Separator" class="my-1 h-px bg-border" />
   <component :is="Item" :class="itemClass" @select="openInTerminal">
     <SquareTerminal :size="16" :stroke-width="1.75" aria-hidden="true" />
-    Abrir en terminal
+    {{ t('Abrir en terminal') }}
   </component>
   <component :is="Item" :class="itemClass" @select="exportMarkdown(false)">
     <FileDown :size="16" :stroke-width="1.75" aria-hidden="true" />
-    Exportar a Markdown…
+    {{ t('Exportar a Markdown…') }}
   </component>
   <component :is="Item" :class="itemClass" @select="exportMarkdown(true)">
     <FileCode :size="16" :stroke-width="1.75" aria-hidden="true" />
-    Exportar con herramientas…
+    {{ t('Exportar con herramientas…') }}
   </component>
   <component :is="Item" :class="itemClass" @select="copyId">
     <Copy :size="16" :stroke-width="1.75" aria-hidden="true" />
-    Copiar id de sesión
+    {{ t('Copiar id de sesión') }}
   </component>
   <component :is="Separator" class="my-1 h-px bg-border" />
   <component :is="Item" :class="[itemClass, 'text-danger']" @select="askTrash">
     <Trash2 :size="16" :stroke-width="1.75" aria-hidden="true" />
-    Eliminar…
+    {{ t('Eliminar…') }}
   </component>
 </template>

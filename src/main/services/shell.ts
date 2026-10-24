@@ -2,6 +2,7 @@ import { execFile } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { basename, join } from 'node:path'
 import type { ShellOption } from '../../shared/terminal'
+import { t } from '../i18n'
 
 /**
  * Shell del usuario y la orden de Claude Code para la terminal. Puro salvo
@@ -45,7 +46,7 @@ export async function detectShells(deps: DetectDeps): Promise<ShellInfo[]> {
       'Windows PowerShell',
       join(root, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe')
     )
-    add('cmd', 'Símbolo del sistema', deps.env['ComSpec'] ?? join(root, 'System32', 'cmd.exe'))
+    add('cmd', t('Símbolo del sistema'), deps.env['ComSpec'] ?? join(root, 'System32', 'cmd.exe'))
     const programFiles = deps.env['ProgramFiles'] ?? 'C:\\Program Files'
     add('git-bash', 'Git Bash', join(programFiles, 'Git', 'bin', 'bash.exe'))
   } else {
@@ -85,6 +86,20 @@ export function claudeLine(
   const exe = claude.onPath ? 'claude' : claude.bundled ? quote(kind, claude.bundled) : null
   if (!exe) return null
   return sessionId ? `${exe} --resume ${sessionId}` : exe
+}
+
+/**
+ * Orden para iniciar sesión: `claude auth login` y, al terminar, cerrar el shell. Prefiere el
+ * binario de la app, de la misma versión que usa el chat: una CLI antigua del `PATH` tomaría
+ * «auth login» como un prompt.
+ */
+export function claudeLoginLine(
+  kind: ShellKind,
+  claude: { onPath: boolean; bundled: string | null }
+): string | null {
+  const exe = claude.bundled ? quote(kind, claude.bundled) : claude.onPath ? 'claude' : null
+  if (!exe) return null
+  return `${exe} auth login${kind === 'cmd' ? ' & exit' : '; exit'}`
 }
 
 const TIMEOUT_MS = 3000

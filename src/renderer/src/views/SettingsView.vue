@@ -1,11 +1,15 @@
 <script setup lang="ts">
-import { FolderOpen, RotateCcw } from 'lucide-vue-next'
+import { t } from '../i18n'
+import { FolderOpen, LogIn, RefreshCw, RotateCcw } from 'lucide-vue-next'
 import { computed, onMounted, ref } from 'vue'
 import type { TerminalShells } from '../../../shared/terminal'
+import type { Language } from '../../../shared/i18n'
 import type { NotificationSettings, SystemInfo } from '../../../shared/types'
 import SettingRow from '../components/settings/SettingRow.vue'
 import SettingSwitch from '../components/settings/SettingSwitch.vue'
 import ThemeToggle from '../components/ui/ThemeToggle.vue'
+import { useAuthStore } from '../stores/auth'
+import { useTerminalStore } from '../stores/terminal'
 import { useUiStore } from '../stores/ui'
 import { useUsageStore } from '../stores/usage'
 
@@ -15,15 +19,35 @@ import { useUsageStore } from '../stores/usage'
  */
 const ui = useUiStore()
 const usage = useUsageStore()
+const auth = useAuthStore()
+const terminals = useTerminalStore()
+
+/** Los nombres de los idiomas van en su propio idioma. */
+const LANGUAGES: { value: Language; label: string }[] = [
+  { value: 'system', label: t('Sistema') },
+  { value: 'es', label: 'Español' },
+  { value: 'en', label: 'English' }
+]
+
+const accountText = computed(() => {
+  const s = auth.status
+  if (!s) return t('Comprobando…')
+  if (s.state === 'out') return t('Sin sesión iniciada')
+  if (s.state === 'unknown') return t('No se pudo comprobar')
+  const plan = s.plan
+    ? t('Plan {plan}', { plan: s.plan.charAt(0).toUpperCase() + s.plan.slice(1) })
+    : ''
+  return [s.email ?? t('Sesión iniciada'), plan].filter(Boolean).join(' · ')
+})
 
 const info = ref<SystemInfo | null>(null)
 const claude = ref<{ dir: string; source: 'settings' | 'env' | 'default' } | null>(null)
 const claudeError = ref<string | null>(null)
 
 const SOURCES = {
-  settings: 'Elegida en Ajustes',
-  env: 'Variable CLAUDE_CONFIG_DIR',
-  default: 'Predeterminada'
+  settings: t('Elegida en Ajustes'),
+  env: t('Variable CLAUDE_CONFIG_DIR'),
+  default: t('Predeterminada')
 } as const
 
 async function loadClaude(): Promise<void> {
@@ -38,6 +62,7 @@ const defaultShellLabel = computed(
 
 onMounted(async () => {
   await ui.loadSettings()
+  void auth.refresh()
   void loadClaude()
   void window.api.terminal.shells().then((r) => (shells.value = r.ok ? r.data : null))
   const result = await window.api.system.info()
@@ -64,12 +89,20 @@ function setNotify(key: keyof NotificationSettings, value: boolean): void {
 const kinds = [
   {
     key: 'turnEnd',
-    label: 'Al terminar',
-    description: 'Claude ha terminado un turno o ha fallado.'
+    label: t('Al terminar'),
+    description: t('Claude ha terminado un turno o ha fallado.')
   },
-  { key: 'permission', label: 'Permisos y preguntas', description: 'Claude espera tu respuesta.' },
-  { key: 'tasks', label: 'Tareas en segundo plano', description: 'Una tarea termina o falla.' },
-  { key: 'limit', label: 'Límite de uso', description: 'Se alcanza el límite de 5 horas.' }
+  {
+    key: 'permission',
+    label: t('Permisos y preguntas'),
+    description: t('Claude espera tu respuesta.')
+  },
+  {
+    key: 'tasks',
+    label: t('Tareas en segundo plano'),
+    description: t('Una tarea termina o falla.')
+  },
+  { key: 'limit', label: t('Límite de uso'), description: t('Se alcanza el límite de 5 horas.') }
 ] as const
 
 const versions = computed(() => {
@@ -77,11 +110,11 @@ const versions = computed(() => {
   if (!i) return []
   return [
     ['OpenClod', i.app],
-    ['Claude Code (incluido)', i.claudeCode ?? '—'],
+    [t('Claude Code (incluido)'), i.claudeCode ?? '—'],
     ['Electron', i.electron],
     ['Chromium', i.chrome],
     ['Node.js', i.node],
-    ['Git', i.git ?? 'No encontrado']
+    ['Git', i.git ?? t('No encontrado')]
   ]
 })
 
@@ -91,10 +124,58 @@ const section = 'divide-y divide-border rounded-item border border-border bg-sur
 
 <template>
   <div class="mx-auto flex w-full max-w-[40rem] flex-col gap-8 px-6 py-8">
-    <section aria-labelledby="ajustes-apariencia">
-      <h2 id="ajustes-apariencia" :class="sectionTitle">Apariencia</h2>
+    <section aria-labelledby="ajustes-general">
+      <h2 id="ajustes-general" :class="sectionTitle">{{ t('General') }}</h2>
       <div :class="section">
-        <SettingRow label="Tema" description="Claro, oscuro o el del sistema.">
+        <SettingRow
+          :label="t('Idioma')"
+          :description="t('La ventana se recarga al cambiarlo; los chats siguen abiertos.')"
+          for="settings-language"
+        >
+          <select
+            id="settings-language"
+            :value="ui.language"
+            class="h-8 rounded-item border border-border bg-surface px-2 text-sm"
+            @change="ui.setLanguage(($event.target as HTMLSelectElement).value as Language)"
+          >
+            <option v-for="option in LANGUAGES" :key="option.value" :value="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+        </SettingRow>
+        <SettingRow :label="t('Cuenta de Claude Code')" :description="accountText">
+          <button
+            type="button"
+            class="inline-flex size-8 items-center justify-center rounded-item text-muted hover:bg-surface-hover hover:text-text disabled:opacity-50"
+            :title="t('Comprobar de nuevo')"
+            :aria-label="t('Comprobar de nuevo')"
+            :disabled="auth.checking"
+            @click="auth.refresh()"
+          >
+            <RefreshCw
+              :size="16"
+              :stroke-width="1.75"
+              :class="auth.checking ? 'motion-safe:animate-spin' : ''"
+              aria-hidden="true"
+            />
+          </button>
+          <button
+            v-if="auth.status && auth.status.state !== 'in'"
+            type="button"
+            class="inline-flex h-8 items-center gap-1.5 rounded-item bg-accent px-3 text-sm text-on-accent hover:bg-accent-hover"
+            @click="terminals.login()"
+          >
+            <LogIn :size="16" :stroke-width="1.75" aria-hidden="true" />
+            {{ t('Iniciar sesión') }}
+          </button>
+        </SettingRow>
+      </div>
+    </section>
+
+    <section aria-labelledby="ajustes-apariencia">
+      <h2 id="ajustes-apariencia" :class="sectionTitle">{{ t('Apariencia') }}</h2>
+      <div :class="section">
+        <SettingRow :label="t('Tema')" :description="t('Claro, oscuro o el del sistema.')">
           <ThemeToggle />
         </SettingRow>
       </div>
@@ -103,7 +184,10 @@ const section = 'divide-y divide-border rounded-item border border-border bg-sur
     <section aria-labelledby="ajustes-claude">
       <h2 id="ajustes-claude" :class="sectionTitle">Claude Code</h2>
       <div :class="section">
-        <SettingRow label="Carpeta de datos" :description="claude ? SOURCES[claude.source] : ''">
+        <SettingRow
+          :label="t('Carpeta de datos')"
+          :description="claude ? SOURCES[claude.source] : ''"
+        >
           <template #extra>
             <p class="mt-1 truncate font-mono text-xs" :title="claude?.dir">{{ claude?.dir }}</p>
             <p v-if="claudeError" class="mt-1 text-xs text-danger" role="alert">
@@ -114,11 +198,11 @@ const section = 'divide-y divide-border rounded-item border border-border bg-sur
             v-if="claude?.source === 'settings'"
             type="button"
             class="inline-flex h-8 items-center gap-1.5 rounded-item px-2 text-sm hover:bg-surface-hover"
-            title="Volver a la predeterminada"
+            :title="t('Volver a la predeterminada')"
             @click="setClaudeDir(null)"
           >
             <RotateCcw :size="16" :stroke-width="1.75" aria-hidden="true" />
-            Predeterminada
+            {{ t('Predeterminada') }}
           </button>
           <button
             type="button"
@@ -126,22 +210,24 @@ const section = 'divide-y divide-border rounded-item border border-border bg-sur
             @click="pickClaudeDir"
           >
             <FolderOpen :size="16" :stroke-width="1.75" aria-hidden="true" />
-            Elegir otra…
+            {{ t('Elegir otra…') }}
           </button>
         </SettingRow>
       </div>
       <p class="mt-1 text-xs text-muted">
-        OpenClod solo lee esta carpeta; las sesiones las escribe Claude Code.
+        {{ t('OpenClod solo lee esta carpeta; las sesiones las escribe Claude Code.') }}
       </p>
     </section>
 
     <section aria-labelledby="ajustes-terminal">
-      <h2 id="ajustes-terminal" :class="sectionTitle">Terminal</h2>
+      <h2 id="ajustes-terminal" :class="sectionTitle">{{ t('Terminal') }}</h2>
       <div :class="section">
         <SettingRow
-          label="Shell"
+          :label="t('Shell')"
           :description="
-            shells?.error ? `No disponible: ${shells.error}` : 'Se usa al abrir terminales nuevas.'
+            shells?.error
+              ? t('No disponible: {error}', { error: shells.error })
+              : t('Se usa al abrir terminales nuevas.')
           "
           for="terminal-shell"
         >
@@ -152,13 +238,13 @@ const section = 'divide-y divide-border rounded-item border border-border bg-sur
             class="h-8 rounded-item border border-border bg-surface px-2 text-sm"
             @change="ui.setTerminal({ shell: ($event.target as HTMLSelectElement).value || null })"
           >
-            <option value="">Automático ({{ defaultShellLabel }})</option>
+            <option value="">{{ t('Automático ({shell})', { shell: defaultShellLabel }) }}</option>
             <option v-for="s in shells?.available ?? []" :key="s.id" :value="s.id">
               {{ s.label }}
             </option>
           </select>
         </SettingRow>
-        <SettingRow label="Tamaño de letra" for="terminal-font">
+        <SettingRow :label="t('Tamaño de letra')" for="terminal-font">
           <select
             id="terminal-font"
             :value="ui.terminal.fontSize"
@@ -177,8 +263,8 @@ const section = 'divide-y divide-border rounded-item border border-border bg-sur
           </select>
         </SettingRow>
         <SettingRow
-          label="Modo lector de pantalla"
-          description="Hace la salida de la terminal accesible a lectores de pantalla."
+          :label="t('Modo lector de pantalla')"
+          :description="t('Hace la salida de la terminal accesible a lectores de pantalla.')"
           for="terminal-sr"
         >
           <SettingSwitch
@@ -191,11 +277,11 @@ const section = 'divide-y divide-border rounded-item border border-border bg-sur
     </section>
 
     <section aria-labelledby="ajustes-notificaciones">
-      <h2 id="ajustes-notificaciones" :class="sectionTitle">Notificaciones</h2>
+      <h2 id="ajustes-notificaciones" :class="sectionTitle">{{ t('Notificaciones') }}</h2>
       <div :class="section">
         <SettingRow
-          label="Notificaciones del sistema"
-          description="Avisos cuando la ventana no tiene el foco."
+          :label="t('Notificaciones del sistema')"
+          :description="t('Avisos cuando la ventana no tiene el foco.')"
           for="notify-enabled"
         >
           <SettingSwitch
@@ -220,7 +306,7 @@ const section = 'divide-y divide-border rounded-item border border-border bg-sur
           />
         </SettingRow>
         <SettingRow
-          label="También con la ventana enfocada"
+          :label="t('También con la ventana enfocada')"
           for="notify-focused"
           :disabled="!notify.enabled"
         >
@@ -235,11 +321,13 @@ const section = 'divide-y divide-border rounded-item border border-border bg-sur
     </section>
 
     <section aria-labelledby="ajustes-uso">
-      <h2 id="ajustes-uso" :class="sectionTitle">Uso</h2>
+      <h2 id="ajustes-uso" :class="sectionTitle">{{ t('Uso') }}</h2>
       <div :class="section">
         <SettingRow
-          label="Consultar los límites a Claude Code"
-          description="Abre un proceso de Claude Code sin prompt para leer el uso real (no gasta tokens)."
+          :label="t('Consultar los límites a Claude Code')"
+          :description="
+            t('Abre un proceso de Claude Code sin prompt para leer el uso real (no gasta tokens).')
+          "
           for="usage-probe"
         >
           <SettingSwitch
@@ -249,8 +337,8 @@ const section = 'divide-y divide-border rounded-item border border-border bg-sur
           />
         </SettingRow>
         <SettingRow
-          label="Mostrar coste equivalente"
-          description="Coste de API según Claude Code, como referencia."
+          :label="t('Mostrar coste equivalente')"
+          :description="t('Coste de API según Claude Code, como referencia.')"
           for="usage-cost"
         >
           <SettingSwitch
@@ -263,11 +351,15 @@ const section = 'divide-y divide-border rounded-item border border-border bg-sur
     </section>
 
     <section aria-labelledby="ajustes-ventana">
-      <h2 id="ajustes-ventana" :class="sectionTitle">Ventana</h2>
+      <h2 id="ajustes-ventana" :class="sectionTitle">{{ t('Ventana') }}</h2>
       <div :class="section">
         <SettingRow
-          label="Mantener en la bandeja al cerrar"
-          description="Cerrar la ventana la oculta: los chats y las terminales siguen trabajando y las notificaciones siguen llegando."
+          :label="t('Mantener en la bandeja al cerrar')"
+          :description="
+            t(
+              'Cerrar la ventana la oculta: los chats y las terminales siguen trabajando y las notificaciones siguen llegando.'
+            )
+          "
           for="window-tray"
         >
           <SettingSwitch
@@ -280,7 +372,7 @@ const section = 'divide-y divide-border rounded-item border border-border bg-sur
     </section>
 
     <section aria-labelledby="ajustes-acerca">
-      <h2 id="ajustes-acerca" :class="sectionTitle">Acerca de</h2>
+      <h2 id="ajustes-acerca" :class="sectionTitle">{{ t('Acerca de') }}</h2>
       <div :class="section">
         <dl class="grid grid-cols-[auto_1fr] gap-x-6 gap-y-1 py-3 text-sm">
           <template v-for="[name, value] in versions" :key="name">
@@ -290,13 +382,13 @@ const section = 'divide-y divide-border rounded-item border border-border bg-sur
         </dl>
       </div>
       <p class="mt-1 flex items-center gap-2 text-xs text-muted">
-        Proyecto personal, no afiliado a Anthropic.
+        {{ t('Proyecto personal, no afiliado a Anthropic.') }}
         <button
           type="button"
           class="rounded-item px-1 text-text underline underline-offset-2 hover:text-accent"
           @click="ui.aboutOpen = true"
         >
-          Acerca de OpenClod
+          {{ t('Acerca de {app}', { app: 'OpenClod' }) }}
         </button>
       </p>
     </section>

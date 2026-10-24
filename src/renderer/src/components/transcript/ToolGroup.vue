@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { ChevronRight, CircleAlert, LoaderCircle } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { useFoldState } from '../../composables/useFoldState'
@@ -56,11 +57,11 @@ const single = computed(() => props.block.steps.length === 1 && props.block.call
         :size="14"
         :stroke-width="1.75"
         role="img"
-        aria-label="en ejecución"
+        :aria-label="t('en ejecución')"
       />
       <span v-if="errors" class="flex shrink-0 items-center gap-1 text-danger">
         <CircleAlert :size="14" :stroke-width="1.75" aria-hidden="true" />
-        {{ errors === 1 ? '1 error' : `${errors} errores` }}
+        {{ errors === 1 ? t('1 error') : t('{n} errores', { n: errors }) }}
       </span>
     </button>
     <div v-if="open" class="ml-2 flex flex-col border-l border-border pl-3">

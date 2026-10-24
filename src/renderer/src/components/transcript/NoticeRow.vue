@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { Bell, ChevronRight, CircleSlash, Hourglass, Info, SquareSlash } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { useChatContext } from '../../composables/useChatContext'
@@ -72,7 +73,7 @@ const task = computed(() =>
     class="flex items-center justify-center gap-1.5 text-xs text-muted"
   >
     <CircleSlash :size="14" :stroke-width="1.75" aria-hidden="true" />
-    Interrumpido por el usuario
+    {{ t('Interrumpido por el usuario') }}
   </p>
 
   <!-- Notificación de tarea en segundo plano: centrada y desplegable. -->
@@ -85,7 +86,7 @@ const task = computed(() =>
     >
       <Bell class="shrink-0" :size="14" :stroke-width="1.75" aria-hidden="true" />
       <span class="min-w-0 truncate" :class="task?.status === 'failed' ? 'text-danger' : ''">
-        {{ task?.label ?? 'Notificación de tarea'
+        {{ task?.label ?? t('Notificación de tarea')
         }}<template v-if="task?.summary">: {{ task.summary }}</template>
       </span>
       <ChevronRight
@@ -102,7 +103,7 @@ const task = computed(() =>
       class="rounded-item px-1 text-muted underline underline-offset-2 hover:text-text"
       @click="chat.jumpToTool(task.toolUseId)"
     >
-      Ir a la llamada
+      {{ t('Ir a la llamada') }}
     </button>
     <TruncatedText v-if="open" :text="detail" class="w-full" />
   </div>
@@ -110,7 +111,7 @@ const task = computed(() =>
   <!-- Duración del turno, al final de la respuesta. -->
   <p v-else-if="block.kind === 'duration'" class="flex items-center gap-1.5 text-xs text-muted">
     <Hourglass :size="12" :stroke-width="1.75" aria-hidden="true" />
-    Trabajó durante {{ formatDuration(block.ms) }}
+    {{ t('Trabajó durante {time}', { time: formatDuration(block.ms) }) }}
   </p>
 
   <!-- Aviso interno: fila tenue con borde punteado, texto plegado. -->

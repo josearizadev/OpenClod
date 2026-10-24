@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useHighlight } from '../../composables/useHighlight'
 import { renderMarkdown } from '../../lib/markdown'
@@ -43,8 +44,8 @@ async function onClick(event: MouseEvent): Promise<void> {
   if (!button || code == null) return
   try {
     await navigator.clipboard.writeText(code)
-    button.textContent = 'Copiado'
-    setTimeout(() => (button.textContent = 'Copiar'), 1500)
+    button.textContent = t('Copiado')
+    setTimeout(() => (button.textContent = t('Copiar')), 1500)
   } catch (error) {
     console.error('No se pudo copiar el código:', error)
   }

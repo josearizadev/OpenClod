@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import {
   Activity,
   Download,
@@ -58,7 +59,7 @@ async function confirmRemove(): Promise<void> {
       'flex h-full shrink-0 flex-col overflow-hidden bg-bg-sidebar transition-[width] duration-200',
       ui.sidebarCollapsed ? 'w-14' : 'w-72'
     ]"
-    aria-label="Barra lateral"
+    :aria-label="t('Barra lateral')"
   >
     <!-- Cabecera: también sirve para arrastrar la ventana. -->
     <div
@@ -69,35 +70,40 @@ async function confirmRemove(): Promise<void> {
     >
       <IconButton
         :icon="ui.sidebarCollapsed ? PanelLeftOpen : PanelLeftClose"
-        :label="ui.sidebarCollapsed ? 'Desplegar barra lateral' : 'Plegar barra lateral'"
+        :label="ui.sidebarCollapsed ? t('Desplegar barra lateral') : t('Plegar barra lateral')"
         :aria-expanded="!ui.sidebarCollapsed"
         @click="ui.toggleSidebar()"
       />
       <span v-if="!ui.sidebarCollapsed" class="truncate font-serif text-lg">OpenClod</span>
     </div>
 
-    <nav class="flex shrink-0 flex-col gap-0.5 px-3 pb-2" aria-label="Acciones">
-      <SidebarItem label="Nueva sesión" :icon="SquarePen" to="/" :collapsed="ui.sidebarCollapsed" />
+    <nav class="flex shrink-0 flex-col gap-0.5 px-3 pb-2" :aria-label="t('Acciones')">
       <SidebarItem
-        label="Buscar"
+        :label="t('Nueva sesión')"
+        :icon="SquarePen"
+        to="/"
+        :collapsed="ui.sidebarCollapsed"
+      />
+      <SidebarItem
+        :label="t('Buscar')"
         :icon="Search"
         :collapsed="ui.sidebarCollapsed"
-        title="Buscar (Ctrl+K)"
+        :title="t('Buscar (Ctrl+K)')"
         @click="search.open = true"
       />
       <SidebarItem
-        label="Uso"
+        :label="t('Uso')"
         :icon="Gauge"
         to="/uso"
         :collapsed="ui.sidebarCollapsed"
-        title="Uso (Ctrl+U)"
+        :title="t('Uso (Ctrl+U)')"
       />
       <SidebarItem
-        label="Terminal"
+        :label="t('Terminal')"
         :icon="SquareTerminal"
         to="/terminal"
         :collapsed="ui.sidebarCollapsed"
-        title="Terminal (Ctrl+`)"
+        :title="t('Terminal (Ctrl+`)')"
       />
     </nav>
 
@@ -118,24 +124,26 @@ async function confirmRemove(): Promise<void> {
       <section
         v-if="projects.loaded && projects.projects.length === 0"
         class="mt-4 flex flex-col gap-1"
-        aria-label="Sin proyectos"
+        :aria-label="t('Sin proyectos')"
       >
         <p class="mb-1 px-2 text-muted">
-          Importa una carpeta de proyecto o elige entre las que ya usaste con Claude Code.
+          {{
+            t('Importa una carpeta de proyecto o elige entre las que ya usaste con Claude Code.')
+          }}
         </p>
         <button
           type="button"
           class="flex h-8 items-center gap-2 rounded-item px-2 transition-colors duration-150 hover:bg-surface-hover"
           @click="projects.importFolder()"
         >
-          <FolderPlus :size="16" :stroke-width="1.75" /> Importar carpeta
+          <FolderPlus :size="16" :stroke-width="1.75" /> {{ t('Importar carpeta') }}
         </button>
         <button
           type="button"
           class="flex h-8 items-center gap-2 rounded-item px-2 transition-colors duration-150 hover:bg-surface-hover"
           @click="discoverOpen = true"
         >
-          <FolderSearch :size="16" :stroke-width="1.75" /> Descubrir proyectos
+          <FolderSearch :size="16" :stroke-width="1.75" /> {{ t('Descubrir proyectos') }}
         </button>
         <p v-if="projects.error" class="px-2 text-sm text-danger" role="alert">
           {{ projects.error }}
@@ -159,13 +167,13 @@ async function confirmRemove(): Promise<void> {
           aria-hidden="true"
           >U</span
         >
-        <span class="truncate">Usuario local</span>
+        <span class="truncate">{{ t('Usuario local') }}</span>
       </div>
       <button
         v-if="readyVersion"
         type="button"
-        :title="`Reiniciar para actualizar a la ${readyVersion}`"
-        :aria-label="`Reiniciar para actualizar a la ${readyVersion}`"
+        :title="t('Reiniciar para actualizar a la {version}', { version: readyVersion })"
+        :aria-label="t('Reiniciar para actualizar a la {version}', { version: readyVersion })"
         class="inline-flex size-8 shrink-0 items-center justify-center rounded-item bg-accent text-on-accent transition-colors duration-150 hover:bg-accent-hover"
         @click="update.install()"
       >
@@ -173,7 +181,7 @@ async function confirmRemove(): Promise<void> {
       </button>
       <SidebarItem
         v-if="ui.sidebarCollapsed"
-        label="Diagnóstico"
+        :label="t('Diagnóstico')"
         :icon="Activity"
         to="/diagnostico"
         collapsed
@@ -181,15 +189,15 @@ async function confirmRemove(): Promise<void> {
       <RouterLink
         v-else
         to="/diagnostico"
-        title="Diagnóstico"
-        aria-label="Diagnóstico"
+        :title="t('Diagnóstico')"
+        :aria-label="t('Diagnóstico')"
         class="inline-flex size-8 shrink-0 items-center justify-center rounded-item text-muted transition-colors duration-150 hover:bg-surface-hover hover:text-text aria-[current=page]:bg-surface-hover aria-[current=page]:text-text"
       >
         <Activity :size="18" :stroke-width="1.75" />
       </RouterLink>
       <SidebarItem
         v-if="ui.sidebarCollapsed"
-        label="Ajustes"
+        :label="t('Ajustes')"
         :icon="Settings"
         to="/ajustes"
         collapsed
@@ -197,8 +205,8 @@ async function confirmRemove(): Promise<void> {
       <RouterLink
         v-else
         to="/ajustes"
-        title="Ajustes (Ctrl+,)"
-        aria-label="Ajustes"
+        :title="t('Ajustes (Ctrl+,)')"
+        :aria-label="t('Ajustes')"
         class="inline-flex size-8 shrink-0 items-center justify-center rounded-item text-muted transition-colors duration-150 hover:bg-surface-hover hover:text-text aria-[current=page]:bg-surface-hover aria-[current=page]:text-text"
       >
         <Settings :size="18" :stroke-width="1.75" />
@@ -209,9 +217,9 @@ async function confirmRemove(): Promise<void> {
     <DiscoverProjectsDialog v-model:open="discoverOpen" />
     <ConfirmDialog
       v-model:open="confirmOpen"
-      :title="`¿Quitar «${removing?.name ?? ''}» de OpenClod?`"
-      description="No se borra nada de la carpeta ni de las sesiones de Claude Code."
-      confirm-label="Quitar"
+      :title="t('¿Quitar «{name}» de OpenClod?', { name: removing?.name ?? '' })"
+      :description="t('No se borra nada de la carpeta ni de las sesiones de Claude Code.')"
+      :confirm-label="t('Quitar')"
       @confirm="confirmRemove"
     />
   </aside>

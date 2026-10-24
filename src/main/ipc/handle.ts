@@ -9,8 +9,9 @@ import {
 import { err, ok, type ErrorCode, type Result } from '../../shared/result'
 import { logger } from '../services/logger'
 import { isAppUrl } from '../window'
+import { t } from '../i18n'
 
-// Mensajes de validación en español (la UI es en español).
+// Mensajes de validación en español hasta que `setMainLocale` fije el idioma.
 z.config(z.locales.es())
 
 /**
@@ -46,7 +47,7 @@ export function handle<C extends InvokeChannel>(channel: C, fn: Handler<C>): voi
   ipcMain.handle(channel, async (event, raw): Promise<Result<InvokeOutput<C>>> => {
     if (!isTrustedSender(event)) {
       logger.warn('ipc', `${channel}: remitente no permitido`)
-      return err('FORBIDDEN', 'Origen no permitido')
+      return err('FORBIDDEN', t('Origen no permitido'))
     }
     const parsed = invokeContract[channel].input.safeParse(raw)
     if (!parsed.success) return err('INVALID_ARGS', z.prettifyError(parsed.error))
@@ -55,7 +56,7 @@ export function handle<C extends InvokeChannel>(channel: C, fn: Handler<C>): voi
     } catch (error) {
       if (error instanceof IpcError) return err(error.code, error.message)
       logger.error(`ipc ${channel}`, error)
-      return err('INTERNAL', 'Error interno')
+      return err('INTERNAL', t('Error interno'))
     }
   })
 }

@@ -1,4 +1,5 @@
 import MarkdownIt from 'markdown-it'
+import { t } from '../i18n'
 
 /**
  * Markdown de las respuestas del asistente (visor). `html: false`: el HTML crudo de la
@@ -28,8 +29,8 @@ md.renderer.rules.fence = (tokens, idx) => {
   const dataLang = lang ? ` data-lang="${lang}"` : ''
   return (
     '<div class="code-block">' +
-    `<div class="code-block-header"><span>${lang || 'texto'}</span>` +
-    '<button type="button" class="code-copy" data-copy-code>Copiar</button></div>' +
+    `<div class="code-block-header"><span>${lang || t('texto')}</span>` +
+    `<button type="button" class="code-copy" data-copy-code>${t('Copiar')}</button></div>` +
     `<pre><code${dataLang}>${md.utils.escapeHtml(token.content)}</code></pre>` +
     '</div>'
   )

@@ -14,6 +14,7 @@ import {
   type BlockAlgorithm,
   type BlockEvent
 } from './usage-blocks'
+import { t } from '../i18n'
 
 /**
  * Informe de uso. Lee el periodo (y al menos 30 días para los bloques) en
@@ -292,7 +293,7 @@ export function usageReport(
         : undefined
       return {
         sessionId,
-        title: ctx.sessionMeta[conversationId]?.title ?? entry?.title ?? '(sin título)',
+        title: ctx.sessionMeta[conversationId]?.title ?? entry?.title ?? t('(sin título)'),
         projectName: c.projectName,
         tokens: c.tokens,
         ...(entry?.updated_at ? { updatedAt: entry.updated_at } : {}),

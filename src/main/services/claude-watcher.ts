@@ -3,6 +3,7 @@ import type { Stats } from 'node:fs'
 import { existsSync } from 'node:fs'
 import { sep } from 'node:path'
 import { logger as defaultLogger, type Logger } from './logger'
+import { t } from '../i18n'
 
 /**
  * Vigilancia de `projects/` de la carpeta de Claude Code. Agrupa los
@@ -76,7 +77,7 @@ export function createClaudeWatcher(options: ClaudeWatcherOptions): ClaudeWatche
   const readyTimeoutMs = options.readyTimeoutMs ?? 10_000
 
   let watcher: FsWatcherLike | null = null
-  let status: WatchStatus = { state: 'off', reason: 'Sin iniciar' }
+  let status: WatchStatus = { state: 'off', reason: t('Sin iniciar') }
   let pending = new Set<string>()
   let timer: ReturnType<typeof setTimeout> | null = null
   let readyTimer: ReturnType<typeof setTimeout> | null = null
@@ -116,7 +117,7 @@ export function createClaudeWatcher(options: ClaudeWatcherOptions): ClaudeWatche
     close()
     const dir = options.projectsDir()
     if (!exists(dir)) {
-      status = { state: 'off', reason: `No existe ${dir}` }
+      status = { state: 'off', reason: t('No existe {dir}', { dir }) }
       log.info('watch', status.reason as string)
       return
     }
@@ -143,7 +144,7 @@ export function createClaudeWatcher(options: ClaudeWatcherOptions): ClaudeWatche
         fail(error instanceof Error ? error.message : String(error))
       })
       readyTimer = setTimeout(() => {
-        if (gen === generation) fail('La vigilancia no arrancó en 10 s')
+        if (gen === generation) fail(t('La vigilancia no arrancó en 10 s'))
       }, readyTimeoutMs)
     } catch (error) {
       fail(error instanceof Error ? error.message : String(error))

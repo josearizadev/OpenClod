@@ -1,9 +1,23 @@
-import { contextBridge, webUtils } from 'electron'
+import { contextBridge, ipcRenderer, webUtils } from 'electron'
 import type { Api } from '../shared/ipc-contract'
+import type { Locale } from '../shared/i18n'
 import { invoke, subscribe } from './ipc'
 
 // Solo funciones concretas del contrato: nunca se expone `ipcRenderer`.
+// El idioma se pide de forma síncrona: la interfaz lo necesita antes de pintar nada.
+function readLocale(): Locale {
+  try {
+    return ipcRenderer.sendSync('i18n:locale') === 'en' ? 'en' : 'es'
+  } catch {
+    return 'es'
+  }
+}
+
 const api: Api = {
+  locale: readLocale(),
+  auth: {
+    status: () => invoke('auth:status', undefined)
+  },
   settings: {
     get: () => invoke('settings:get', undefined),
     set: (patch) => invoke('settings:set', patch)

@@ -5,6 +5,7 @@ import {
   type ChatAttachment,
   type ImageMediaType
 } from '../../../shared/chat'
+import { t } from '../i18n'
 
 /**
  * De archivos soltados, pegados o elegidos a adjuntos del chat. Lo que
@@ -29,14 +30,14 @@ function readBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = () => resolve(String(reader.result).replace(/^data:[^,]*,/, ''))
-    reader.onerror = () => reject(reader.error ?? new Error('No se pudo leer'))
+    reader.onerror = () => reject(reader.error ?? new Error(t('No se pudo leer')))
     reader.readAsDataURL(file)
   })
 }
 
 /** Nombre de una imagen pegada sin archivo: «Imagen pegada.png». */
 function pastedName(type: ImageMediaType): string {
-  return `Imagen pegada.${type.slice('image/'.length).replace('jpeg', 'jpg')}`
+  return `${t('Imagen pegada')}.${type.slice('image/'.length).replace('jpeg', 'jpg')}`
 }
 
 /** `current`: los que ya hay, para no pasar del máximo ni repetir rutas. */
@@ -48,7 +49,7 @@ export async function attachFiles(
   const paths = new Set(current.flatMap((a) => (a.kind === 'file' ? [a.path] : [])))
   for (const file of files) {
     if (current.length + out.attachments.length >= ATTACHMENTS_MAX) {
-      out.errors.push(`Como mucho ${ATTACHMENTS_MAX} adjuntos por mensaje.`)
+      out.errors.push(t('Como mucho {n} adjuntos por mensaje.', { n: ATTACHMENTS_MAX }))
       break
     }
     const path = window.api.files.pathFor(file)
@@ -60,12 +61,14 @@ export async function attachFiles(
     }
     if (!isImageType(file.type)) {
       out.errors.push(
-        `«${file.name || 'Archivo'}» no se puede adjuntar: no está guardado en disco.`
+        t('«{name}» no se puede adjuntar: no está guardado en disco.', {
+          name: file.name || t('Archivo')
+        })
       )
       continue
     }
     if (file.size > IMAGE_MAX_BYTES) {
-      out.errors.push(`«${file.name || 'Imagen'}» pesa más de 5 MB.`)
+      out.errors.push(t('«{name}» pesa más de 5 MB.', { name: file.name || t('Imagen') }))
       continue
     }
     try {
@@ -77,7 +80,7 @@ export async function attachFiles(
         data
       })
     } catch {
-      out.errors.push(`No se pudo leer «${file.name || 'la imagen'}».`)
+      out.errors.push(t('No se pudo leer «{name}».', { name: file.name || t('la imagen') }))
     }
   }
   return out
@@ -93,7 +96,7 @@ export function attachPaths(
   for (const path of paths) {
     if (seen.has(path)) continue
     if (current.length + out.attachments.length >= ATTACHMENTS_MAX) {
-      out.errors.push(`Como mucho ${ATTACHMENTS_MAX} adjuntos por mensaje.`)
+      out.errors.push(t('Como mucho {n} adjuntos por mensaje.', { n: ATTACHMENTS_MAX }))
       break
     }
     seen.add(path)

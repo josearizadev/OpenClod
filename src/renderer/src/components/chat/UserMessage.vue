@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { Image } from 'lucide-vue-next'
 import MessageActions from '../transcript/MessageActions.vue'
 
@@ -24,17 +25,17 @@ const props = defineProps<{
         class="mb-1 flex items-center gap-1.5 text-sm whitespace-normal text-muted"
       >
         <Image :size="14" :stroke-width="1.75" aria-hidden="true" />
-        {{ props.images === 1 ? '1 imagen' : `${props.images} imágenes` }}
+        {{ props.images === 1 ? t('1 imagen') : t('{n} imágenes', { n: props.images }) }}
       </span>
       <!-- `v-text`: sin los espacios de la plantilla, que `pre-wrap` mostraría. -->
       <span v-text="props.text" />
     </div>
-    <p v-if="props.pending" class="mt-1 text-xs text-muted" role="status">Enviando…</p>
+    <p v-if="props.pending" class="mt-1 text-xs text-muted" role="status">{{ t('Enviando…') }}</p>
     <MessageActions
       v-else
       :text="props.text"
       :timestamp="props.timestamp"
-      label="Copiar mensaje"
+      :label="t('Copiar mensaje')"
       align="end"
     />
   </div>

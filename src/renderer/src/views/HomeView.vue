@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../i18n'
 import { computed, ref, watch } from 'vue'
 import type { ChatAttachment, ChatMode, ChromeState } from '../../../shared/chat'
 import { effective, type ProjectSettings } from '../../../shared/project-settings'
@@ -157,7 +158,7 @@ watch(
       <WelcomeHero v-if="!pending" />
       <div v-else class="flex w-full flex-col gap-3">
         <UserMessage :text="pending.text" :images="imageCount(pending.attachments)" pending />
-        <p class="text-sm text-muted" role="status">Iniciando Claude Code…</p>
+        <p class="text-sm text-muted" role="status">{{ t('Iniciando Claude Code…') }}</p>
       </div>
       <Composer
         v-model="draft"
@@ -167,7 +168,7 @@ watch(
         :models="chat.catalog.models"
         :commands="commands"
         :disabled="!cwd || pending !== null"
-        :placeholder="cwd ? '¿En qué puedo ayudarte?' : 'Elige antes una carpeta de trabajo'"
+        :placeholder="cwd ? t('¿En qué puedo ayudarte?') : t('Elige antes una carpeta de trabajo')"
         @send="send"
       >
         <template #tools>

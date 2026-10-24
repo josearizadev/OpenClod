@@ -22,6 +22,7 @@ import {
   type IndexedListItem
 } from './index-queries'
 import { isInside, normalizePath, pathKey } from './paths'
+import { t } from '../i18n'
 
 /**
  * Proyectos importados sobre `state.json` y el lector del índice. Nunca
@@ -82,6 +83,9 @@ function withMeta<T extends IndexedListItem | IndexedDetail>(
   if (meta?.title) {
     out.title = meta.title
     if ('titleSource' in out) out.titleSource = 'app'
+  } else if (out.title === '(sin título)') {
+    // El índice guarda el título de respaldo en español.
+    out.title = t('(sin título)')
   }
   return out
 }
@@ -108,7 +112,7 @@ export function createProjectsService(options: ProjectsServiceOptions): Projects
 
   function find(id: string): Project {
     const project = projects().find((p) => p.id === id)
-    if (!project) throw new ProjectError('NOT_FOUND', 'El proyecto no existe.')
+    if (!project) throw new ProjectError('NOT_FOUND', t('El proyecto no existe.'))
     return project
   }
 
@@ -142,10 +146,10 @@ export function createProjectsService(options: ProjectsServiceOptions): Projects
   async function add(raw: string): Promise<Project> {
     const path = normalizePath(raw)
     if (path === '' || !(await isDirectory(path))) {
-      throw new ProjectError('INVALID_CWD', 'La carpeta no existe.')
+      throw new ProjectError('INVALID_CWD', t('La carpeta no existe.'))
     }
     if (isInside(path, options.claudeDir())) {
-      throw new ProjectError('INVALID_CWD', 'No se puede importar la carpeta de Claude Code.')
+      throw new ProjectError('INVALID_CWD', t('No se puede importar la carpeta de Claude Code.'))
     }
     const key = pathKey(path)
     const existing = projects().find((p) => pathKey(p.path) === key)
@@ -192,7 +196,7 @@ export function createProjectsService(options: ProjectsServiceOptions): Projects
         }
       }
       const [first] = added
-      if (!first) throw firstError ?? new ProjectError('INVALID_CWD', 'La carpeta no existe.')
+      if (!first) throw firstError ?? new ProjectError('INVALID_CWD', t('La carpeta no existe.'))
       activate(first.id)
       return Promise.all(added.map((p) => view(find(p.id))))
     },

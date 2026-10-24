@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { ArrowDown } from 'lucide-vue-next'
 
 /** «N mensajes nuevos ↓»: llegó contenido mientras se leía más arriba. */
@@ -13,7 +14,7 @@ defineEmits<{ go: [] }>()
     aria-live="polite"
     @click="$emit('go')"
   >
-    {{ props.count === 1 ? '1 mensaje nuevo' : `${props.count} mensajes nuevos` }}
+    {{ props.count === 1 ? t('1 mensaje nuevo') : t('{n} mensajes nuevos', { n: props.count }) }}
     <ArrowDown :size="14" :stroke-width="1.75" aria-hidden="true" />
   </button>
 </template>

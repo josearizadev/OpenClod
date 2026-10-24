@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../../i18n'
 import { computed } from 'vue'
 import type { ToolCallView } from '../../../lib/transcript/blocks'
 import MarkdownContent from '../MarkdownContent.vue'
@@ -67,5 +68,5 @@ const plan = computed(() => text((props.call.input as { plan?: unknown } | null)
       </ul>
     </div>
   </div>
-  <ToolResult :call="call" label="Respuesta" />
+  <ToolResult :call="call" :label="t('Respuesta')" />
 </template>

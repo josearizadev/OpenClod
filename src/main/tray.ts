@@ -1,4 +1,5 @@
 import { Menu, nativeImage, Tray } from 'electron'
+import { t } from './i18n'
 
 /**
  * Icono de la bandeja. Solo existe con «Mantener en la bandeja
@@ -32,11 +33,11 @@ export function createTray(deps: TrayDeps): AppTray {
     last = status
     tray.setContextMenu(
       Menu.buildFromTemplate([
-        { label: 'Mostrar OpenClod', click: deps.onShow },
-        { label: 'Nueva sesión', click: deps.onNewSession },
+        { label: t('Mostrar OpenClod'), click: deps.onShow },
+        { label: t('Nueva sesión'), click: deps.onNewSession },
         ...(status ? [{ type: 'separator' as const }, { label: status, enabled: false }] : []),
         { type: 'separator' },
-        { label: 'Salir', click: deps.onQuit }
+        { label: t('Salir'), click: deps.onQuit }
       ])
     )
     tray.setToolTip(status ? `OpenClod · ${status}` : 'OpenClod')

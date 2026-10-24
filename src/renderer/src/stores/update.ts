@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { shallowRef } from 'vue'
 import type { UpdateStatus } from '../../../shared/update'
 import { useUiStore } from './ui'
+import { t } from '../i18n'
 
 /**
  * Actualizaciones de la app. El estado lo empuja el main (`update:status`); al quedar lista una
@@ -15,8 +16,8 @@ export const useUpdateStore = defineStore('update', () => {
     const wasReady = status.value.state === 'ready'
     status.value = next
     if (next.state === 'ready' && !wasReady) {
-      ui.toast(`OpenClod ${next.version} está lista para instalarse.`, {
-        action: { label: 'Reiniciar', run: install }
+      ui.toast(t('OpenClod {version} está lista para instalarse.', { version: next.version }), {
+        action: { label: t('Reiniciar'), run: install }
       })
     }
   }

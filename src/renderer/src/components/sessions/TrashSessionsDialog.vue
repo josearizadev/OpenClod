@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { computed, ref, watch } from 'vue'
 import { useSessionsStore } from '../../stores/sessions'
 import { useUiStore } from '../../stores/ui'
@@ -29,12 +30,12 @@ const open = computed({
 const count = computed(() => ids.value.length)
 const title = computed(() =>
   count.value === 1
-    ? '¿Mover la conversación a la papelera?'
-    : `¿Mover ${count.value} conversaciones a la papelera?`
+    ? t('¿Mover la conversación a la papelera?')
+    : t('¿Mover {n} conversaciones a la papelera?', { n: count.value })
 )
 
 function conversations(n: number): string {
-  return n === 1 ? '1 conversación' : `${n} conversaciones`
+  return n === 1 ? t('1 conversación') : t('{n} conversaciones', { n })
 }
 
 async function confirm(): Promise<void> {
@@ -42,14 +43,15 @@ async function confirm(): Promise<void> {
   sessions.trashRequest = null
   if (request.length === 0) return
   const result = await sessions.trash(request)
-  if (!result) return ui.toast('No se pudo mover a la papelera', { tone: 'danger' })
+  if (!result) return ui.toast(t('No se pudo mover a la papelera'), { tone: 'danger' })
   const moved = result.trashed.length
   const active = result.skipped.filter((s) => s.reason === 'active').length
   const failed = result.skipped.length - active
   const parts: string[] = []
-  if (moved > 0) parts.push(`${conversations(moved)} a la papelera`)
-  if (active > 0) parts.push(`${active} con Claude trabajando, sin tocar`)
-  if (failed > 0) parts.push(`${failed} no se pudieron mover`)
+  if (moved > 0)
+    parts.push(t('{conversations} a la papelera', { conversations: conversations(moved) }))
+  if (active > 0) parts.push(t('{n} con Claude trabajando, sin tocar', { n: active }))
+  if (failed > 0) parts.push(t('{n} no se pudieron mover', { n: failed }))
   ui.toast(parts.join(' · '), moved === 0 ? { tone: 'danger' } : {})
 }
 </script>
@@ -58,8 +60,12 @@ async function confirm(): Promise<void> {
   <ConfirmDialog
     v-model:open="open"
     :title="title"
-    description="Se quitan de OpenClod y Claude Code ya no podrá retomarlas. Puedes recuperarlas desde la papelera del sistema."
-    confirm-label="Mover a la papelera"
+    :description="
+      t(
+        'Se quitan de OpenClod y Claude Code ya no podrá retomarlas. Puedes recuperarlas desde la papelera del sistema.'
+      )
+    "
+    :confirm-label="t('Mover a la papelera')"
     danger
     @confirm="confirm"
   />

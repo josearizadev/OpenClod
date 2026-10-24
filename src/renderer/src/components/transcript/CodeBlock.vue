@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { computed, ref } from 'vue'
 import { useCopy } from '../../composables/useCopy'
 import { useHighlight } from '../../composables/useHighlight'
@@ -26,7 +27,7 @@ const { copied, copy } = useCopy()
     <div class="code-block-header">
       <span class="min-w-0 truncate" :title="label">{{ label ?? lang ?? 'texto' }}</span>
       <button type="button" class="code-copy shrink-0" @click="copy(code)">
-        {{ copied ? 'Copiado' : 'Copiar' }}
+        {{ copied ? t('Copiado') : t('Copiar') }}
       </button>
     </div>
     <pre><code :key="code + (lang ?? '')" :data-lang="highlightable">{{ code }}</code></pre>

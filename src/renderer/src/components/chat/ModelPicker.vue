@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { Check, ChevronDown } from 'lucide-vue-next'
 import {
   DropdownMenuContent,
@@ -34,7 +35,7 @@ const label = computed(() => {
   const found = find(model.value)
   if (found) return found.displayName
   if (model.value) return model.value.replace(/^claude-/, '')
-  return 'Predeterminado'
+  return t('Predeterminado')
 })
 
 const options = computed(() => props.models.filter((m) => m.value !== 'default'))
@@ -48,7 +49,7 @@ const itemClass =
     <DropdownMenuTrigger
       :disabled="disabled"
       class="inline-flex h-8 max-w-48 items-center gap-1 rounded-item px-2 text-sm text-muted transition-colors duration-150 enabled:hover:bg-surface-hover enabled:hover:text-text disabled:opacity-60"
-      :aria-label="`Modelo: ${label}`"
+      :aria-label="t('Modelo: {model}', { model: label })"
     >
       <span class="truncate">{{ label }}</span>
       <ChevronDown class="shrink-0" :size="14" :stroke-width="1.75" aria-hidden="true" />
@@ -63,8 +64,8 @@ const itemClass =
       >
         <DropdownMenuItem :class="itemClass" @select="model = null">
           <span class="flex min-w-0 flex-1 flex-col">
-            <span>Predeterminado</span>
-            <span class="text-xs text-muted">El que use Claude Code</span>
+            <span>{{ t('Predeterminado') }}</span>
+            <span class="text-xs text-muted">{{ t('El que use Claude Code') }}</span>
           </span>
           <Check v-if="model === null" class="mt-0.5 shrink-0" :size="16" aria-hidden="true" />
         </DropdownMenuItem>
@@ -88,7 +89,7 @@ const itemClass =
           />
         </DropdownMenuItem>
         <p v-if="options.length === 0" class="px-2 py-1.5 text-xs text-muted">
-          La lista de modelos aparece tras la primera sesión.
+          {{ t('La lista de modelos aparece tras la primera sesión.') }}
         </p>
       </DropdownMenuContent>
     </DropdownMenuPortal>

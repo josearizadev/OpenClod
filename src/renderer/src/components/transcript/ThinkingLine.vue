@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { Brain, ChevronRight } from 'lucide-vue-next'
 import { useFoldState } from '../../composables/useFoldState'
 
@@ -21,7 +22,7 @@ const fold = useFoldState()
       @click="fold.toggle(props.foldKey)"
     >
       <Brain :size="16" :stroke-width="1.75" aria-hidden="true" />
-      Pensó
+      {{ t('Pensó') }}
       <ChevronRight
         :size="14"
         :stroke-width="1.75"
@@ -32,7 +33,7 @@ const fold = useFoldState()
     </button>
     <p v-else class="flex items-center gap-1.5 py-0.5">
       <Brain :size="16" :stroke-width="1.75" aria-hidden="true" />
-      Pensó
+      {{ t('Pensó') }}
     </p>
     <p
       v-if="props.text && fold.isOpen(props.foldKey)"

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { Search } from 'lucide-vue-next'
 import {
   DialogContent,
@@ -14,7 +15,6 @@ import {
 import { computed, nextTick, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import type { SearchAuthor, SearchGroup, SearchHit, SearchSort } from '../../../../shared/search'
-import { formatNumber } from '../../lib/tokens'
 import { useProjectsStore } from '../../stores/projects'
 import { useSearchStore } from '../../stores/search'
 import SearchResultGroup from './SearchResultGroup.vue'
@@ -126,10 +126,10 @@ function onKeydown(event: KeyboardEvent): void {
 const summary = computed(() => {
   const r = search.results
   if (!r) return ''
-  const hits = r.total === 1 ? '1 coincidencia' : `${formatNumber(r.total)} coincidencias`
+  const hits = r.total === 1 ? t('1 coincidencia') : t('{n} coincidencias', { n: r.total })
   const convs =
-    r.groups.length === 1 ? '1 conversación' : `${formatNumber(r.groups.length)} conversaciones`
-  return `${hits} en ${convs}`
+    r.groups.length === 1 ? t('1 conversación') : t('{n} conversaciones', { n: r.groups.length })
+  return t('{hits} en {conversations}', { hits, conversations: convs })
 })
 
 const segmented =
@@ -145,8 +145,10 @@ const segmented =
         @open-auto-focus.prevent="input?.select()"
       >
         <VisuallyHidden>
-          <DialogTitle>Buscar</DialogTitle>
-          <DialogDescription>Busca en tus prompts y en las respuestas de Claude.</DialogDescription>
+          <DialogTitle>{{ t('Buscar') }}</DialogTitle>
+          <DialogDescription>{{
+            t('Busca en tus prompts y en las respuestas de Claude.')
+          }}</DialogDescription>
         </VisuallyHidden>
         <div class="flex items-center gap-2 border-b border-border px-4">
           <Search :size="18" :stroke-width="1.75" class="shrink-0 text-muted" aria-hidden="true" />
@@ -155,8 +157,8 @@ const segmented =
             v-model="search.text"
             type="text"
             maxlength="500"
-            placeholder="Buscar en las conversaciones…"
-            aria-label="Buscar"
+            :placeholder="t('Buscar en las conversaciones…')"
+            :aria-label="t('Buscar')"
             role="combobox"
             aria-expanded="true"
             aria-controls="busqueda-resultados"
@@ -171,32 +173,36 @@ const segmented =
           <ToggleGroupRoot
             v-model="scopeModel"
             type="single"
-            aria-label="Ámbito (Alt+P)"
+            :aria-label="t('Ámbito (Alt+P)')"
             class="flex gap-0.5"
           >
             <ToggleGroupItem value="project" :disabled="!projects.activeId" :class="segmented">
-              Este proyecto
+              {{ t('Este proyecto') }}
             </ToggleGroupItem>
-            <ToggleGroupItem value="all" :class="segmented">Todos</ToggleGroupItem>
+            <ToggleGroupItem value="all" :class="segmented">{{ t('Todos') }}</ToggleGroupItem>
           </ToggleGroupRoot>
           <ToggleGroupRoot
             v-model="authorModel"
             type="single"
-            aria-label="Autor"
+            :aria-label="t('Autor')"
             class="flex gap-0.5"
           >
-            <ToggleGroupItem value="all" :class="segmented">Todo</ToggleGroupItem>
-            <ToggleGroupItem value="user" :class="segmented">Tú</ToggleGroupItem>
+            <ToggleGroupItem value="all" :class="segmented">{{ t('Todo') }}</ToggleGroupItem>
+            <ToggleGroupItem value="user" :class="segmented">{{ t('Tú') }}</ToggleGroupItem>
             <ToggleGroupItem value="assistant" :class="segmented">Claude</ToggleGroupItem>
           </ToggleGroupRoot>
           <ToggleGroupRoot
             v-model="sortModel"
             type="single"
-            aria-label="Orden"
+            :aria-label="t('Orden')"
             class="ml-auto flex gap-0.5"
           >
-            <ToggleGroupItem value="relevance" :class="segmented">Relevancia</ToggleGroupItem>
-            <ToggleGroupItem value="date" :class="segmented">Más recientes</ToggleGroupItem>
+            <ToggleGroupItem value="relevance" :class="segmented">{{
+              t('Relevancia')
+            }}</ToggleGroupItem>
+            <ToggleGroupItem value="date" :class="segmented">{{
+              t('Más recientes')
+            }}</ToggleGroupItem>
           </ToggleGroupRoot>
         </div>
 
@@ -205,8 +211,12 @@ const segmented =
           class="flex flex-col gap-1 border-b border-border px-4 py-2 text-sm text-muted"
           role="status"
         >
-          Indexando {{ formatNumber(search.results.indexing.done) }} de
-          {{ formatNumber(search.results.indexing.total) }} sesiones…
+          {{
+            t('Indexando {done} de {total} sesiones…', {
+              done: search.results.indexing.done,
+              total: search.results.indexing.total
+            })
+          }}
           <div class="h-0.5 overflow-hidden rounded-full bg-surface-hover">
             <div
               class="h-full bg-accent"
@@ -219,17 +229,19 @@ const segmented =
 
         <div class="min-h-0 flex-1 overflow-y-auto px-2 py-1">
           <p v-if="search.error" class="px-3 py-6 text-sm text-danger" role="alert">
-            La búsqueda no está disponible: {{ search.error }}
+            {{ t('La búsqueda no está disponible: {error}', { error: search.error }) }}
           </p>
           <p v-else-if="!search.text.trim()" class="px-3 py-6 text-sm text-muted">
-            Busca en lo que dijiste tú y lo que respondió Claude.
+            {{ t('Busca en lo que dijiste tú y lo que respondió Claude.') }}
           </p>
           <div
             v-else-if="search.results && groups.length === 0 && !search.loading"
             class="flex flex-wrap items-center gap-2 px-3 py-6 text-sm text-muted"
           >
             <span>{{
-              search.scope === 'project' ? 'Sin resultados en este proyecto' : 'Sin resultados'
+              search.scope === 'project'
+                ? t('Sin resultados en este proyecto')
+                : t('Sin resultados')
             }}</span>
             <template v-if="search.scope === 'project'">
               <span aria-hidden="true">·</span>
@@ -238,11 +250,11 @@ const segmented =
                 class="font-medium text-accent hover:text-accent-hover"
                 @click="search.setScope('all')"
               >
-                Buscar en todos
+                {{ t('Buscar en todos') }}
               </button>
             </template>
           </div>
-          <div v-else id="busqueda-resultados" role="listbox" aria-label="Resultados">
+          <div v-else id="busqueda-resultados" role="listbox" :aria-label="t('Resultados')">
             <SearchResultGroup
               v-for="(group, index) in groups"
               :key="group.entryId"
@@ -261,7 +273,7 @@ const segmented =
           class="border-t border-border px-4 py-2 text-xs text-muted"
         >
           {{ summary }} · {{ search.results.durationMs }} ms
-          <span v-if="search.results.literal"> · buscado como texto literal</span>
+          <span v-if="search.results.literal"> · {{ t('buscado como texto literal') }}</span>
         </div>
         <p class="sr-only" role="status" aria-live="polite">{{ summary }}</p>
       </DialogContent>

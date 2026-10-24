@@ -2,6 +2,7 @@ import type { IndexStatus } from '../../shared/projects'
 import type { IndexService } from '../services/index-service'
 import { logger } from '../services/logger'
 import { IpcError, handle } from './handle'
+import { t } from '../i18n'
 
 /**
  * Canales del índice. Si el índice no se pudo abrir no hay servicio:
@@ -21,11 +22,11 @@ export function registerIndexIpc(
 }
 
 async function run(service: IndexService | null, kind: 'refresh' | 'rebuild'): Promise<void> {
-  if (!service) throw new IpcError('INTERNAL', 'El índice no está disponible')
+  if (!service) throw new IpcError('INTERNAL', t('El índice no está disponible'))
   try {
     await service[kind]()
   } catch (error) {
     logger.error('index', error)
-    throw new IpcError('INTERNAL', 'No se pudo actualizar el índice')
+    throw new IpcError('INTERNAL', t('No se pudo actualizar el índice'))
   }
 }

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { Clock } from 'lucide-vue-next'
 import { computed } from 'vue'
 import type { LimitWindow } from '../../../../shared/usage'
@@ -18,12 +19,14 @@ const rejected = computed(() => props.window.status === 'rejected')
 const visible = computed(() => left.value === null || left.value > 0)
 const text = computed(() => {
   const resets = props.window.resetsAt
-    ? ` · se renueva a las ${formatClock(props.window.resetsAt, now.value)}` +
-      (left.value !== null ? ` (dentro de ${formatDuration(left.value)})` : '')
+    ? ` · ${t('se renueva a las {time}', { time: formatClock(props.window.resetsAt, now.value) })}` +
+      (left.value !== null
+        ? ` (${t('dentro de {time}', { time: formatDuration(left.value) })})`
+        : '')
     : ''
-  if (rejected.value) return `Has alcanzado el límite de uso${resets}`
+  if (rejected.value) return `${t('Has alcanzado el límite de uso')}${resets}`
   const pct = props.window.utilization
-  return `Te acercas al límite de uso${pct !== null ? ` (${Math.round(pct)} %)` : ''}${resets}`
+  return `${t('Te acercas al límite de uso')}${pct !== null ? ` (${Math.round(pct)} %)` : ''}${resets}`
 })
 </script>
 

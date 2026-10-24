@@ -6,6 +6,7 @@ import {
 } from '../../../../shared/chat'
 import type { TranscriptItem, TranscriptSegment } from '../../../../shared/sessions'
 import type { Viewer } from '../../../../shared/types'
+import { t } from '../../i18n'
 
 /**
  * Capa de presentación del transcript: convierte los `TranscriptItem`
@@ -126,7 +127,7 @@ const ALL: Viewer = { tools: true, thinking: true, internal: true }
 
 /** Nombre legible de los `system` que solo se ven con el filtro de avisos internos. */
 function systemLabel(subtype: string): string {
-  return `Aviso del sistema: ${subtype}`
+  return t('Aviso del sistema: {type}', { type: subtype })
 }
 
 /** Día local `AAAA-MM-DD` de un ISO, o `null` si no es una fecha. */
@@ -270,7 +271,7 @@ export function buildBlocks(items: readonly TranscriptItem[], options: BuildOpti
           call.status = item.isError ? 'error' : 'ok'
           delete call.elapsedMs
         } else {
-          internal(item, key, 'Resultado de herramienta sin llamada', item.text)
+          internal(item, key, t('Resultado de herramienta sin llamada'), item.text)
         }
         break
       }
@@ -282,7 +283,12 @@ export function buildBlocks(items: readonly TranscriptItem[], options: BuildOpti
           ...(item.description ? { description: item.description } : {})
         }
         if (call) call.subagent = subagent
-        else internal(item, key, `Subagente sin llamada: ${item.agentType ?? item.agentId}`)
+        else
+          internal(
+            item,
+            key,
+            t('Subagente sin llamada: {name}', { name: item.agentType ?? item.agentId })
+          )
         break
       }
       case 'command':
@@ -293,7 +299,7 @@ export function buildBlocks(items: readonly TranscriptItem[], options: BuildOpti
         if (last?.kind === 'command' && !last.output) {
           last.output = { text: item.text, stream: item.stream }
         } else {
-          internal(item, key, 'Salida de comando', item.text)
+          internal(item, key, t('Salida de comando'), item.text)
         }
         break
       }
@@ -314,13 +320,18 @@ export function buildBlocks(items: readonly TranscriptItem[], options: BuildOpti
         }
         break
       case 'meta':
-        internal(item, key, 'Aviso interno', item.text)
+        internal(item, key, t('Aviso interno'), item.text)
         break
       case 'attachment':
         internal(item, key, `Adjunto: ${item.attachmentType}`)
         break
       case 'unknown':
-        internal(item, key, `Elemento no reconocido: ${item.originalType}`, item.reason)
+        internal(
+          item,
+          key,
+          t('Elemento no reconocido: {type}', { type: item.originalType }),
+          item.reason
+        )
         break
     }
   }

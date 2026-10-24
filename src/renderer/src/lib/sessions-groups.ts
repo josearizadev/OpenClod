@@ -1,5 +1,6 @@
 import type { SessionListItem } from '../../../shared/projects'
 import { groupByDate, type DateGroup } from './dates'
+import { t } from '../i18n'
 
 /**
  * Grupos de la lista de sesiones: «Favoritas» primero y
@@ -15,7 +16,7 @@ export function groupSessions(
   const favorites = visible.filter((item) => item.favorite)
   const rest = visible.filter((item) => !item.favorite)
   const groups = groupByDate(rest, now, (item) => item.updatedAt)
-  return favorites.length > 0 ? [{ label: 'Favoritas', items: favorites }, ...groups] : groups
+  return favorites.length > 0 ? [{ label: t('Favoritas'), items: favorites }, ...groups] : groups
 }
 
 /** Nº de sesiones ocultas por el usuario en la lista («Mostrar ocultas (N)»). */

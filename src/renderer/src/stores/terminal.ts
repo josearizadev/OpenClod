@@ -6,6 +6,7 @@ import { router } from '../router'
 import { useChatStore } from './chat'
 import { useProjectsStore } from './projects'
 import { useUiStore } from './ui'
+import { t } from '../i18n'
 
 type DataListener = (data: string) => void
 
@@ -75,7 +76,9 @@ export const useTerminalStore = defineStore('terminal', () => {
     })
     if (!result.ok) {
       error.value = result.error.message
-      ui.toast(`No se pudo abrir la terminal: ${result.error.message}`, { tone: 'danger' })
+      ui.toast(t('No se pudo abrir la terminal: {error}', { error: result.error.message }), {
+        tone: 'danger'
+      })
       return null
     }
     error.value = null
@@ -118,7 +121,14 @@ export const useTerminalStore = defineStore('terminal', () => {
     if (opened) await router.push('/terminal')
   }
 
+  /** `claude auth login` en la vista Terminal (Ajustes, error de sesión del chat). */
+  async function login(): Promise<void> {
+    const opened = await open('login')
+    if (opened) await router.push('/terminal')
+  }
+
   return {
+    login,
     terminals,
     activeId,
     active,

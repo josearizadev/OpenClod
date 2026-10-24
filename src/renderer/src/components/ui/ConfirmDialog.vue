@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import {
   AlertDialogAction,
   AlertDialogCancel,
@@ -37,7 +38,7 @@ const emit = defineEmits<{ confirm: [] }>()
           <AlertDialogCancel
             class="h-8 rounded-item px-3 transition-colors duration-150 hover:bg-surface-hover"
           >
-            Cancelar
+            {{ t('Cancelar') }}
           </AlertDialogCancel>
           <AlertDialogAction
             :class="[

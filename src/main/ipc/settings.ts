@@ -6,6 +6,8 @@ import { handle } from './handle'
 /** Solo los ajustes salen por este canal; los proyectos tienen el suyo. */
 function toSettings({
   theme,
+  language,
+  welcomed,
   claudeDir,
   viewer,
   chat,
@@ -15,7 +17,19 @@ function toSettings({
   terminal,
   window
 }: State): Settings {
-  return { theme, claudeDir, viewer, chat, search, usage, notifications, terminal, window }
+  return {
+    theme,
+    language,
+    welcomed,
+    claudeDir,
+    viewer,
+    chat,
+    search,
+    usage,
+    notifications,
+    terminal,
+    window
+  }
 }
 
 /** `onClaudeDirChanged` se llama si cambia `claudeDir` (el main reconstruye el índice). */

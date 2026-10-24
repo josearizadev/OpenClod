@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { t } from '../../i18n'
 import { Terminal } from 'lucide-vue-next'
 import { computed } from 'vue'
+import { tag } from '../../i18n'
 import type { ToolCallView } from '../../lib/transcript/blocks'
 import type { TouchedFile } from '../../lib/transcript/files'
 import EditDiff from '../transcript/tools/EditDiff.vue'
@@ -13,17 +15,17 @@ import WriteContent from '../transcript/tools/WriteContent.vue'
 const props = defineProps<{ file: TouchedFile; cwd?: string }>()
 
 const OPS = {
-  deleted: 'Borrado',
-  created: 'Creado',
-  'moved-from': 'Movido a otra ruta',
-  'moved-to': 'Movido aquí'
+  deleted: t('Borrado'),
+  created: t('Creado'),
+  'moved-from': t('Movido a otra ruta'),
+  'moved-to': t('Movido aquí')
 } as const
 
 const TOOLS = {
-  Write: 'Escritura completa',
-  Edit: 'Edición',
-  MultiEdit: 'Ediciones',
-  NotebookEdit: 'Celda de notebook'
+  Write: t('Escritura completa'),
+  Edit: t('Edición'),
+  MultiEdit: t('Ediciones'),
+  NotebookEdit: t('Celda de notebook')
 } as const
 
 function time(iso: string | undefined): string {
@@ -31,7 +33,7 @@ function time(iso: string | undefined): string {
   const date = new Date(iso)
   return Number.isNaN(date.getTime())
     ? ''
-    : date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+    : date.toLocaleTimeString(tag, { hour: '2-digit', minute: '2-digit' })
 }
 
 const calls = computed(() =>
@@ -63,7 +65,7 @@ const calls = computed(() =>
       <p class="flex items-center gap-2 text-xs text-muted">
         <span class="font-medium text-text">{{ TOOLS[change.tool] }}</span>
         <span v-if="time(change.timestamp)">{{ time(change.timestamp) }}</span>
-        <span v-if="change.status === 'running'">· en curso</span>
+        <span v-if="change.status === 'running'">· {{ t('en curso') }}</span>
         <span class="ml-auto tabular-nums">
           <span class="text-diff-add">+{{ change.added }}</span>
           <span class="ml-1 text-diff-del">−{{ change.removed }}</span>
@@ -73,7 +75,7 @@ const calls = computed(() =>
       <EditDiff v-else :call="call" />
     </section>
     <section v-if="file.commands.length > 0" class="flex flex-col gap-1">
-      <p class="text-xs font-medium">Detectado por comando</p>
+      <p class="text-xs font-medium">{{ t('Detectado por comando') }}</p>
       <p
         v-for="(op, index) in file.commands"
         :key="`${op.toolUseId}:${index}`"
