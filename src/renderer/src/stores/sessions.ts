@@ -177,6 +177,15 @@ export const useSessionsStore = defineStore('sessions', () => {
     await load()
   }
 
+  /** Marcar o quitar de favoritas varias a la vez; la selección se mantiene. */
+  async function setFavoriteMany(sessionIds: readonly string[], favorite: boolean): Promise<void> {
+    for (const sessionId of sessionIds) {
+      const result = await window.api.sessions.update({ sessionId, favorite })
+      if (!result.ok) error.value = result.error.message
+    }
+    await load()
+  }
+
   /** Entradas que esperan la confirmación de «Eliminar…» (un solo diálogo, en `App.vue`). */
   const trashRequest = ref<string[] | null>(null)
 
@@ -212,6 +221,7 @@ export const useSessionsStore = defineStore('sessions', () => {
     selectAll,
     clearSelection,
     setHiddenMany,
+    setFavoriteMany,
     trashRequest,
     askTrash,
     trash,
