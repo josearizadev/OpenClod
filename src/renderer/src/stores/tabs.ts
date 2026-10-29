@@ -148,20 +148,25 @@ export const useTabsStore = defineStore('tabs', () => {
     return { key: newKey(), sessionId: null, title: '', projectId: null }
   }
 
-  /** Activa la pestaña vacía («Nueva sesión»), creándola si no la hay. */
-  function showEmpty(): void {
-    const empty = tabs.value.find((tab) => tab.sessionId === null)
-    if (empty) return activate(empty)
+  function addEmpty(): void {
     const tab = emptyTab()
     insertAfterActive(tab)
     activate(tab)
     trim()
   }
 
-  /** Botón `+`: ya en `/` no hay navegación, así que la pestaña vacía se crea aquí. */
+  /** Muestra una pestaña vacía («Nueva sesión»): la activa si ya lo es, otra vacía o una nueva. */
+  function showEmpty(): void {
+    if (active.value?.sessionId === null) return
+    const empty = tabs.value.find((tab) => tab.sessionId === null)
+    if (empty) return activate(empty)
+    addEmpty()
+  }
+
+  /** Botón `+` y `Ctrl+N`: siempre una pestaña nueva, aunque ya haya otra vacía. */
   function openNew(): void {
-    if (router.currentRoute.value.name === 'home') showEmpty()
-    else void router.push('/')
+    addEmpty()
+    if (router.currentRoute.value.name !== 'home') void router.push('/')
   }
 
   /** Decide la pestaña de la ruta actual (lo llama `App.vue` en cada navegación). */
@@ -207,7 +212,9 @@ export const useTabsStore = defineStore('tabs', () => {
   }
 
   function select(tab: SessionTab): void {
-    void router.push(routeOf(tab))
+    // Activarla antes: entre pestañas vacías la ruta (`/`) no cambia.
+    activate(tab)
+    if (router.currentRoute.value.fullPath !== routeOf(tab)) void router.push(routeOf(tab))
   }
 
   /** Abre una sesión en una pestaña nueva (o va a la suya si ya la tiene). */
@@ -224,10 +231,7 @@ export const useTabsStore = defineStore('tabs', () => {
     if (tabs.value.length === 0) tabs.value = [emptyTab()]
     if (tab.key !== activeKey.value) return
     activeKey.value = null
-    const next = (tabs.value[index] ?? tabs.value[index - 1]) as SessionTab
-    // Si la ruta ya es la suya (la vacía estando en `/`), no habrá navegación que la active.
-    if (router.currentRoute.value.fullPath === routeOf(next)) activate(next)
-    else void router.push(routeOf(next))
+    select((tabs.value[index] ?? tabs.value[index - 1]) as SessionTab)
   }
 
   function closeActive(): void {
