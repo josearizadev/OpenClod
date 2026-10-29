@@ -67,7 +67,12 @@ import { isAppUrl } from './window'
 // `state.json`, índice ni logs. Tiene que ir antes de cualquier uso de `userData`.
 // La instalada sigue en `bitacora` tras el cambio de nombre a OpenClod: Electron
 // la deriva de `name` y, si no, se perderían ajustes, índice y logs.
-app.setPath('userData', join(app.getPath('appData'), app.isPackaged ? 'bitacora' : 'bitacora-dev'))
+// En desarrollo, `OPENCLOD_USER_DATA` permite arrancar con otro perfil (p. ej. datos de maqueta).
+const devUserData = app.isPackaged ? undefined : process.env['OPENCLOD_USER_DATA']?.trim()
+app.setPath(
+  'userData',
+  devUserData || join(app.getPath('appData'), app.isPackaged ? 'bitacora' : 'bitacora-dev')
+)
 
 initLogger(join(app.getPath('userData'), 'logs'), { echo: is.dev })
 
