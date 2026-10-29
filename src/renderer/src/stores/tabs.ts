@@ -144,16 +144,31 @@ export const useTabsStore = defineStore('tabs', () => {
     tabs.value = list
   }
 
+  function emptyTab(): SessionTab {
+    return { key: newKey(), sessionId: null, title: '', projectId: null }
+  }
+
+  /** Activa la pestaña vacía («Nueva sesión»), creándola si no la hay. */
+  function showEmpty(): void {
+    const empty = tabs.value.find((tab) => tab.sessionId === null)
+    if (empty) return activate(empty)
+    const tab = emptyTab()
+    insertAfterActive(tab)
+    activate(tab)
+    trim()
+  }
+
+  /** Botón `+`: ya en `/` no hay navegación, así que la pestaña vacía se crea aquí. */
+  function openNew(): void {
+    if (router.currentRoute.value.name === 'home') showEmpty()
+    else void router.push('/')
+  }
+
   /** Decide la pestaña de la ruta actual (lo llama `App.vue` en cada navegación). */
   function syncRoute(route: RouteLocationNormalizedLoaded): void {
     if (route.name === 'home') {
       forceNew = false
-      const empty = tabs.value.find((tab) => tab.sessionId === null)
-      if (empty) return activate(empty)
-      const tab: SessionTab = { key: newKey(), sessionId: null, title: '', projectId: null }
-      insertAfterActive(tab)
-      activate(tab)
-      return trim()
+      return showEmpty()
     }
     if (route.name !== 'session') {
       activeKey.value = null
@@ -205,10 +220,14 @@ export const useTabsStore = defineStore('tabs', () => {
     const index = tabs.value.findIndex((t) => t.key === tab.key)
     if (index === -1) return
     tabs.value = tabs.value.filter((t) => t.key !== tab.key)
+    // Siempre queda al menos una: cerrar la última deja una «Nueva sesión».
+    if (tabs.value.length === 0) tabs.value = [emptyTab()]
     if (tab.key !== activeKey.value) return
     activeKey.value = null
-    const next = tabs.value[index] ?? tabs.value[index - 1]
-    void router.push(next ? routeOf(next) : '/')
+    const next = (tabs.value[index] ?? tabs.value[index - 1]) as SessionTab
+    // Si la ruta ya es la suya (la vacía estando en `/`), no habrá navegación que la active.
+    if (router.currentRoute.value.fullPath === routeOf(next)) activate(next)
+    else void router.push(routeOf(next))
   }
 
   function closeActive(): void {
@@ -256,6 +275,7 @@ export const useTabsStore = defineStore('tabs', () => {
     syncRoute,
     select,
     openInNewTab,
+    openNew,
     close,
     closeActive,
     cycle,

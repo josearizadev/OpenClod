@@ -2,7 +2,6 @@
 import { t } from '../../i18n'
 import { CircleCheck, Loader2, Plus, X } from 'lucide-vue-next'
 import { nextTick, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
 import type { ProjectView } from '../../../../shared/projects'
 import { useProjectsStore } from '../../stores/projects'
 import { useTabsStore, type SessionTab } from '../../stores/tabs'
@@ -14,7 +13,6 @@ import ProjectIcon from '../projects/ProjectIcon.vue'
  */
 const tabs = useTabsStore()
 const projects = useProjectsStore()
-const router = useRouter()
 const strip = ref<HTMLElement | null>(null)
 
 function projectOf(tab: SessionTab): ProjectView | null {
@@ -131,7 +129,7 @@ function onWheel(event: WheelEvent): void {
       :aria-label="t('Nueva sesión')"
       :title="t('Nueva sesión (Ctrl+N)')"
       class="mb-0.5 inline-flex size-7 shrink-0 items-center justify-center rounded-item text-muted transition-colors duration-150 hover:bg-surface-hover hover:text-text"
-      @click="router.push('/')"
+      @click="tabs.openNew()"
     >
       <Plus :size="16" :stroke-width="1.75" />
     </button>

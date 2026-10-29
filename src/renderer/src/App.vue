@@ -88,12 +88,12 @@ function quit(): void {
   void window.api.app.quit(closing.value?.restart ?? false)
 }
 
-// `Ctrl+N`: sesión nueva (en su pestaña).
 const router = useRouter()
-useShortcut('ctrl+n', () => void router.push('/'))
 
 // Pestañas: cada navegación cae en la suya; `Ctrl+W` cierra y `Ctrl+(Mayús+)Tab` cambia.
 const tabs = useTabsStore()
+// `Ctrl+N`: sesión nueva (en su pestaña).
+useShortcut('ctrl+n', () => tabs.openNew())
 // Con el nombre: antes de resolver la primera ruta, `fullPath` ya es `/` pero sin nombre.
 watch(
   () => [route.name, route.fullPath],
@@ -134,7 +134,7 @@ let unsubscribeCommand: (() => void) | null = null
 function runCommand(command: AppCommand): void {
   switch (command) {
     case 'new-session':
-      return void router.push('/')
+      return tabs.openNew()
     case 'open-project':
       return void projects.importFolder()
     case 'search':
