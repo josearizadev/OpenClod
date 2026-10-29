@@ -24,7 +24,7 @@ export type GitRun = (args: string[], cwd: string) => Promise<GitRunResult>
 
 const TIMEOUT_MS = 5000
 
-const runGit: GitRun = (args, cwd) =>
+export const runGit: GitRun = (args, cwd) =>
   new Promise((done) => {
     execFile(
       'git',

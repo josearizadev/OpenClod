@@ -775,6 +775,7 @@ async function setFavorite(value: boolean): Promise<void> {
             :working="working"
             :models="chat.catalog.models"
             :commands="commands"
+            :mentions="{ sessionId: id }"
             :placeholder="working ? t('Escribe para ponerlo en cola…') : t('Responder…')"
             @send="send"
             @stop="stop"

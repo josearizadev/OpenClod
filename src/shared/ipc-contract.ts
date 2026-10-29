@@ -40,11 +40,13 @@ import {
   FileOpenInputSchema,
   FileRefInputSchema,
   FileTargetSchema,
+  MentionsInputSchema,
   SessionExportInputSchema,
   type ClaudeMdFile,
   type ClaudeMdWrite,
   type FileDiff,
-  type FilePreview
+  type FilePreview,
+  type MentionEntry
 } from './files'
 import type { GitInfo } from './git'
 import {
@@ -201,6 +203,7 @@ export const invokeContract = {
   'files:read': { input: FileRefInputSchema, output: z.custom<FilePreview>() },
   'files:diff': { input: FileRefInputSchema, output: z.custom<FileDiff>() },
   'files:open': { input: FileOpenInputSchema, output: z.void() },
+  'files:mentions': { input: MentionsInputSchema, output: z.custom<MentionEntry[]>() },
   'files:revealExport': {
     input: z.object({ path: z.string().min(1).max(1024) }).strict(),
     output: z.void()
@@ -360,6 +363,7 @@ export interface Api {
     read(args: InvokeInput<'files:read'>): Promise<Result<InvokeOutput<'files:read'>>>
     diff(args: InvokeInput<'files:diff'>): Promise<Result<InvokeOutput<'files:diff'>>>
     open(args: InvokeInput<'files:open'>): Promise<Result<void>>
+    mentions(args: InvokeInput<'files:mentions'>): Promise<Result<InvokeOutput<'files:mentions'>>>
     revealExport(path: string): Promise<Result<void>>
     /** Ruta en disco de un archivo soltado o pegado; `''` si no tiene. Sin IPC. */
     pathFor(file: File): string

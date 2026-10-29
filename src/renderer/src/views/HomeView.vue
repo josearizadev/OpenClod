@@ -167,6 +167,7 @@ watch(
         v-model:mode="mode"
         :models="chat.catalog.models"
         :commands="commands"
+        :mentions="cwd ? { cwd } : null"
         :disabled="!cwd || pending !== null"
         :placeholder="cwd ? t('¿En qué puedo ayudarte?') : t('Elige antes una carpeta de trabajo')"
         @send="send"

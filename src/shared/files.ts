@@ -98,3 +98,22 @@ export const ClaudeMdWriteInputSchema = z
 export const SessionExportInputSchema = z
   .object({ sessionId: z.string().min(1).max(100), tools: z.boolean() })
   .strict()
+
+/** Carpeta donde buscar menciones `@`: la de un destino o, en la bienvenida, la elegida. */
+export const MentionTargetSchema = z.union([
+  FileTargetSchema,
+  z.object({ cwd: z.string().min(1).max(1024) }).strict()
+])
+export type MentionTarget = z.infer<typeof MentionTargetSchema>
+
+export const MentionsInputSchema = z
+  .object({ target: MentionTargetSchema, query: z.string().max(512) })
+  .strict()
+
+/** Sugerencia de `@`: ruta relativa a la carpeta de trabajo, con `/`. */
+export interface MentionEntry {
+  path: string
+  dir: boolean
+}
+
+export const MENTIONS_MAX = 8

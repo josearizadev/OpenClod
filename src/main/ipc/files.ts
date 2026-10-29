@@ -2,6 +2,7 @@ import { app, BrowserWindow, dialog, shell } from 'electron'
 import { writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import type { FileTarget } from '../../shared/files'
+import { checkCwd } from '../services/chat/claude-runtime'
 import { ClaudeMdError, readClaudeMd, writeClaudeMd } from '../services/claude-md'
 import {
   FileAccessError,
@@ -10,6 +11,7 @@ import {
   resolveRoot,
   type RootDeps
 } from '../services/file-access'
+import type { FileMentions } from '../services/file-mentions'
 import { readDiff, readPreview } from '../services/file-preview'
 import type { GitService } from '../services/git'
 import { logger } from '../services/logger'
@@ -22,6 +24,7 @@ import { t } from '../i18n'
 
 export interface FilesIpcDeps extends RootDeps {
   git: GitService
+  mentions: FileMentions
   projects: ProjectsService
   transcripts: TranscriptService
 }
@@ -92,6 +95,24 @@ export function registerFilesIpc(deps: FilesIpcDeps): void {
       if (error) throw new IpcError('INTERNAL', t('No se pudo abrir: {error}', { error }))
     })
   )
+
+  // Solo nombres de archivo. La bienvenida aún no tiene sesión: manda la carpeta elegida, que
+  // pasa la misma comprobación que la de un chat nuevo. Sin carpeta válida, sin sugerencias.
+  handle('files:mentions', async ({ target, query }) => {
+    let root: string
+    if ('cwd' in target) {
+      const checked = await checkCwd(target.cwd, deps.claudeDir())
+      if (!checked.ok) return []
+      root = checked.path
+    } else {
+      try {
+        root = await resolveRoot(target, deps)
+      } catch {
+        return []
+      }
+    }
+    return deps.mentions.suggest(root, query)
+  })
 
   // --- CLAUDE.md del proyecto ---------------------------------------------------
 

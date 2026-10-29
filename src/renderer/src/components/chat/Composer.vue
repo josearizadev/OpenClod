@@ -8,20 +8,23 @@ import {
   DropdownMenuRoot,
   DropdownMenuTrigger
 } from 'reka-ui'
-import { computed, onMounted, ref, useTemplateRef, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, toRaw, useTemplateRef, watch } from 'vue'
 import type { ChatAttachment, ChatMode, ChatModel } from '../../../../shared/chat'
+import type { MentionEntry, MentionTarget } from '../../../../shared/files'
 import { attachFiles, attachPaths, type AttachResult } from '../../lib/attachments'
 import type { SlashEntry } from '../../lib/slash-commands'
 import AttachmentChip from './AttachmentChip.vue'
 import ModePicker from './ModePicker.vue'
 import ModelPicker from './ModelPicker.vue'
+import MentionMenu from './MentionMenu.vue'
 import SlashMenu from './SlashMenu.vue'
 
 /**
  * Compositor del chat: textarea autoexpandible, selectores de modo y
  * modelo, enviar y detener. Mientras Claude trabaja sigue activo: `Enter` envía (el main
  * lo encola), `Ctrl+Enter` lo envía ya, `Shift+Enter` salto de línea y `Esc` detiene.
- * Adjuntos: clip, pegar y soltar; se envían con el mensaje.
+ * Adjuntos: clip, pegar y soltar; se envían con el mensaje. `@ruta` menciona un archivo
+ * como en la terminal: va tal cual en el texto y Claude Code lo lee.
  */
 const props = defineProps<{
   /** Claude está trabajando: aparece detener y enviar encola. */
@@ -36,6 +39,8 @@ const props = defineProps<{
   commands?: SlashEntry[]
   /** Sin adjuntos (p. ej. editando un mensaje de la cola, que no los cambia). */
   noAttach?: boolean
+  /** Carpeta de las menciones `@`; sin ella no se sugieren archivos. */
+  mentions?: MentionTarget | null
 }>()
 
 const emit = defineEmits<{
@@ -127,31 +132,117 @@ function pick(name: string): void {
   focus()
 }
 
-function onSlashKey(event: KeyboardEvent): boolean {
-  const list = suggestions.value
-  if (list.length === 0) return false
+// --- Menciones de archivos con `@` -------------------------------------------------------
+/** Posición del cursor: la mención que se completa es la que acaba justo ahí. */
+const caret = ref(0)
+function syncCaret(): void {
+  caret.value = textarea.value?.selectionStart ?? text.value.length
+}
+
+/** `@consulta` (o `@"con espacios`) al principio o tras un espacio, pegada al cursor. */
+const mention = computed<{ start: number; query: string } | null>(() => {
+  if (!props.mentions) return null
+  const before = text.value.slice(0, caret.value)
+  const match = /(?:^|\s)@(?:"([^"]*)|([^\s"]*))$/.exec(before)
+  if (!match) return null
+  return { start: match.index + match[0].indexOf('@'), query: match[1] ?? match[2] ?? '' }
+})
+const mentionItems = ref<MentionEntry[]>([])
+const mentionActive = ref(0)
+const mentionDismissed = ref<string | null>(null)
+const mentionEntries = computed(() =>
+  mention.value && mentionDismissed.value !== text.value ? mentionItems.value : []
+)
+watch(mentionEntries, () => (mentionActive.value = 0))
+
+let mentionTicket = 0
+let mentionTimer: number | undefined
+watch(
+  () => mention.value?.query ?? null,
+  (query) => {
+    window.clearTimeout(mentionTimer)
+    const ticket = ++mentionTicket
+    const target = props.mentions
+    if (query === null || !target) {
+      mentionItems.value = []
+      return
+    }
+    // Espera breve: no se pide una lista por cada tecla al escribir deprisa.
+    mentionTimer = window.setTimeout(async () => {
+      const result = await window.api.files.mentions({ target: toRaw(target), query })
+      if (ticket === mentionTicket) mentionItems.value = result.ok ? result.data : []
+    }, 80)
+  }
+)
+
+/** Sustituye la mención por la ruta elegida: un archivo cierra con espacio, una carpeta sigue. */
+function pickMention(entry: MentionEntry): void {
+  const current = mention.value
+  if (!current) return
+  const quoted = /\s/.test(entry.path)
+  const path = entry.dir ? `${entry.path}/` : entry.path
+  const inserted = quoted
+    ? entry.dir
+      ? `@"${path}`
+      : `@"${path}" `
+    : entry.dir
+      ? `@${path}`
+      : `@${path} `
+  const end = caret.value
+  text.value = text.value.slice(0, current.start) + inserted + text.value.slice(end)
+  const at = current.start + inserted.length
+  caret.value = at
+  mentionDismissed.value = null
+  // Un `keyup` antes del repintado leería el cursor del texto viejo: se fija otra vez.
+  void nextTick(() => {
+    textarea.value?.setSelectionRange(at, at)
+    caret.value = at
+    focus()
+  })
+}
+
+/** El menú abierto (comandos o archivos): mismas teclas para los dos. */
+function onMenuKey(event: KeyboardEvent): boolean {
+  const slash = suggestions.value.length > 0
+  const count = slash ? suggestions.value.length : mentionEntries.value.length
+  if (count === 0) return false
+  const index = slash ? active : mentionActive
   if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
     event.preventDefault()
     const step = event.key === 'ArrowDown' ? 1 : -1
-    active.value = (active.value + step + list.length) % list.length
+    index.value = (index.value + step + count) % count
     return true
   }
   if (event.key === 'Tab' || (event.key === 'Enter' && !event.shiftKey && !event.isComposing)) {
     event.preventDefault()
-    const choice = list[active.value]
-    if (choice) pick(choice.name)
+    if (slash) {
+      const choice = suggestions.value[active.value]
+      if (choice) pick(choice.name)
+    } else {
+      const choice = mentionEntries.value[mentionActive.value]
+      if (choice) pickMention(choice)
+    }
     return true
   }
   if (event.key === 'Escape') {
     event.preventDefault()
-    dismissed.value = text.value
+    if (slash) dismissed.value = text.value
+    else mentionDismissed.value = text.value
     return true
   }
   return false
 }
 
+const menuId = computed(() =>
+  suggestions.value.length > 0
+    ? { list: 'slash-menu', option: `slash-${active.value}` }
+    : mentionEntries.value.length > 0
+      ? { list: 'mention-menu', option: `mention-${mentionActive.value}` }
+      : null
+)
+
 function onKeydown(event: KeyboardEvent): void {
-  if (onSlashKey(event)) {
+  if (onMenuKey(event)) {
     event.stopImmediatePropagation()
     return
   }
@@ -165,6 +256,7 @@ function send(now = false): void {
   if (props.disabled || (value === '' && attachments.value.length === 0)) return
   emit('send', value, now, [...attachments.value])
   text.value = ''
+  caret.value = 0
   attachments.value = []
   attachError.value = null
 }
@@ -203,6 +295,13 @@ defineExpose({ focus, textarea })
       @drop="onDrop"
     >
       <SlashMenu :commands="suggestions" :active="active" @pick="pick" @hover="active = $event" />
+      <MentionMenu
+        v-if="suggestions.length === 0"
+        :entries="mentionEntries"
+        :active="mentionActive"
+        @pick="pickMention"
+        @hover="mentionActive = $event"
+      />
       <ul v-if="attachments.length > 0" class="flex flex-wrap gap-2" :aria-label="t('Adjuntos')">
         <AttachmentChip
           v-for="(attachment, index) in attachments"
@@ -221,10 +320,13 @@ defineExpose({ focus, textarea })
         :placeholder="placeholder ?? t('Escribe un mensaje…')"
         :aria-label="t('Mensaje')"
         class="field-sizing-content max-h-[18rem] min-h-6 w-full resize-none bg-transparent px-1 text-base leading-6 outline-none placeholder:text-muted disabled:cursor-not-allowed"
-        :aria-autocomplete="commands ? 'list' : undefined"
-        :aria-controls="suggestions.length > 0 ? 'slash-menu' : undefined"
-        :aria-activedescendant="suggestions.length > 0 ? `slash-${active}` : undefined"
+        :aria-autocomplete="commands || mentions ? 'list' : undefined"
+        :aria-controls="menuId?.list"
+        :aria-activedescendant="menuId?.option"
         @keydown="onKeydown"
+        @input="syncCaret"
+        @keyup="syncCaret"
+        @click="syncCaret"
         @paste="onPaste"
       />
 

@@ -30,6 +30,7 @@ import { pathKey } from './services/paths'
 import { registerTerminalIpc } from './ipc/terminal'
 import { setupTerminal } from './terminal-setup'
 import { stripParentClaudeEnv } from './services/env'
+import { createFileMentions } from './services/file-mentions'
 import { createGitService } from './services/git'
 import { createNotifier, type AppNotification } from './services/notifier'
 import { LimitsService } from './services/limits'
@@ -496,7 +497,13 @@ app.whenReady().then(() => {
       }
     : undefined
   registerProjectsIpc(projectsService, transcripts, follower, trash)
-  registerFilesIpc({ ...rootDeps, git, projects: projectsService, transcripts })
+  registerFilesIpc({
+    ...rootDeps,
+    git,
+    mentions: createFileMentions({ claudeDir }),
+    projects: projectsService,
+    transcripts
+  })
   registerProjectSettingsIpc({ ...rootDeps, store })
   registerTerminalIpc(terminal.service, terminal.shells)
   // «Actualizar» reintenta la vigilancia si estaba apagada o en sondeo.

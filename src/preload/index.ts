@@ -35,6 +35,7 @@ const api: Api = {
     read: (args) => invoke('files:read', args),
     diff: (args) => invoke('files:diff', args),
     open: (args) => invoke('files:open', args),
+    mentions: (args) => invoke('files:mentions', args),
     revealExport: (path) => invoke('files:revealExport', { path }),
     pathFor: (file) => {
       try {
