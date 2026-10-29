@@ -134,12 +134,67 @@ const DEFAULT_SETTINGS: Settings = {
 }
 
 /** Proyecto importado: una carpeta en la que se usa Claude Code. */
+/** Iconos que se pueden elegir para un proyecto (el renderer los traduce a lucide). */
+export const PROJECT_ICONS = [
+  'folder',
+  'monitor',
+  'code',
+  'terminal',
+  'globe',
+  'smartphone',
+  'server',
+  'database',
+  'cloud',
+  'bot',
+  'brain',
+  'sparkles',
+  'book',
+  'file',
+  'pen',
+  'palette',
+  'camera',
+  'music',
+  'gamepad',
+  'flask',
+  'chart',
+  'briefcase',
+  'cart',
+  'graduation',
+  'house',
+  'heart',
+  'rocket',
+  'wrench',
+  'shield',
+  'leaf'
+] as const
+export const ProjectIconSchema = z.enum(PROJECT_ICONS)
+export type ProjectIcon = z.infer<typeof ProjectIconSchema>
+
+/** Colores de proyecto: cada uno es un token `--project-*` con variante clara y oscura. */
+export const PROJECT_COLORS = [
+  'red',
+  'orange',
+  'amber',
+  'green',
+  'teal',
+  'blue',
+  'violet',
+  'pink',
+  'gray'
+] as const
+export const ProjectColorSchema = z.enum(PROJECT_COLORS)
+export type ProjectColor = z.infer<typeof ProjectColorSchema>
+
 export const ProjectSchema = z.object({
   id: z.string().uuid(),
   /** Ruta tal como la eligió el usuario, normalizada (separadores, sin barra final). */
   path: z.string().min(1).max(1024),
-  /** Nombre de la carpeta. */
+  /** Nombre visible: el de la carpeta salvo que el usuario lo cambie. */
   name: z.string().min(1).max(256),
+  /** `computer` = «Mi PC»: la carpeta personal, para lo que no es un proyecto. Sin él, `folder`. */
+  kind: z.enum(['folder', 'computer']).optional(),
+  icon: ProjectIconSchema.optional(),
+  color: ProjectColorSchema.optional(),
   /** ISO. */
   addedAt: z.string(),
   /** ISO; ordena el selector. */

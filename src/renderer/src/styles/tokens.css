@@ -52,6 +52,17 @@
   --chart-other: #9c9a92;
   --meter-track: #1f1e1d1a;
 
+  /* Color de los proyectos: iconos legibles (≥ 3:1) sobre --bg y --bg-sidebar. */
+  --project-red: #c4402f;
+  --project-orange: #c2602a;
+  --project-amber: #9a6a00;
+  --project-green: #3a7f44;
+  --project-teal: #1d7a80;
+  --project-blue: #2a6cc0;
+  --project-violet: #7f52b0;
+  --project-pink: #b0457a;
+  --project-gray: #73726c;
+
   /* Terminal: ANSI legible sobre --code-bg. */
   --term-black: #141413;
   --term-red: #b53333;
@@ -118,6 +129,16 @@
   --chart-4: #c98500;
   --chart-other: #73726c;
   --meter-track: #dedcd126;
+
+  --project-red: #ef7b74;
+  --project-orange: #e8915c;
+  --project-amber: #e0a043;
+  --project-green: #7fbf6a;
+  --project-teal: #6cc2c2;
+  --project-blue: #6ca7e8;
+  --project-violet: #c49be0;
+  --project-pink: #e58ab6;
+  --project-gray: #9c9a92;
 
   --term-black: #3a3a37;
   --term-red: #e5534b;
@@ -194,6 +215,15 @@
   --color-chart-4: var(--chart-4);
   --color-chart-other: var(--chart-other);
   --color-meter-track: var(--meter-track);
+  --color-project-red: var(--project-red);
+  --color-project-orange: var(--project-orange);
+  --color-project-amber: var(--project-amber);
+  --color-project-green: var(--project-green);
+  --color-project-teal: var(--project-teal);
+  --color-project-blue: var(--project-blue);
+  --color-project-violet: var(--project-violet);
+  --color-project-pink: var(--project-pink);
+  --color-project-gray: var(--project-gray);
 
   --font-sans: 'Inter Variable', system-ui, sans-serif;
   --font-serif: 'Source Serif 4 Variable', Georgia, serif;

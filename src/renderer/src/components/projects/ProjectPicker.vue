@@ -11,20 +11,13 @@ import {
   PopoverTrigger,
   type AcceptableValue
 } from 'reka-ui'
-import {
-  Check,
-  ChevronsUpDown,
-  Folder,
-  FolderPlus,
-  FolderSearch,
-  FolderX,
-  X
-} from 'lucide-vue-next'
+import { Check, ChevronsUpDown, FolderPlus, FolderSearch, Pencil, X } from 'lucide-vue-next'
 import { computed, nextTick, ref, watch } from 'vue'
 import type { ProjectView } from '../../../../shared/projects'
 import { useShortcut } from '../../composables/useShortcut'
 import { useProjectsStore } from '../../stores/projects'
 import { useUiStore } from '../../stores/ui'
+import ProjectIcon from './ProjectIcon.vue'
 
 /**
  * Selector del proyecto activo: botón de la barra lateral que abre
@@ -41,13 +34,24 @@ const query = ref('')
 const IMPORT = '__import'
 const DISCOVER = '__discover'
 
+function matches(project: ProjectView, q: string): boolean {
+  return (
+    project.name.toLocaleLowerCase().includes(q) || project.path.toLocaleLowerCase().includes(q)
+  )
+}
+
+/** «Mi PC» va aparte, arriba; luego los proyectos de carpeta. */
 const filtered = computed(() => {
   const q = query.value.trim().toLocaleLowerCase()
-  if (!q) return projects.projects
-  return projects.projects.filter(
-    (p) => p.name.toLocaleLowerCase().includes(q) || p.path.toLocaleLowerCase().includes(q)
-  )
+  const computer =
+    projects.computer && (!q || matches(projects.computer, q)) ? projects.computer : null
+  const folders = q ? projects.folders.filter((p) => matches(p, q)) : projects.folders
+  return { computer, folders }
 })
+const groups = computed(() => [
+  filtered.value.computer ? [filtered.value.computer] : [],
+  filtered.value.folders
+])
 
 watch(open, (isOpen) => {
   if (isOpen) {
@@ -97,6 +101,11 @@ async function onPick(value: AcceptableValue | AcceptableValue[] | undefined): P
   await projects.select(value)
 }
 
+function requestEdit(project: ProjectView): void {
+  open.value = false
+  projects.startEditing(project)
+}
+
 function requestRemove(project: ProjectView): void {
   open.value = false
   emit('remove', project)
@@ -120,12 +129,7 @@ defineExpose({ show })
       :title="collapsed ? (projects.active?.name ?? t('Elegir proyecto')) : undefined"
       @click="onTriggerClick"
     >
-      <component
-        :is="projects.active?.missing ? FolderX : Folder"
-        :size="18"
-        :stroke-width="1.75"
-        :class="['shrink-0', projects.active?.missing ? 'text-muted' : '']"
-      />
+      <ProjectIcon :project="projects.active" :size="18" />
       <template v-if="!collapsed">
         <span class="min-w-0 flex-1">
           <span class="block truncate">{{ projects.active?.name ?? t('Elegir proyecto') }}</span>
@@ -158,46 +162,66 @@ defineExpose({ show })
             class="mb-1 h-8 w-full rounded-item bg-transparent px-2 text-text outline-none placeholder:text-muted"
           />
           <ListboxContent class="max-h-80 overflow-y-auto">
-            <ListboxItem
-              v-for="project in filtered"
-              :key="project.id"
-              :value="project.id"
-              class="group flex min-h-8 cursor-default items-center gap-2 rounded-item px-2 py-1 outline-none data-[highlighted]:bg-surface-hover"
-            >
-              <component
-                :is="project.missing ? FolderX : Folder"
-                :size="16"
-                :stroke-width="1.75"
-                :class="['shrink-0', project.missing ? 'text-muted' : '']"
+            <template v-for="(group, g) in groups" :key="g">
+              <div
+                v-if="g === 1 && filtered.computer && filtered.folders.length > 0"
+                class="my-1 h-px bg-border"
+                role="separator"
               />
-              <span class="min-w-0 flex-1">
-                <span class="block truncate">{{ project.name }}</span>
-                <span class="block truncate text-xs text-muted" :title="project.path">
-                  {{ project.missing ? `${t('Carpeta no encontrada')} · ` : '' }}{{ project.path }}
-                </span>
-              </span>
-              <Check
-                v-if="project.id === projects.activeId"
-                :size="16"
-                :stroke-width="1.75"
-                class="shrink-0 text-accent"
-                :aria-label="t('Activo')"
-              />
-              <button
-                type="button"
-                :aria-label="t('Quitar {name}', { name: project.name })"
-                :title="t('Quitar')"
-                class="inline-flex size-6 shrink-0 items-center justify-center rounded-[6px] text-muted opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-data-[highlighted]:opacity-100 hover:text-text focus-visible:opacity-100"
-                @pointerdown.stop
-                @click.stop="requestRemove(project)"
-                @keydown.enter.stop.prevent="requestRemove(project)"
-                @keydown.space.stop.prevent="requestRemove(project)"
+              <ListboxItem
+                v-for="project in group"
+                :key="project.id"
+                :value="project.id"
+                class="group flex min-h-8 cursor-default items-center gap-2 rounded-item px-2 py-1 outline-none data-[highlighted]:bg-surface-hover"
               >
-                <X :size="14" :stroke-width="1.75" />
-              </button>
-            </ListboxItem>
+                <ProjectIcon :project="project" />
+                <span class="min-w-0 flex-1">
+                  <span class="block truncate">{{ project.name }}</span>
+                  <span class="block truncate text-xs text-muted" :title="project.path">
+                    {{ project.missing ? `${t('Carpeta no encontrada')} · ` : ''
+                    }}{{
+                      project.kind === 'computer' ? t('Consultas sobre tu ordenador') : project.path
+                    }}
+                  </span>
+                </span>
+                <Check
+                  v-if="project.id === projects.activeId"
+                  :size="16"
+                  :stroke-width="1.75"
+                  class="shrink-0 text-accent"
+                  :aria-label="t('Activo')"
+                />
+                <button
+                  type="button"
+                  :aria-label="t('Personalizar {name}', { name: project.name })"
+                  :title="t('Personalizar…')"
+                  class="inline-flex size-6 shrink-0 items-center justify-center rounded-[6px] text-muted opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-data-[highlighted]:opacity-100 hover:text-text focus-visible:opacity-100"
+                  @pointerdown.stop
+                  @click.stop="requestEdit(project)"
+                  @keydown.enter.stop.prevent="requestEdit(project)"
+                  @keydown.space.stop.prevent="requestEdit(project)"
+                >
+                  <Pencil :size="14" :stroke-width="1.75" />
+                </button>
+                <button
+                  v-if="project.kind !== 'computer'"
+                  type="button"
+                  :aria-label="t('Quitar {name}', { name: project.name })"
+                  :title="t('Quitar')"
+                  class="inline-flex size-6 shrink-0 items-center justify-center rounded-[6px] text-muted opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-data-[highlighted]:opacity-100 hover:text-text focus-visible:opacity-100"
+                  @pointerdown.stop
+                  @click.stop="requestRemove(project)"
+                  @keydown.enter.stop.prevent="requestRemove(project)"
+                  @keydown.space.stop.prevent="requestRemove(project)"
+                >
+                  <X :size="14" :stroke-width="1.75" />
+                </button>
+              </ListboxItem>
+            </template>
             <p
-              v-if="projects.projects.length > 0 && filtered.length === 0"
+              v-if="
+                projects.projects.length > 0 && !filtered.computer && filtered.folders.length === 0
+              "
               class="px-2 py-2 text-muted"
             >
               {{ t('Ningún proyecto coincide.') }}

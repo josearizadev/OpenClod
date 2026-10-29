@@ -28,7 +28,7 @@ interface Ctx {
 }
 
 /** Carpeta temporal con proyectos de prueba, una copia de los fixtures y su índice. */
-async function setup(withIndex = true): Promise<Ctx> {
+async function setup(withIndex = true, home?: string): Promise<Ctx> {
   const root = mkdtempSync(join(tmpdir(), 'bitacora-projects-'))
   dirs.push(root)
   const claudeDir = join(root, 'claude')
@@ -47,6 +47,7 @@ async function setup(withIndex = true): Promise<Ctx> {
     store,
     reader,
     claudeDir: () => claudeDir,
+    ...(home !== undefined ? { home: () => join(root, home) } : {}),
     now: () => new Date(clock)
   })
   const folder = (name: string): string => {
@@ -201,5 +202,54 @@ describe('ProjectsService', () => {
     const { service, store } = await setup()
     store.set({ activeProjectId: '33333333-3333-4333-8333-333333333333' })
     expect(service.active()).toBeNull()
+  })
+
+  describe('Mi PC y aspecto', () => {
+    it('crea Mi PC una sola vez, con su icono, y no se puede quitar', async () => {
+      const { root, store, claudeDir } = await setup(false, 'casa')
+      const [computer] = store.get().projects
+      expect(computer).toMatchObject({ kind: 'computer', name: 'Mi PC', icon: 'monitor' })
+      // Otra instancia del servicio sobre el mismo state.json no lo duplica.
+      const again = createProjectsService({
+        store,
+        reader: null,
+        claudeDir: () => claudeDir,
+        home: () => join(root, 'casa')
+      })
+      expect(store.get().projects).toHaveLength(1)
+      const error = await rejection(Promise.resolve().then(() => again.remove(computer!.id)))
+      expect(error.code).toBe('PROTECTED')
+      expect(store.get().projects).toHaveLength(1)
+    })
+
+    it('convierte en Mi PC la carpeta personal ya importada', async () => {
+      const { store, claudeDir, folder } = await setup(false)
+      const home = folder('yo')
+      const plain = createProjectsService({ store, reader: null, claudeDir: () => claudeDir })
+      const imported = await plain.import(home)
+      createProjectsService({ store, reader: null, claudeDir: () => claudeDir, home: () => home })
+      expect(store.get().projects).toEqual([
+        expect.objectContaining({ id: imported.id, kind: 'computer', name: 'Mi PC' })
+      ])
+    })
+
+    it('personalizar: nombre, icono y color; null vuelve a lo de antes', async () => {
+      const { service, folder } = await setup(false)
+      const project = await service.import(folder('Tienda'))
+      const custom = await service.customize({
+        id: project.id,
+        name: '  Mi tienda ',
+        icon: 'cart',
+        color: 'green'
+      })
+      expect(custom).toMatchObject({ name: 'Mi tienda', icon: 'cart', color: 'green' })
+      const reset = await service.customize({ id: project.id, name: null, icon: null, color: null })
+      expect(reset.name).toBe('Tienda')
+      expect(reset.icon).toBeUndefined()
+      expect(reset.color).toBeUndefined()
+      // Lo que no se pasa no cambia.
+      await service.customize({ id: project.id, color: 'blue' })
+      expect((await service.list())[0]).toMatchObject({ name: 'Tienda', color: 'blue' })
+    })
   })
 })

@@ -16,6 +16,7 @@ import { buildMenuTemplate } from './menu'
 import { restoreBounds } from './services/window-state'
 import { createTray, type AppTray } from './tray'
 import { join } from 'node:path'
+import { homedir } from 'node:os'
 import { Worker } from 'node:worker_threads'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import { emitChatEvent, registerChatIpc } from './ipc/chat'
@@ -180,7 +181,7 @@ app.whenReady().then(() => {
     resolveEntry: (sessionId) => transcripts.resumeTarget(sessionId)?.sessionId ?? sessionId
   })
   const transcripts = createTranscriptService({ reader, claudeDir, follower })
-  const projectsService = createProjectsService({ store, reader, claudeDir })
+  const projectsService = createProjectsService({ store, reader, claudeDir, home: homedir })
   // Git de solo lectura.
   const git = createGitService({ projects: () => store.get().projects, log: logger })
 

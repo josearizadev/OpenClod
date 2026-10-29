@@ -7,11 +7,14 @@ import {
   DropdownMenuRoot,
   DropdownMenuTrigger
 } from 'reka-ui'
-import { ScrollText, Settings2, SlidersHorizontal } from 'lucide-vue-next'
+import { Palette, ScrollText, Settings2, SlidersHorizontal } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import { useProjectsStore } from '../../stores/projects'
 
-/** Botón junto al selector de proyecto: abre sus instrucciones y sus ajustes. */
+/**
+ * Botón junto al selector de proyecto: personalizarlo, sus instrucciones y sus ajustes. «Mi PC» no
+ * tiene ajustes: su archivo personal estaría en la carpeta de Claude Code.
+ */
 const projects = useProjectsStore()
 const router = useRouter()
 
@@ -40,12 +43,24 @@ const itemClass =
         :collision-padding="8"
         class="z-30 min-w-56 rounded-menu bg-surface p-1 text-text shadow-float"
       >
+        <DropdownMenuItem
+          v-if="projects.active"
+          :class="itemClass"
+          @select="projects.startEditing(projects.active)"
+        >
+          <Palette :size="16" :stroke-width="1.75" class="shrink-0" />
+          <span class="flex-1">{{ t('Personalizar…') }}</span>
+        </DropdownMenuItem>
         <DropdownMenuItem :class="itemClass" @select="go('instrucciones')">
           <ScrollText :size="16" :stroke-width="1.75" class="shrink-0" />
           <span class="flex-1">{{ t('Instrucciones') }}</span>
           <span class="pl-4 text-xs text-muted">CLAUDE.md</span>
         </DropdownMenuItem>
-        <DropdownMenuItem :class="itemClass" @select="go('ajustes')">
+        <DropdownMenuItem
+          v-if="projects.active?.kind !== 'computer'"
+          :class="itemClass"
+          @select="go('ajustes')"
+        >
           <SlidersHorizontal :size="16" :stroke-width="1.75" class="shrink-0" />
           <span class="flex-1">{{ t('Ajustes del proyecto') }}</span>
         </DropdownMenuItem>

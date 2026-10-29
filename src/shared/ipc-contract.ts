@@ -34,7 +34,13 @@ import {
   type ChatSnapshot,
   type CloseRequest
 } from './chat'
-import { AppCommandSchema, SettingsSchema, SystemInfoSchema } from './types'
+import {
+  AppCommandSchema,
+  ProjectColorSchema,
+  ProjectIconSchema,
+  SettingsSchema,
+  SystemInfoSchema
+} from './types'
 import {
   ClaudeMdWriteInputSchema,
   FileOpenInputSchema,
@@ -123,6 +129,18 @@ export const invokeContract = {
   'projects:remove': {
     input: z.object({ id: z.string().uuid() }),
     output: z.void()
+  },
+  /** Nombre, icono y color. `null` vuelve al valor por defecto. */
+  'projects:customize': {
+    input: z
+      .object({
+        id: z.string().uuid(),
+        name: z.string().trim().max(256).nullable().optional(),
+        icon: ProjectIconSchema.nullable().optional(),
+        color: ProjectColorSchema.nullable().optional()
+      })
+      .strict(),
+    output: ProjectViewSchema
   },
   'projects:select': {
     input: z.object({ id: z.string().uuid() }),
@@ -397,6 +415,9 @@ export interface Api {
     import(path: string): Promise<Result<InvokeOutput<'projects:import'>>>
     importMany(paths: string[]): Promise<Result<InvokeOutput<'projects:importMany'>>>
     remove(id: string): Promise<Result<InvokeOutput<'projects:remove'>>>
+    customize(
+      input: InvokeInput<'projects:customize'>
+    ): Promise<Result<InvokeOutput<'projects:customize'>>>
     select(id: string): Promise<Result<InvokeOutput<'projects:select'>>>
     active(): Promise<Result<InvokeOutput<'projects:active'>>>
     discover(): Promise<Result<InvokeOutput<'projects:discover'>>>

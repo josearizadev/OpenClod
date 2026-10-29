@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import type { DiscoveredProject, ProjectView } from '../../../shared/projects'
+import type { InvokeInput } from '../../../shared/ipc-contract'
 
 /**
  * Proyectos importados y el activo. La verdad está en el main
@@ -14,6 +15,11 @@ export const useProjectsStore = defineStore('projects', () => {
   const error = ref<string | null>(null)
 
   const active = computed(() => projects.value.find((p) => p.id === activeId.value) ?? null)
+  /** «Mi PC» y los proyectos de carpeta, por separado (el selector los muestra así). */
+  const computer = computed(() => projects.value.find((p) => p.kind === 'computer') ?? null)
+  const folders = computed(() => projects.value.filter((p) => p.kind !== 'computer'))
+  /** Proyecto en el diálogo de personalizar (hay uno solo, en la barra lateral). */
+  const editing = ref<ProjectView | null>(null)
 
   async function load(): Promise<void> {
     const [list, current] = await Promise.all([
@@ -65,6 +71,23 @@ export const useProjectsStore = defineStore('projects', () => {
     await load()
   }
 
+  /** Nombre, icono y color. `null` vuelve al valor por defecto. */
+  async function customize(input: InvokeInput<'projects:customize'>): Promise<boolean> {
+    const result = await window.api.projects.customize(input)
+    if (!result.ok) {
+      error.value = result.error.message
+      return false
+    }
+    error.value = null
+    await load()
+    return true
+  }
+
+  /** Después de cerrar el menú que lo abre, para que el foco no cierre el diálogo. */
+  function startEditing(project: ProjectView): void {
+    setTimeout(() => (editing.value = project), 0)
+  }
+
   async function select(id: string): Promise<void> {
     if (id === activeId.value) return
     const result = await window.api.projects.select(id)
@@ -92,6 +115,9 @@ export const useProjectsStore = defineStore('projects', () => {
     projects,
     activeId,
     active,
+    computer,
+    folders,
+    editing,
     loaded,
     error,
     load,
@@ -99,6 +125,8 @@ export const useProjectsStore = defineStore('projects', () => {
     importFolder,
     importMany,
     remove,
+    customize,
+    startEditing,
     select,
     discover,
     clearError

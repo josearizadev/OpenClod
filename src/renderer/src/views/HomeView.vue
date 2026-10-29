@@ -177,7 +177,13 @@ watch(
         </template>
       </Composer>
       <p v-if="error" class="-mt-4 w-full text-sm text-danger" role="alert">{{ error }}</p>
-      <WorkdirChip v-model="cwd" class="-mt-4" :readonly="pending !== null" @pick="pickFolder" />
+      <WorkdirChip
+        v-model="cwd"
+        class="-mt-4"
+        :project="projects.active"
+        :readonly="pending !== null"
+        @pick="pickFolder"
+      />
       <SlashCommandHost
         ref="host"
         :session-id="null"

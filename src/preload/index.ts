@@ -71,6 +71,7 @@ const api: Api = {
     import: (path) => invoke('projects:import', { path }),
     importMany: (paths) => invoke('projects:importMany', { paths }),
     remove: (id) => invoke('projects:remove', { id }),
+    customize: (input) => invoke('projects:customize', input),
     select: (id) => invoke('projects:select', { id }),
     active: () => invoke('projects:active', undefined),
     discover: () => invoke('projects:discover', undefined)

@@ -6,6 +6,7 @@ import {
   FolderPlus,
   Gauge,
   FolderSearch,
+  Monitor,
   PanelLeftClose,
   PanelLeftOpen,
   Search,
@@ -20,6 +21,7 @@ import { useSearchStore } from '../../stores/search'
 import { useUiStore } from '../../stores/ui'
 import { useUpdateStore } from '../../stores/update'
 import DiscoverProjectsDialog from '../projects/DiscoverProjectsDialog.vue'
+import ProjectEditDialog from '../projects/ProjectEditDialog.vue'
 import ProjectMenu from '../projects/ProjectMenu.vue'
 import ProjectPicker from '../projects/ProjectPicker.vue'
 import SessionList from '../sessions/SessionList.vue'
@@ -120,17 +122,27 @@ async function confirmRemove(): Promise<void> {
     </div>
 
     <div v-if="!ui.sidebarCollapsed" class="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
-      <!-- Sin proyectos. -->
+      <!-- Sin proyecto activo. -->
       <section
-        v-if="projects.loaded && projects.projects.length === 0"
+        v-if="projects.loaded && !projects.active"
         class="mt-4 flex flex-col gap-1"
         :aria-label="t('Sin proyectos')"
       >
         <p class="mb-1 px-2 text-muted">
           {{
-            t('Importa una carpeta de proyecto o elige entre las que ya usaste con Claude Code.')
+            t(
+              'Usa Mi PC para consultas sobre tu ordenador, importa una carpeta de proyecto o elige entre las que ya usaste con Claude Code.'
+            )
           }}
         </p>
+        <button
+          v-if="projects.computer"
+          type="button"
+          class="flex h-8 items-center gap-2 rounded-item px-2 transition-colors duration-150 hover:bg-surface-hover"
+          @click="projects.select(projects.computer.id)"
+        >
+          <Monitor :size="16" :stroke-width="1.75" /> {{ projects.computer.name }}
+        </button>
         <button
           type="button"
           class="flex h-8 items-center gap-2 rounded-item px-2 transition-colors duration-150 hover:bg-surface-hover"
@@ -150,7 +162,7 @@ async function confirmRemove(): Promise<void> {
         </p>
       </section>
 
-      <SessionList v-else-if="projects.activeId" />
+      <SessionList v-else-if="projects.active" />
     </div>
     <div v-else class="flex-1" />
 
@@ -222,5 +234,6 @@ async function confirmRemove(): Promise<void> {
       :confirm-label="t('Quitar')"
       @confirm="confirmRemove"
     />
+    <ProjectEditDialog />
   </aside>
 </template>

@@ -9,7 +9,7 @@ import type {
   SessionListItem,
   SessionMetaStats
 } from '../../shared/projects'
-import type { Project, SessionMeta } from '../../shared/types'
+import type { Project, ProjectColor, ProjectIcon, SessionMeta } from '../../shared/types'
 import type { AppStore } from './app-store'
 import {
   conversationOf,
@@ -32,7 +32,7 @@ import { t } from '../i18n'
 /** Rechazo previsto; la capa IPC lo traduce a `IpcError`. */
 export class ProjectError extends Error {
   constructor(
-    readonly code: 'INVALID_CWD' | 'NOT_FOUND',
+    readonly code: 'INVALID_CWD' | 'NOT_FOUND' | 'PROTECTED',
     message: string
   ) {
     super(message)
@@ -45,7 +45,17 @@ export interface ProjectsServiceOptions {
   /** Lector del índice, o `null` si no se pudo abrir (los proyectos siguen funcionando). */
   reader: Database.Database | null
   claudeDir: () => string
+  /** Carpeta personal: con ella existe siempre «Mi PC». Sin ella (tests), no hay «Mi PC». */
+  home?: () => string
   now?: () => Date
+}
+
+/** Nombre, icono y color de un proyecto; `null` vuelve al valor por defecto. */
+export interface ProjectCustomization {
+  id: string
+  name?: string | null
+  icon?: ProjectIcon | null
+  color?: ProjectColor | null
 }
 
 export interface ProjectsService {
@@ -53,6 +63,7 @@ export interface ProjectsService {
   import(path: string): Promise<ProjectView>
   importMany(paths: string[]): Promise<ProjectView[]>
   remove(id: string): void
+  customize(input: ProjectCustomization): Promise<ProjectView>
   select(id: string): void
   active(): string | null
   discover(): DiscoveredProject[]
@@ -96,6 +107,11 @@ async function isDirectory(path: string): Promise<boolean> {
   } catch {
     return false
   }
+}
+
+/** Nombre por defecto: «Mi PC» o el de la carpeta. */
+function defaultName(project: Pick<Project, 'path' | 'kind'>): string {
+  return project.kind === 'computer' ? t('Mi PC') : basename(project.path) || project.path
 }
 
 function byRecent(a: Project, b: Project): number {
@@ -158,13 +174,62 @@ export function createProjectsService(options: ProjectsServiceOptions): Projects
     const project: Project = {
       id: randomUUID(),
       path,
-      name: basename(path) || path,
+      name: defaultName({ path }),
       addedAt: at,
       lastOpenedAt: at
     }
     store.set({ projects: [...projects(), project] })
     return project
   }
+
+  /** «Mi PC»: la carpeta personal como proyecto. Si ya estaba importada, se convierte. */
+  function ensureComputer(): void {
+    const raw = options.home?.()
+    if (!raw) return
+    const path = normalizePath(raw)
+    if (path === '' || isInside(path, options.claudeDir())) return
+    const all = projects()
+    const key = pathKey(path)
+    const existing = all.find((p) => pathKey(p.path) === key)
+    if (existing?.kind === 'computer' && all.filter((p) => p.kind === 'computer').length === 1) {
+      return
+    }
+    // Solo uno: si la carpeta personal cambió, el anterior vuelve a ser un proyecto normal.
+    const rest = all.map((p) => {
+      if (p.kind !== 'computer' || p === existing) return p
+      const folder: Project = { ...p }
+      delete folder.kind
+      return folder
+    })
+    if (existing) {
+      store.set({
+        projects: rest.map((p) =>
+          p === existing
+            ? {
+                ...p,
+                kind: 'computer',
+                name: p.name === defaultName(p) ? t('Mi PC') : p.name,
+                icon: p.icon ?? 'monitor'
+              }
+            : p
+        )
+      })
+      return
+    }
+    const at = now()
+    const computer: Project = {
+      id: randomUUID(),
+      path,
+      name: t('Mi PC'),
+      kind: 'computer',
+      icon: 'monitor',
+      addedAt: at,
+      lastOpenedAt: at
+    }
+    store.set({ projects: [...rest, computer] })
+  }
+
+  ensureComputer()
 
   return {
     async list() {
@@ -202,7 +267,9 @@ export function createProjectsService(options: ProjectsServiceOptions): Projects
     },
 
     remove(id) {
-      find(id)
+      if (find(id).kind === 'computer') {
+        throw new ProjectError('PROTECTED', t('Mi PC no se puede quitar.'))
+      }
       const rest = projects().filter((p) => p.id !== id)
       const state = store.get()
       const active =
@@ -210,6 +277,22 @@ export function createProjectsService(options: ProjectsServiceOptions): Projects
           ? ([...rest].sort(byRecent)[0]?.id ?? null)
           : state.activeProjectId
       store.set({ projects: rest, activeProjectId: active })
+    },
+
+    async customize({ id, name, icon, color }) {
+      const project = find(id)
+      const next: Project = { ...project }
+      if (name !== undefined) next.name = (name?.trim() || defaultName(project)).slice(0, 256)
+      if (icon !== undefined) {
+        if (icon) next.icon = icon
+        else delete next.icon
+      }
+      if (color !== undefined) {
+        if (color) next.color = color
+        else delete next.color
+      }
+      store.set({ projects: projects().map((p) => (p.id === id ? next : p)) })
+      return view(next)
     },
 
     select(id) {

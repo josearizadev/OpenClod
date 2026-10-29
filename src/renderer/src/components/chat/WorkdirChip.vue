@@ -2,11 +2,15 @@
 import { t } from '../../i18n'
 import { FolderOpen, Pencil } from 'lucide-vue-next'
 import { nextTick, ref, useTemplateRef } from 'vue'
+import type { ProjectView } from '../../../../shared/projects'
+import ProjectIcon from '../projects/ProjectIcon.vue'
 import IconButton from '../ui/IconButton.vue'
 
 defineProps<{
   /** Solo muestra la carpeta, sin poder cambiarla (p. ej. durante la conversación). */
   readonly?: boolean
+  /** Proyecto activo: si la carpeta es la suya, el chip lleva su icono y su nombre. */
+  project?: ProjectView | null
 }>()
 
 const emit = defineEmits<{
@@ -62,9 +66,16 @@ function cancel(): void {
         class="inline-flex h-8 min-w-0 items-center gap-1.5 rounded-item px-2.5 transition-colors duration-150 enabled:hover:bg-surface-hover enabled:hover:text-text"
         @click="emit('pick')"
       >
-        <FolderOpen class="shrink-0" :size="16" :stroke-width="1.75" aria-hidden="true" />
-        <span v-if="path" class="truncate font-mono text-[13px]">{{ path }}</span>
-        <span v-else>{{ t('Elegir carpeta de trabajo') }}</span>
+        <template v-if="project && path === project.path">
+          <ProjectIcon :project="project" />
+          <span class="shrink-0 text-text">{{ project.name }}</span>
+          <span class="truncate font-mono text-[13px]">{{ path }}</span>
+        </template>
+        <template v-else>
+          <FolderOpen class="shrink-0" :size="16" :stroke-width="1.75" aria-hidden="true" />
+          <span v-if="path" class="truncate font-mono text-[13px]">{{ path }}</span>
+          <span v-else>{{ t('Elegir carpeta de trabajo') }}</span>
+        </template>
       </button>
       <IconButton
         v-if="!readonly"

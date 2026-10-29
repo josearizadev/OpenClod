@@ -32,6 +32,7 @@ export function registerProjectsIpc(
   handle('projects:import', ({ path }) => guarded(() => service.import(path)))
   handle('projects:importMany', ({ paths }) => guarded(() => service.importMany(paths)))
   handle('projects:remove', ({ id }) => guarded(() => service.remove(id)))
+  handle('projects:customize', (input) => guarded(() => service.customize(input)))
   handle('projects:select', ({ id }) => guarded(() => service.select(id)))
   handle('projects:active', () => service.active())
   handle('projects:discover', () => service.discover())
