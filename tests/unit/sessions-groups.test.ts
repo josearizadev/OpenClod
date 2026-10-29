@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { groupSessions, hiddenCount } from '../../src/renderer/src/lib/sessions-groups'
+import { archivedCount, groupSessions } from '../../src/renderer/src/lib/sessions-groups'
 import type { SessionListItem } from '../../src/shared/projects'
 
 const now = new Date(2026, 9, 14, 12, 0)
@@ -47,12 +47,13 @@ describe('groupSessions', () => {
     ])
   })
 
-  it('con «Mostrar ocultas», las ocultas salen en su sitio', () => {
+  it('con «Archivadas», las archivadas salen juntas al final, también las favoritas', () => {
     expect(shape(groupSessions(list, now, true))).toEqual([
-      ['Favoritas', ['fav-hoy', 'fav-vieja', 'fav-oculta']],
-      ['Hoy', ['hoy', 'oculta']],
+      ['Favoritas', ['fav-hoy', 'fav-vieja']],
+      ['Hoy', ['hoy']],
       ['Ayer', ['ayer']],
-      ['septiembre de 2026', ['vieja']]
+      ['septiembre de 2026', ['vieja']],
+      ['Archivadas', ['oculta', 'fav-oculta']]
     ])
   })
 
@@ -65,7 +66,7 @@ describe('groupSessions', () => {
     expect(groupSessions([], now, true)).toEqual([])
   })
 
-  it('hiddenCount', () => {
-    expect(hiddenCount(list)).toBe(2)
+  it('archivedCount', () => {
+    expect(archivedCount(list)).toBe(2)
   })
 })

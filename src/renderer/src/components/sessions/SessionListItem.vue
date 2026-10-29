@@ -14,7 +14,7 @@ import {
   TooltipRoot,
   TooltipTrigger
 } from 'reka-ui'
-import { CircleCheck, Ellipsis, EyeOff, GitBranch, Link2, Star } from 'lucide-vue-next'
+import { Archive, CircleCheck, Ellipsis, GitBranch, Link2, Star } from 'lucide-vue-next'
 import { computed } from 'vue'
 import type { SessionListItem } from '../../../../shared/projects'
 import { isLive } from '../../lib/live'
@@ -27,7 +27,7 @@ import TokenBreakdown from './TokenBreakdown.vue'
 
 /**
  * Fila de la lista: título y, debajo, fecha relativa ·
- * rama · tokens. Estrella si es favorita, atenuada si está oculta. Acciones con el botón ⋯ (al
+ * rama · tokens. Estrella si es favorita, atenuada si está archivada. Acciones con el botón ⋯ (al
  * pasar o con foco), el menú contextual o `F2` (renombrar). `Ctrl`/`Mayús`+clic, o un clic con
  * selección activa, marca la fila en vez de abrirla.
  */
@@ -63,6 +63,11 @@ function onClickCapture(event: MouseEvent): void {
   emit('select', event.shiftKey)
 }
 
+/** `Mayús+clic` marca un rango: sin esto, el navegador seleccionaría el texto de la lista. */
+function onMouseDown(event: MouseEvent): void {
+  if (event.shiftKey) event.preventDefault()
+}
+
 function onKeydown(event: KeyboardEvent): void {
   if (event.key !== 'F2') return
   event.preventDefault()
@@ -83,6 +88,7 @@ const menuContent = 'z-30 min-w-56 rounded-menu bg-surface p-1 text-text shadow-
               class="no-drag flex flex-col gap-0.5 rounded-item py-1.5 pr-8 pl-2 transition-colors duration-150 hover:bg-surface-hover focus-visible:outline-offset-[-2px] aria-[current=page]:bg-surface-hover"
               :class="selected ? 'bg-surface-hover' : ''"
               :aria-selected="sessions.selecting ? selected : undefined"
+              @mousedown="onMouseDown"
               @click.capture="onClickCapture"
               @keydown="onKeydown"
             >
@@ -126,12 +132,12 @@ const menuContent = 'z-30 min-w-56 rounded-menu bg-surface p-1 text-text shadow-
                 >
                   <Link2 :size="14" :stroke-width="1.75" aria-hidden="true" />
                 </span>
-                <EyeOff
+                <Archive
                   v-if="item.hidden"
                   :size="12"
                   :stroke-width="1.75"
                   class="shrink-0 text-muted"
-                  :aria-label="t('Oculta')"
+                  :aria-label="t('Archivada')"
                 />
               </span>
               <span class="flex min-w-0 items-center gap-1.5 text-xs text-muted">

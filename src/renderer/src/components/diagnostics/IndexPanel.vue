@@ -39,7 +39,7 @@ const metaText = computed(() => {
   const sessionsText = m.entries === 1 ? t('1 sesión') : t('{n} sesiones', { n: m.entries })
   const orphaned = m.orphaned > 0 ? `; ${t('{n} sin sesión en el índice', { n: m.orphaned })}` : ''
   const favorites = m.favorites === 1 ? t('1 favorita') : t('{n} favoritas', { n: m.favorites })
-  const hidden = m.hidden === 1 ? t('1 oculta') : t('{n} ocultas', { n: m.hidden })
+  const hidden = m.hidden === 1 ? t('1 archivada') : t('{n} archivadas', { n: m.hidden })
   return `${sessionsText} (${favorites}, ${hidden})${orphaned}`
 })
 
@@ -134,7 +134,7 @@ async function rebuild(): Promise<void> {
         <dd>
           {{ metaText }}
           <span class="text-sm text-muted"
-            >({{ t('títulos, favoritas y ocultas en state.json') }})</span
+            >({{ t('títulos, favoritas y archivadas en state.json') }})</span
           >
         </dd>
         <dt class="text-muted">Tokens</dt>

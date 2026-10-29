@@ -97,11 +97,11 @@ export const useSessionsStore = defineStore('sessions', () => {
     }
   )
 
-  /** «Mostrar ocultas» en la lista: preferencia de esta ejecución, no se guarda. */
+  /** «Archivadas (N)» desplegado en la lista: preferencia de esta ejecución, no se guarda. */
   const showHidden = ref(false)
 
   /**
-   * Renombrar, favorita u ocultar. Recarga la lista; la vista abierta recarga su
+   * Renombrar, favorita o archivar (`hidden`). Recarga la lista; la vista abierta recarga su
    * cabecera al cambiar la lista. `title: null` o vacío vuelve al título calculado.
    */
   async function update(
@@ -141,13 +141,20 @@ export const useSessionsStore = defineStore('sessions', () => {
     anchor = sessionId
   }
 
-  /** `order`: ids en el orden en que se ven en la lista. */
+  /**
+   * `order`: ids en el orden en que se ven en la lista. Sin ancla, el rango empieza en la sesión
+   * abierta, como en un explorador de archivos: clic en una y `Mayús+clic` en otra.
+   */
   function selectRange(sessionId: string, order: readonly string[]): void {
-    const from = anchor ? order.indexOf(anchor) : -1
+    const route = router.currentRoute.value
+    const open = route.name === 'session' ? String(route.params['id'] ?? '') : null
+    const start = anchor ?? open
+    const from = start ? order.indexOf(start) : -1
     const to = order.indexOf(sessionId)
     if (from === -1 || to === -1) return toggleSelect(sessionId)
     const range = order.slice(Math.min(from, to), Math.max(from, to) + 1)
     selected.value = [...new Set([...selected.value, ...range])]
+    anchor = start
   }
 
   function selectAll(order: readonly string[]): void {
@@ -159,12 +166,14 @@ export const useSessionsStore = defineStore('sessions', () => {
     anchor = null
   }
 
-  /** Ocultar o mostrar todas las seleccionadas de una vez. */
+  /** Archivar o desarchivar todas las seleccionadas de una vez. */
   async function setHiddenMany(sessionIds: readonly string[], hidden: boolean): Promise<void> {
     for (const sessionId of sessionIds) {
       const result = await window.api.sessions.update({ sessionId, hidden })
       if (!result.ok) error.value = result.error.message
     }
+    // Cambian de grupo (o dejan de verse): la selección ya no tiene sentido.
+    clearSelection()
     await load()
   }
 

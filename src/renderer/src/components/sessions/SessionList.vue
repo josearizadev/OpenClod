@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { t } from '../../i18n'
-import { RefreshCw } from 'lucide-vue-next'
+import { Archive, RefreshCw } from 'lucide-vue-next'
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
-import { groupSessions, hiddenCount } from '../../lib/sessions-groups'
+import { archivedCount, groupSessions } from '../../lib/sessions-groups'
 import { useSessionsStore } from '../../stores/sessions'
 import SessionListItem from './SessionListItem.vue'
 import SessionSelectionBar from './SessionSelectionBar.vue'
 
 /**
  * Sesiones del proyecto activo: «Favoritas» y grupos por fecha, con «Actualizar»,
- * «Mostrar ocultas (N)» y los estados de carga, vacío y error del índice.
+ * «Archivadas (N)» y los estados de carga, vacío y error del índice.
  */
 const sessions = useSessionsStore()
 
@@ -44,7 +44,7 @@ function onKeydown(event: KeyboardEvent): void {
 }
 window.addEventListener('keydown', onKeydown)
 onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
-const hidden = computed(() => hiddenCount(sessions.items))
+const archived = computed(() => archivedCount(sessions.items))
 const running = computed(() => sessions.status?.running ?? false)
 const indexError = computed(() => sessions.status?.ok === false)
 const showSkeleton = computed(
@@ -131,13 +131,14 @@ watch(
     </div>
 
     <button
-      v-if="hidden > 0"
+      v-if="archived > 0"
       type="button"
-      class="no-drag mt-3 mb-2 ml-1 rounded-item px-2 py-1 text-xs text-muted transition-colors duration-150 hover:bg-surface-hover hover:text-text"
+      class="no-drag mt-3 mb-2 ml-1 inline-flex items-center gap-1.5 rounded-item px-2 py-1 text-xs text-muted transition-colors duration-150 hover:bg-surface-hover hover:text-text"
       :aria-pressed="sessions.showHidden"
       @click="sessions.showHidden = !sessions.showHidden"
     >
-      {{ sessions.showHidden ? t('Esconder ocultas') : t('Mostrar ocultas ({n})', { n: hidden }) }}
+      <Archive :size="12" :stroke-width="1.75" aria-hidden="true" />
+      {{ sessions.showHidden ? t('Esconder archivadas') : t('Archivadas ({n})', { n: archived }) }}
     </button>
   </section>
 </template>

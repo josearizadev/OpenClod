@@ -7,9 +7,9 @@ import {
   DropdownMenuSeparator
 } from 'reka-ui'
 import {
+  Archive,
+  ArchiveRestore,
   Copy,
-  Eye,
-  EyeOff,
   FileCode,
   FileDown,
   Pencil,
@@ -25,7 +25,7 @@ import { useTerminalStore } from '../../stores/terminal'
 import { useUiStore } from '../../stores/ui'
 
 /**
- * Acciones de una sesión: Renombrar… · Favorita · Ocultar/Mostrar ·
+ * Acciones de una sesión: Renombrar… · Favorita · Archivar/Desarchivar ·
  * Copiar id · Eliminar…. Lo usan el botón ⋯ y el menú contextual de la fila, y el ⋯ de
  * la cabecera; `kind` elige los primitivos de Reka del menú que lo contiene. `inList` añade
  * «Seleccionar».
@@ -113,8 +113,13 @@ const itemClass =
     {{ favorite ? t('Quitar de favoritas') : t('Marcar como favorita') }}
   </component>
   <component :is="Item" :class="itemClass" @select="set({ hidden: !hidden })">
-    <component :is="hidden ? Eye : EyeOff" :size="16" :stroke-width="1.75" aria-hidden="true" />
-    {{ hidden ? t('Mostrar en la lista') : t('Ocultar') }}
+    <component
+      :is="hidden ? ArchiveRestore : Archive"
+      :size="16"
+      :stroke-width="1.75"
+      aria-hidden="true"
+    />
+    {{ hidden ? t('Desarchivar') : t('Archivar') }}
   </component>
   <component :is="Item" v-if="inList" :class="itemClass" @select="sessions.toggleSelect(sessionId)">
     <SquareCheck :size="16" :stroke-width="1.75" aria-hidden="true" />

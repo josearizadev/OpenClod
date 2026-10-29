@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { t } from '../../i18n'
-import { CheckCheck, Eye, EyeOff, Trash2, X } from 'lucide-vue-next'
+import { Archive, ArchiveRestore, CheckCheck, Trash2, X } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { useSessionsStore } from '../../stores/sessions'
 
@@ -12,6 +12,7 @@ const props = defineProps<{ order: readonly string[] }>()
 
 const sessions = useSessionsStore()
 const count = computed(() => sessions.selected.length)
+/** Todas archivadas: el botón desarchiva; si no, archiva. */
 const allHidden = computed(() =>
   sessions.selected.every((id) => sessions.items.find((i) => i.sessionId === id)?.hidden)
 )
@@ -43,11 +44,11 @@ const button =
     <button
       type="button"
       :class="button"
-      :aria-label="allHidden ? t('Mostrar en la lista') : t('Ocultar')"
-      :title="allHidden ? t('Mostrar en la lista') : t('Ocultar')"
+      :aria-label="allHidden ? t('Desarchivar') : t('Archivar')"
+      :title="allHidden ? t('Desarchivar') : t('Archivar')"
       @click="sessions.setHiddenMany(sessions.selected, !allHidden)"
     >
-      <component :is="allHidden ? Eye : EyeOff" :size="16" :stroke-width="1.75" />
+      <component :is="allHidden ? ArchiveRestore : Archive" :size="16" :stroke-width="1.75" />
     </button>
     <button
       type="button"
