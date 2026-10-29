@@ -121,7 +121,8 @@ describe('AppStore', () => {
       welcomed: false,
       limitsCache: null,
       windowState: null,
-      projectPrefs: {}
+      projectPrefs: {},
+      sessionMoves: {}
     })
     expect(warn).not.toHaveBeenCalled()
   })
@@ -157,7 +158,8 @@ describe('AppStore', () => {
       welcomed: false,
       limitsCache: null,
       windowState: null,
-      projectPrefs: {}
+      projectPrefs: {},
+      sessionMoves: {}
     })
     expect(warn).not.toHaveBeenCalled()
   })
@@ -187,7 +189,8 @@ describe('AppStore', () => {
       welcomed: false,
       limitsCache: null,
       windowState: null,
-      projectPrefs: {}
+      projectPrefs: {},
+      sessionMoves: {}
     })
     expect(warn).not.toHaveBeenCalled()
   })

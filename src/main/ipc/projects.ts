@@ -1,7 +1,7 @@
 import { ProjectError, type ProjectsService } from '../services/projects'
 import { TranscriptReadError, type TranscriptService } from '../services/transcript'
 import type { TranscriptFollower } from '../services/transcript-follower'
-import type { SessionTrashResult } from '../../shared/projects'
+import type { SessionMoveResult, SessionTrashResult } from '../../shared/projects'
 import { handle, IpcError } from './handle'
 import { t } from '../i18n'
 
@@ -26,7 +26,8 @@ export function registerProjectsIpc(
   service: ProjectsService,
   transcripts: TranscriptService,
   follower?: TranscriptFollower,
-  trash?: (sessionIds: string[]) => Promise<SessionTrashResult>
+  trash?: (sessionIds: string[]) => Promise<SessionTrashResult>,
+  move?: (sessionIds: string[], projectId: string) => Promise<SessionMoveResult>
 ): void {
   handle('projects:list', () => service.list())
   handle('projects:import', ({ path }) => guarded(() => service.import(path)))
@@ -42,6 +43,10 @@ export function registerProjectsIpc(
   handle('sessions:trash', ({ sessionIds }) => {
     if (!trash) throw new IpcError('INTERNAL', t('El índice no está disponible.'))
     return trash(sessionIds)
+  })
+  handle('sessions:move', ({ sessionIds, projectId }) => {
+    if (!move) throw new IpcError('INTERNAL', t('El índice no está disponible.'))
+    return guarded(() => move(sessionIds, projectId))
   })
   handle('sessions:metaStats', () => service.metaStats())
   // Leer una sesión para el visor la deja seguida por esa ventana.

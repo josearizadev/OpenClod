@@ -79,7 +79,9 @@ describe('IndexService', () => {
     expect(workers).toHaveLength(0)
     const done = service.refresh()
     expect(workers).toHaveLength(1)
-    expect(workers[0]?.requests).toEqual([{ type: 'pass', id: 1, claudeDir: 'C:\\claude' }])
+    expect(workers[0]?.requests).toEqual([
+      { type: 'pass', id: 1, claudeDir: 'C:\\claude', moves: {} }
+    ])
     expect(service.running).toBe(true)
     expect(notes).toEqual([{ changed: false, status: status(true) }])
 

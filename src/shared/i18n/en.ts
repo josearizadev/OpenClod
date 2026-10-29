@@ -1117,5 +1117,22 @@ export const en = {
   Corazón: 'Heart',
   Cohete: 'Rocket',
   Seguridad: 'Security',
-  Naturaleza: 'Nature'
+  Naturaleza: 'Nature',
+
+  // --- Mover sesiones entre proyectos ---
+  'Mover a proyecto…': 'Move to project…',
+  'Mover la conversación a otro proyecto': 'Move the conversation to another project',
+  'Mover {n} conversaciones a otro proyecto': 'Move {n} conversations to another project',
+  'Sus archivos de Claude Code pasan a la carpeta del proyecto elegido y, al continuarla, Claude trabajará allí.':
+    'Its Claude Code files move to the chosen project’s folder, and Claude will work there when you continue it.',
+  'Proyecto de destino': 'Destination project',
+  'No hay otro proyecto al que moverla.': 'There’s no other project to move it to.',
+  'Se ha escrito hace menos de 2 minutos: si está abierta en una terminal con claude, ciérrala antes o la conversación se partirá en dos.':
+    'It was written less than 2 minutes ago: if it’s open in a terminal with claude, close it first or the conversation will split in two.',
+  Mover: 'Move',
+  'No se pudo mover': 'Couldn’t move',
+  '{conversations} movidas a {name}': '{conversations} moved to {name}',
+  '{n} ya existían en el destino': '{n} already existed at the destination',
+  'Ir al proyecto': 'Go to project',
+  'En pausa': 'Paused'
 } satisfies Record<string, string>

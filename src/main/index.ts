@@ -49,8 +49,9 @@ import { indexStatus } from './services/index-queries'
 import { openIndex, openIndexReader, SCHEMA_VERSION } from './services/index-schema'
 import { createIndexService, type IndexService, type WorkerData } from './services/index-service'
 import workerPath from './services/index-worker?modulePath'
-import { createProjectsService } from './services/projects'
+import { ProjectError, createProjectsService } from './services/projects'
 import { trashSessions } from './services/session-trash'
+import { moveSessions } from './services/session-move'
 import { initLogger, logger } from './services/logger'
 import { createTranscriptService } from './services/transcript'
 import { createTranscriptFollower } from './services/transcript-follower'
@@ -154,6 +155,7 @@ app.whenReady().then(() => {
     ? createIndexService({
         createWorker: () => new Worker(workerPath, { workerData: { dbFile } satisfies WorkerData }),
         claudeDir,
+        moves: () => store.get().sessionMoves,
         status: statusOf,
         notify: (payload) => {
           for (const win of BrowserWindow.getAllWindows()) {
@@ -502,7 +504,37 @@ app.whenReady().then(() => {
         return { trashed: outcome.trashed, skipped: outcome.skipped }
       }
     : undefined
-  registerProjectsIpc(projectsService, transcripts, follower, trash)
+  // Mover conversaciones: sus archivos a la carpeta del destino y la reasignación a `state.json`.
+  const move = reader
+    ? async (sessionIds: string[], projectId: string) => {
+        const project = store.get().projects.find((p) => p.id === projectId)
+        if (!project) throw new ProjectError('NOT_FOUND', t('El proyecto no existe.'))
+        // En Windows, una carpeta `<id>/` vigilada no se puede renombrar: la vigilancia se pausa.
+        const watching = watcher.status().state === 'watching'
+        if (watching) await watcher.pause()
+        const outcome = await moveSessions(sessionIds, project.path, {
+          reader,
+          projectsDir: projectsDirOf(claudeDir()),
+          chatState: (id) => chat.chatState(id),
+          closeChat: (id) => chat.close(id),
+          log: logger
+        }).finally(() => {
+          if (watching) watcher.start()
+        })
+        if (outcome.sessions.length > 0) {
+          const moves = { ...store.get().sessionMoves }
+          for (const id of outcome.sessions) moves[id] = project.path
+          store.set({ sessionMoves: moves })
+          logger.info(
+            'sessions',
+            `${outcome.moved.length} conversaciones movidas a ${project.name}`
+          )
+          await indexService?.refresh().catch((error) => logger.error('index', error))
+        }
+        return { moved: outcome.moved, skipped: outcome.skipped }
+      }
+    : undefined
+  registerProjectsIpc(projectsService, transcripts, follower, trash, move)
   registerFilesIpc({
     ...rootDeps,
     git,

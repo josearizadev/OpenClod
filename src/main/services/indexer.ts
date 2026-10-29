@@ -488,11 +488,34 @@ export type PassProgress = (progress: { done: number; total: number }) => void
 const PROGRESS_MIN = 20
 const PROGRESS_EVERY = 10
 
+/**
+ * Sesiones movidas a otro proyecto desde la app (`sessionId` → carpeta del destino): su proyecto y
+ * su carpeta de trabajo pasan a ser los del destino, aunque los `cwd` del archivo sigan siendo los
+ * de antes. Devuelve cuántas filas cambiaron.
+ */
+export function applyMoves(db: Database.Database, moves: Readonly<Record<string, string>>): number {
+  const update = db.prepare<[string, string, string, string, string]>(
+    `UPDATE sessions SET project_key = ?, start_cwd = ?
+     WHERE session_id = ? AND (project_key IS NOT ? OR start_cwd IS NOT ?)`
+  )
+  let changed = 0
+  db.transaction(() => {
+    for (const [sessionId, raw] of Object.entries(moves)) {
+      const cwd = normalizePath(raw)
+      if (!cwd) continue
+      const key = pathKey(cwd)
+      changed += update.run(key, cwd, sessionId, key, cwd).changes
+    }
+  })()
+  return changed
+}
+
 export async function runPass(
   db: Database.Database,
   claudeDir: string,
   log: PassLog = defaultLogger,
-  onProgress?: PassProgress
+  onProgress?: PassProgress,
+  moves: Readonly<Record<string, string>> = {}
 ): Promise<PassResult> {
   const started = performance.now()
   const st = prepareStatements(db)
@@ -585,8 +608,9 @@ export async function runPass(
     }
   }
 
-  // 6. Reenlazar conversaciones donde algo cambió.
+  // 6. Reenlazar conversaciones donde algo cambió y aplicar las sesiones movidas.
   for (const folder of affectedFolders) relinkFolder(db, st, folder)
+  result.changedSessions += applyMoves(db, moves)
 
   // 7. Resumen de la pasada.
   result.durationMs = Math.round(performance.now() - started)

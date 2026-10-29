@@ -14,6 +14,7 @@ import {
   Copy,
   FileCode,
   FileDown,
+  FolderInput,
   Pencil,
   SquareTerminal,
   SquareCheck,
@@ -81,6 +82,12 @@ async function setHidden(hidden: boolean): Promise<void> {
   if (many.value) await sessions.setHiddenMany(targets.value, hidden)
   else await sessions.update(props.sessionId, { hidden })
   emit('changed')
+}
+
+/** Igual que eliminar: el diálogo se abre con el menú ya cerrado. */
+function askMove(): void {
+  const ids = targets.value
+  setTimeout(() => sessions.askMove(ids), 0)
 }
 
 function unselectAll(): void {
@@ -161,6 +168,10 @@ const itemClass =
       />
       {{ allHidden ? t('Desarchivar') : t('Archivar') }}
     </component>
+    <component :is="Item" :class="itemClass" @select="askMove">
+      <FolderInput :size="16" :stroke-width="1.75" aria-hidden="true" />
+      {{ t('Mover a proyecto…') }}
+    </component>
     <component :is="Item" :class="itemClass" @select="unselectAll">
       <X :size="16" :stroke-width="1.75" aria-hidden="true" />
       {{ t('Quitar la selección') }}
@@ -208,6 +219,10 @@ const itemClass =
       <span class="ml-auto pl-4 text-xs text-muted">{{ t('Ctrl+clic') }}</span>
     </component>
     <component :is="Separator" class="my-1 h-px bg-border" />
+    <component :is="Item" :class="itemClass" @select="askMove">
+      <FolderInput :size="16" :stroke-width="1.75" aria-hidden="true" />
+      {{ t('Mover a proyecto…') }}
+    </component>
     <component :is="Item" :class="itemClass" @select="openInTerminal">
       <SquareTerminal :size="16" :stroke-width="1.75" aria-hidden="true" />
       {{ t('Abrir en terminal') }}

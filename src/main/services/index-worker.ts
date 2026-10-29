@@ -36,8 +36,12 @@ port.on('message', (request: WorkerRequest) => {
   void (async () => {
     try {
       if (request.type === 'rebuild') clearIndex(db)
-      const result = await runPass(db, request.claudeDir, log, (progress) =>
-        send({ type: 'progress', id: request.id, ...progress })
+      const result = await runPass(
+        db,
+        request.claudeDir,
+        log,
+        (progress) => send({ type: 'progress', id: request.id, ...progress }),
+        request.moves
       )
       send({ type: 'done', id: request.id, result })
     } catch (error) {

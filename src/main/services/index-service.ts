@@ -20,6 +20,8 @@ export interface WorkerRequest {
   type: PassKind
   id: number
   claudeDir: string
+  /** Sesiones movidas a otro proyecto: `sessionId` → carpeta del destino. */
+  moves: Record<string, string>
 }
 
 export type WorkerResponse =
@@ -40,6 +42,8 @@ export interface IndexWorker {
 export interface IndexServiceOptions {
   createWorker: () => IndexWorker
   claudeDir: () => string
+  /** Sesiones movidas a otro proyecto (de `state.json`). */
+  moves?: () => Record<string, string>
   /** Estado actual leído del índice (lector del main), con `running` ya resuelto. */
   status: (running: boolean) => IndexStatus
   /** Intervalo mínimo entre avisos de progreso (ms). */
@@ -166,7 +170,12 @@ export function createIndexService(options: IndexServiceOptions): IndexService {
     const id = nextId++
     current = { ...job, id }
     try {
-      ensureWorker().postMessage({ type: job.kind, id, claudeDir: options.claudeDir() })
+      ensureWorker().postMessage({
+        type: job.kind,
+        id,
+        claudeDir: options.claudeDir(),
+        moves: options.moves?.() ?? {}
+      })
     } catch (error) {
       log.error('index', error)
       settle({ error: error instanceof Error ? error : new Error(String(error)) })

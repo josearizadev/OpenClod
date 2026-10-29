@@ -32,7 +32,7 @@ interface ChainRow {
 }
 
 /** Archivo y carpeta de la sesión que se pueden mover, o `null` si la ruta no es la esperada. */
-function sessionPaths(row: ChainRow, projectsDir: string): string[] | null {
+export function sessionPaths(row: ChainRow, projectsDir: string): string[] | null {
   if (!isInside(row.file, projectsDir) || basename(row.file) !== `${row.session_id}.jsonl`)
     return null
   const paths = existsSync(row.file) ? [row.file] : []

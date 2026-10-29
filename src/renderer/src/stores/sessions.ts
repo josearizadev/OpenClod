@@ -4,6 +4,7 @@ import type {
   IndexStatus,
   IndexUpdated,
   SessionListItem,
+  SessionMoveResult,
   SessionTrashResult
 } from '../../../shared/projects'
 import { useLiveClock } from '../composables/useLiveClock'
@@ -193,6 +194,29 @@ export const useSessionsStore = defineStore('sessions', () => {
     if (sessionIds.length > 0) trashRequest.value = [...sessionIds]
   }
 
+  /** Entradas que esperan elegir destino en «Mover a proyecto…» (un solo diálogo, en `App.vue`). */
+  const moveRequest = ref<string[] | null>(null)
+
+  function askMove(sessionIds: readonly string[]): void {
+    if (sessionIds.length > 0) moveRequest.value = [...sessionIds]
+  }
+
+  /** Mueve a otro proyecto; el main ya ha refrescado el índice al responder. */
+  async function move(
+    sessionIds: readonly string[],
+    projectId: string
+  ): Promise<SessionMoveResult | null> {
+    const result = await window.api.sessions.move([...sessionIds], projectId)
+    if (!result.ok) {
+      error.value = result.error.message
+      return null
+    }
+    const gone = new Set(result.data.moved)
+    selected.value = selected.value.filter((id) => !gone.has(id))
+    await load()
+    return result.data
+  }
+
   /** Mueve a la papelera; el main ya ha refrescado el índice al responder. */
   async function trash(sessionIds: readonly string[]): Promise<SessionTrashResult | null> {
     const result = await window.api.sessions.trash([...sessionIds])
@@ -224,6 +248,9 @@ export const useSessionsStore = defineStore('sessions', () => {
     setFavoriteMany,
     trashRequest,
     askTrash,
+    moveRequest,
+    askMove,
+    move,
     trash,
     items,
     clock,

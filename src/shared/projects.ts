@@ -95,6 +95,19 @@ export const SessionTrashResultSchema = z.object({
 })
 export type SessionTrashResult = z.infer<typeof SessionTrashResultSchema>
 
+/** Resultado de mover conversaciones a otro proyecto: ids de las entradas pedidas. */
+export const SessionMoveResultSchema = z.object({
+  moved: z.array(z.string()),
+  skipped: z.array(
+    z.object({
+      sessionId: z.string(),
+      /** `conflict`: ya hay un archivo con ese nombre en el destino. */
+      reason: z.enum(['active', 'not-found', 'conflict', 'failed'])
+    })
+  )
+})
+export type SessionMoveResult = z.infer<typeof SessionMoveResultSchema>
+
 export const LastPassSchema = z.object({
   finishedAt: z.string(),
   durationMs: z.number(),

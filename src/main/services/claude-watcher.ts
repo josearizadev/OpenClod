@@ -48,6 +48,11 @@ export interface ClaudeWatcherOptions {
 export interface ClaudeWatcher {
   start(): void
   restart(): void
+  /**
+   * Para la vigilancia y espera a que suelte las carpetas: en Windows no se puede renombrar una
+   * carpeta vigilada (EPERM). Se vuelve a arrancar con `start`.
+   */
+  pause(): Promise<void>
   dispose(): void
   status(): WatchStatus
 }
@@ -95,7 +100,7 @@ export function createClaudeWatcher(options: ClaudeWatcherOptions): ClaudeWatche
     }
   }
 
-  function close(): void {
+  function close(): Promise<void> {
     generation++
     if (readyTimer) clearTimeout(readyTimer)
     readyTimer = null
@@ -104,17 +109,19 @@ export function createClaudeWatcher(options: ClaudeWatcherOptions): ClaudeWatche
     pending = new Set()
     const w = watcher
     watcher = null
-    w?.close().catch((error) => log.warn('watch', `No se pudo cerrar la vigilancia: ${error}`))
+    return (w?.close() ?? Promise.resolve()).catch((error) =>
+      log.warn('watch', `No se pudo cerrar la vigilancia: ${error}`)
+    )
   }
 
   function fail(reason: string): void {
-    close()
+    void close()
     status = { ...status, state: 'polling', reason }
     log.warn('watch', `Sin vigilancia (${reason}): se comprobará cada 30 s`)
   }
 
   function start(): void {
-    close()
+    void close()
     const dir = options.projectsDir()
     if (!exists(dir)) {
       status = { state: 'off', reason: t('No existe {dir}', { dir }) }
@@ -154,8 +161,12 @@ export function createClaudeWatcher(options: ClaudeWatcherOptions): ClaudeWatche
   return {
     start,
     restart: start,
+    async pause() {
+      await close()
+      status = { state: 'off', reason: t('En pausa') }
+    },
     dispose() {
-      close()
+      void close()
       status = { state: 'off', reason: 'Cerrada' }
     },
     status: () => ({ ...status })

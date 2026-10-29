@@ -229,6 +229,8 @@ export const StateSchema = SettingsSchema.extend({
   sessionMeta: z.record(z.string().max(100), SessionMetaSchema),
   /** Preferencias de la app por proyecto: Claude en Chrome en sus sesiones. */
   projectPrefs: z.record(z.string().uuid(), ProjectPrefsSchema),
+  /** Sesiones movidas a otro proyecto desde la app: `sessionId` → carpeta del destino. */
+  sessionMoves: z.record(z.string().max(100), z.string().min(1).max(1024)),
   /** Última lista de modelos y comandos del SDK: sin datos sensibles. */
   chatCache: z.object({
     models: z.array(ChatModelSchema).max(100),
@@ -256,6 +258,7 @@ export const DEFAULT_STATE: State = {
   activeProjectId: null,
   sessionMeta: {},
   projectPrefs: {},
+  sessionMoves: {},
   chatCache: { models: [], commands: [], updatedAt: null },
   limitsCache: null,
   windowState: null

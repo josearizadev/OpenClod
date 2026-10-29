@@ -9,6 +9,7 @@ import MainHeader from './components/layout/MainHeader.vue'
 import SearchDialog from './components/search/SearchDialog.vue'
 import RenameSessionDialog from './components/sessions/RenameSessionDialog.vue'
 import TrashSessionsDialog from './components/sessions/TrashSessionsDialog.vue'
+import MoveSessionsDialog from './components/sessions/MoveSessionsDialog.vue'
 import AboutDialog from './components/ui/AboutDialog.vue'
 import AppToast from './components/ui/AppToast.vue'
 import type { AppCommand } from '../../shared/types'
@@ -195,6 +196,7 @@ onBeforeUnmount(() => {
     </div>
     <RenameSessionDialog />
     <TrashSessionsDialog />
+    <MoveSessionsDialog />
     <SearchDialog />
     <AppToast />
     <AboutDialog v-model:open="ui.aboutOpen" />

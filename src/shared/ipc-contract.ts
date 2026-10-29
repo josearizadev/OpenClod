@@ -8,7 +8,8 @@ import {
   SessionDetailSchema,
   SessionListItemSchema,
   SessionMetaStatsSchema,
-  SessionTrashResultSchema
+  SessionTrashResultSchema,
+  SessionMoveResultSchema
 } from './projects'
 import {
   ClaudeScanReportSchema,
@@ -180,6 +181,16 @@ export const invokeContract = {
   'sessions:trash': {
     input: z.object({ sessionIds: z.array(z.string().min(1).max(100)).min(1).max(500) }).strict(),
     output: SessionTrashResultSchema
+  },
+  /** Mueve conversaciones (y sus archivos de Claude Code) a otro proyecto. */
+  'sessions:move': {
+    input: z
+      .object({
+        sessionIds: z.array(z.string().min(1).max(100)).min(1).max(500),
+        projectId: z.string().uuid()
+      })
+      .strict(),
+    output: SessionMoveResultSchema
   },
   'sessions:metaStats': {
     input: z.void(),
@@ -429,6 +440,7 @@ export interface Api {
     update(patch: InvokeInput<'sessions:update'>): Promise<Result<InvokeOutput<'sessions:update'>>>
     /** Mueve a la papelera las conversaciones de esas entradas. */
     trash(sessionIds: string[]): Promise<Result<InvokeOutput<'sessions:trash'>>>
+    move(sessionIds: string[], projectId: string): Promise<Result<InvokeOutput<'sessions:move'>>>
     metaStats(): Promise<Result<InvokeOutput<'sessions:metaStats'>>>
     /** Transcript leído en el momento de la carpeta de Claude Code; `null` si ya no existe. */
     transcript(sessionId: string): Promise<Result<InvokeOutput<'sessions:transcript'>>>

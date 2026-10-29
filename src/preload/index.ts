@@ -81,6 +81,7 @@ const api: Api = {
     get: (sessionId) => invoke('sessions:get', { sessionId }),
     update: (patch) => invoke('sessions:update', patch),
     trash: (sessionIds) => invoke('sessions:trash', { sessionIds }),
+    move: (sessionIds, projectId) => invoke('sessions:move', { sessionIds, projectId }),
     metaStats: () => invoke('sessions:metaStats', undefined),
     transcript: (sessionId) => invoke('sessions:transcript', { sessionId }),
     subagent: (sessionId, agentId) => invoke('sessions:subagent', { sessionId, agentId }),
