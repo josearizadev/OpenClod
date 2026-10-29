@@ -15,6 +15,7 @@ import {
   FileCode,
   FileDown,
   FolderInput,
+  PanelTop,
   Pencil,
   SquareTerminal,
   SquareCheck,
@@ -25,6 +26,7 @@ import {
 } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { useSessionsStore } from '../../stores/sessions'
+import { useTabsStore } from '../../stores/tabs'
 import { useTerminalStore } from '../../stores/terminal'
 import { useUiStore } from '../../stores/ui'
 
@@ -83,6 +85,8 @@ async function setHidden(hidden: boolean): Promise<void> {
   else await sessions.update(props.sessionId, { hidden })
   emit('changed')
 }
+
+const tabs = useTabsStore()
 
 /** Igual que eliminar: el diálogo se abre con el menú ya cerrado. */
 function askMove(): void {
@@ -219,6 +223,11 @@ const itemClass =
       <span class="ml-auto pl-4 text-xs text-muted">{{ t('Ctrl+clic') }}</span>
     </component>
     <component :is="Separator" class="my-1 h-px bg-border" />
+    <component :is="Item" v-if="inList" :class="itemClass" @select="tabs.openInNewTab(sessionId)">
+      <PanelTop :size="16" :stroke-width="1.75" aria-hidden="true" />
+      {{ t('Abrir en pestaña nueva') }}
+      <span class="ml-auto pl-4 text-xs text-muted">{{ t('Clic central') }}</span>
+    </component>
     <component :is="Item" :class="itemClass" @select="askMove">
       <FolderInput :size="16" :stroke-width="1.75" aria-hidden="true" />
       {{ t('Mover a proyecto…') }}

@@ -1134,5 +1134,14 @@ export const en = {
   '{conversations} movidas a {name}': '{conversations} moved to {name}',
   '{n} ya existían en el destino': '{n} already existed at the destination',
   'Ir al proyecto': 'Go to project',
-  'En pausa': 'Paused'
+  'En pausa': 'Paused',
+
+  // --- Pestañas ---
+  'Terminó mientras no mirabas': 'Finished while you were away',
+  'Sesiones abiertas': 'Open sessions',
+  'Cerrar pestaña «{title}»': 'Close tab “{title}”',
+  'Cerrar (Ctrl+W)': 'Close (Ctrl+W)',
+  'Nueva sesión (Ctrl+N)': 'New session (Ctrl+N)',
+  'Abrir en pestaña nueva': 'Open in new tab',
+  'Clic central': 'Middle-click'
 } satisfies Record<string, string>

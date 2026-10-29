@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { t } from './i18n'
 import { TooltipProvider } from 'reka-ui'
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { CloseRequest } from '../../shared/chat'
 import AppSidebar from './components/layout/AppSidebar.vue'
 import MainHeader from './components/layout/MainHeader.vue'
+import SessionTabs from './components/layout/SessionTabs.vue'
 import SearchDialog from './components/search/SearchDialog.vue'
 import RenameSessionDialog from './components/sessions/RenameSessionDialog.vue'
 import TrashSessionsDialog from './components/sessions/TrashSessionsDialog.vue'
@@ -22,6 +23,7 @@ import { useTerminalStore } from './stores/terminal'
 import { useProjectsStore } from './stores/projects'
 import { useSearchStore } from './stores/search'
 import { useSessionsStore } from './stores/sessions'
+import { useTabsStore } from './stores/tabs'
 import { useUiStore } from './stores/ui'
 import { useUpdateStore } from './stores/update'
 import { useUsageStore } from './stores/usage'
@@ -86,9 +88,21 @@ function quit(): void {
   void window.api.app.quit(closing.value?.restart ?? false)
 }
 
-// `Ctrl+N`: sesión nueva.
+// `Ctrl+N`: sesión nueva (en su pestaña).
 const router = useRouter()
 useShortcut('ctrl+n', () => void router.push('/'))
+
+// Pestañas: cada navegación cae en la suya; `Ctrl+W` cierra y `Ctrl+(Mayús+)Tab` cambia.
+const tabs = useTabsStore()
+// Con el nombre: antes de resolver la primera ruta, `fullPath` ya es `/` pero sin nombre.
+watch(
+  () => [route.name, route.fullPath],
+  () => tabs.syncRoute(route),
+  { immediate: true }
+)
+useShortcut('ctrl+w', () => tabs.closeActive())
+useShortcut('ctrl+tab', () => tabs.cycle(1))
+useShortcut('ctrl+shift+tab', () => tabs.cycle(-1))
 // `Ctrl+K`: búsqueda global, también con el foco en el compositor.
 const search = useSearchStore()
 useShortcut('ctrl+k', () => (search.open = true))
@@ -157,12 +171,13 @@ onMounted(() => {
   window.addEventListener('keydown', onTerminalKey)
   unsubscribe = window.api.index.onUpdated((event) => {
     sessions.onIndexUpdated(event)
+    if (event.changed) tabs.refreshTitles()
     usage.onIndexUpdated(event.changed)
     if (event.changed) git.refresh()
   })
   void usage.init().then((off) => (unsubscribeLimits = off))
   void sessions.loadStatus()
-  void projects.load()
+  void projects.load().then(() => tabs.refreshTitles())
   void chat.init().then((off) => (unsubscribeChat = off))
   void update.init().then((off) => (unsubscribeUpdate = off))
 })
@@ -188,6 +203,7 @@ onBeforeUnmount(() => {
       <AppSidebar />
       <div class="flex min-w-0 flex-1 flex-col bg-bg">
         <MainHeader :title="title" />
+        <SessionTabs />
         <!-- `relative`: lo posicionado dentro (p. ej. tablas `sr-only`) se queda en este scroll. -->
         <main class="relative min-h-0 flex-1 overflow-y-auto">
           <RouterView />

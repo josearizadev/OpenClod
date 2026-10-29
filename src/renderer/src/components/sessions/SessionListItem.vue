@@ -22,6 +22,7 @@ import { relativeTime } from '../../lib/dates'
 import { formatTokens, totalTokens } from '../../lib/tokens'
 import { useChatStore } from '../../stores/chat'
 import { useSessionsStore } from '../../stores/sessions'
+import { useTabsStore } from '../../stores/tabs'
 import SessionMenu from './SessionMenu.vue'
 import TokenBreakdown from './TokenBreakdown.vue'
 
@@ -65,7 +66,16 @@ function onClickCapture(event: MouseEvent): void {
 
 /** `Mayús+clic` marca un rango: sin esto, el navegador seleccionaría el texto de la lista. */
 function onMouseDown(event: MouseEvent): void {
-  if (event.shiftKey) event.preventDefault()
+  // Mayús: sin selección de texto; botón central: sin el desplazamiento automático.
+  if (event.shiftKey || event.button === 1) event.preventDefault()
+}
+
+/** Clic central: en una pestaña nueva (y nunca en otra ventana). */
+const tabs = useTabsStore()
+function onAuxClick(event: MouseEvent): void {
+  if (event.button !== 1) return
+  event.preventDefault()
+  tabs.openInNewTab(props.item.sessionId)
 }
 
 function onKeydown(event: KeyboardEvent): void {
@@ -89,6 +99,7 @@ const menuContent = 'z-30 min-w-56 rounded-menu bg-surface p-1 text-text shadow-
               :class="selected ? 'bg-surface-hover' : ''"
               :aria-selected="sessions.selecting ? selected : undefined"
               @mousedown="onMouseDown"
+              @auxclick="onAuxClick"
               @click.capture="onClickCapture"
               @keydown="onKeydown"
             >
