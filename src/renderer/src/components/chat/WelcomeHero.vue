@@ -15,11 +15,8 @@ const greeting =
     <template v-if="incognito">
       <h2 class="flex items-center gap-3 font-serif text-[2.125rem] leading-tight">
         <Ghost class="shrink-0" :size="32" :stroke-width="1.5" aria-hidden="true" />
-        {{ t('Sesión de incógnito') }}
+        {{ t('Estás en modo incógnito') }}
       </h2>
-      <p class="font-serif text-lg text-muted">
-        {{ t('No se guarda en el historial: al cerrar su pestaña, desaparece.') }}
-      </p>
     </template>
     <template v-else>
       <h2 class="flex items-center gap-3 font-serif text-[2.125rem] leading-tight">

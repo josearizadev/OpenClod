@@ -13,14 +13,37 @@ import icon from '../../resources/icon.png?asset'
  */
 const WINDOW_COLORS = {
   light: { bg: '#FAF9F5', text: '#141413' },
-  dark: { bg: '#262624', text: '#FAF9F5' }
+  dark: { bg: '#262624', text: '#FAF9F5' },
+  /** Marco de incógnito (`--incognito-frame`): la cabecera es oscura en los dos temas. */
+  incognito: { light: '#141413', dark: '#0E0E0D', text: '#FAF9F5' }
 } as const
+
+/** La vista activa es de incógnito: los botones nativos van sobre el marco oscuro. */
+let incognitoFrame = false
 
 /** Debe coincidir con la altura de `MainHeader` (h-12). */
 const TITLE_BAR_HEIGHT = 48
 
-function currentColors(): (typeof WINDOW_COLORS)['light' | 'dark'] {
-  return nativeTheme.shouldUseDarkColors ? WINDOW_COLORS.dark : WINDOW_COLORS.light
+function currentColors(): { bg: string; text: string } {
+  const dark = nativeTheme.shouldUseDarkColors
+  if (incognitoFrame) {
+    const frame = WINDOW_COLORS.incognito
+    return { bg: dark ? frame.dark : frame.light, text: frame.text }
+  }
+  return dark ? WINDOW_COLORS.dark : WINDOW_COLORS.light
+}
+
+/** Cambia el color de los botones nativos al entrar o salir de una vista de incógnito. */
+export function setIncognitoFrame(on: boolean): void {
+  if (incognitoFrame === on) return
+  incognitoFrame = on
+  const c = currentColors()
+  for (const win of BrowserWindow.getAllWindows()) {
+    if (win.isDestroyed()) continue
+    win.setBackgroundColor(c.bg)
+    if (process.platform !== 'darwin')
+      win.setTitleBarOverlay({ color: c.bg, symbolColor: c.text, height: TITLE_BAR_HEIGHT })
+  }
 }
 
 const devServerUrl = is.dev ? process.env['ELECTRON_RENDERER_URL'] : undefined

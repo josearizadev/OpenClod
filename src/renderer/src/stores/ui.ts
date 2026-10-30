@@ -210,6 +210,8 @@ export const useUiStore = defineStore('ui', () => {
 
   /** Título de la cabecera que fija la vista abierta (p. ej. la ficha de una sesión). */
   const pageTitle = ref<string | null>(null)
+  /** Fantasma activado en «Nueva sesión»: la próxima sesión será de incógnito. */
+  const incognitoNext = ref(false)
 
   return {
     theme,
@@ -238,6 +240,7 @@ export const useUiStore = defineStore('ui', () => {
     toast,
     sidebarCollapsed,
     toggleSidebar,
-    pageTitle
+    pageTitle,
+    incognitoNext
   }
 })

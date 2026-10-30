@@ -5,6 +5,7 @@ import { logger } from '../services/logger'
 import { handle, IpcError } from './handle'
 import { t } from '../i18n'
 import type { ShellMenuService } from '../services/shell-menu'
+import { setIncognitoFrame } from '../window'
 
 /** `claudeCodeVersion` del `package.json` del Agent SDK (la CLI que trae la app). */
 function claudeCodeVersion(): string | null {
@@ -68,6 +69,7 @@ export function registerSystemIpc(opts: {
     return result.canceled ? [] : result.filePaths
   })
   handle('system:shellMenu', () => opts.shellMenu.status())
+  handle('system:setIncognitoFrame', ({ on }) => setIncognitoFrame(on))
   handle('system:setShellMenu', async ({ enabled }) => {
     try {
       const status = enabled

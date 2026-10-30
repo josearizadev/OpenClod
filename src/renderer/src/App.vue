@@ -36,6 +36,21 @@ const projects = useProjectsStore()
 const sessions = useSessionsStore()
 const chat = useChatStore()
 
+/**
+ * Vista de incógnito (la sesión nueva con el fantasma o una sesión de incógnito): el marco pasa
+ * a oscuro y el contenido queda como una tarjeta, como en la app de Claude. La barra lateral
+ * sigue a la vista con sus proyectos.
+ */
+const incognito = computed(
+  () =>
+    (route.name === 'home' && ui.incognitoNext) ||
+    (route.name === 'session' && chat.isIncognito(String(route.params['id'] ?? '')))
+)
+watch(incognito, (on) => void window.api.system.setIncognitoFrame(on))
+const frameTitle = computed(() =>
+  incognito.value && route.name === 'home' ? t('Incógnito') : title.value
+)
+
 // Una sola suscripción a `index:updated` y otra a `chat:event` para toda la
 // app: así se siguen todas las sesiones de chat aunque no se vean.
 let unsubscribe: (() => void) | null = null
@@ -205,13 +220,16 @@ onBeforeUnmount(() => {
     <!-- Hasta leer los ajustes no se sabe si toca la bienvenida: no se pinta nada. -->
     <div v-if="!ui.settingsLoaded" class="h-full bg-bg" />
     <WelcomeScreen v-else-if="!ui.welcomed" />
-    <div v-else class="flex h-full overflow-hidden">
-      <AppSidebar />
-      <div class="flex min-w-0 flex-1 flex-col bg-bg">
-        <MainHeader :title="title" />
-        <SessionTabs />
+    <div v-else class="flex h-full overflow-hidden" :class="incognito ? 'bg-incognito-frame' : ''">
+      <AppSidebar :class="incognito ? 'incognito text-text' : ''" />
+      <div class="flex min-w-0 flex-1 flex-col" :class="incognito ? '' : 'bg-bg'">
+        <MainHeader :title="frameTitle" :class="incognito ? 'incognito text-text' : ''" />
+        <SessionTabs :class="incognito ? 'incognito text-text' : ''" />
         <!-- `relative`: lo posicionado dentro (p. ej. tablas `sr-only`) se queda en este scroll. -->
-        <main class="relative min-h-0 flex-1 overflow-y-auto">
+        <main
+          class="relative min-h-0 flex-1 overflow-y-auto"
+          :class="incognito ? 'mr-2 mb-2 rounded-dialog bg-bg' : ''"
+        >
           <RouterView />
         </main>
       </div>

@@ -1159,11 +1159,11 @@ export const en = {
   'En una sesión de incógnito este cambio haría perder la conversación.':
     'In an incognito session this change would lose the conversation.',
   Incógnito: 'Incognito',
-  'Sesión de incógnito': 'Incognito session',
+  'Estás en modo incógnito': 'You’re in incognito mode',
+  'Las sesiones de incógnito no aparecen en tu historial ni en la búsqueda, y se borran al cerrar su pestaña.':
+    'Incognito sessions don’t appear in your history or in search, and they’re deleted when you close their tab.',
   'Activar incógnito': 'Turn on incognito',
   'Desactivar incógnito': 'Turn off incognito',
-  'No se guarda en el historial: al cerrar su pestaña, desaparece.':
-    'It isn’t saved to history: when you close its tab, it’s gone.',
   'Esta conversación no se guarda: se borra al cerrar la pestaña.':
     'This conversation isn’t saved: it’s deleted when you close the tab.',
   'Las sesiones de incógnito no se guardan: no se pueden exportar.':

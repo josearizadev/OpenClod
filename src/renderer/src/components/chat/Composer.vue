@@ -41,6 +41,8 @@ const props = defineProps<{
   noAttach?: boolean
   /** Carpeta de las menciones `@`; sin ella no se sugieren archivos. */
   mentions?: MentionTarget | null
+  /** Sesión de incógnito: borde discontinuo a la vista. */
+  incognito?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -288,7 +290,7 @@ defineExpose({ focus, textarea })
     <!-- Clic en cualquier zona vacía de la tarjeta lleva el foco al texto. -->
     <div
       class="flex w-full cursor-text flex-col gap-2 rounded-composer border border-dashed bg-surface p-3 shadow-float"
-      :class="dragging ? 'border-accent' : 'border-transparent'"
+      :class="dragging ? 'border-accent' : incognito ? 'border-muted/60' : 'border-transparent'"
       @click.self="focus"
       @dragover="onDragOver"
       @dragleave.self="dragging = false"

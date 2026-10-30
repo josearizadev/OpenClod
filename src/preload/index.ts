@@ -28,7 +28,8 @@ const api: Api = {
     pickFolder: (purpose) => invoke('system:pickFolder', purpose ? { purpose } : undefined),
     pickFiles: () => invoke('system:pickFiles', undefined),
     shellMenu: () => invoke('system:shellMenu', undefined),
-    setShellMenu: (enabled) => invoke('system:setShellMenu', { enabled })
+    setShellMenu: (enabled) => invoke('system:setShellMenu', { enabled }),
+    setIncognitoFrame: (on) => invoke('system:setIncognitoFrame', { on })
   },
   git: {
     info: (args) => invoke('git:info', args)

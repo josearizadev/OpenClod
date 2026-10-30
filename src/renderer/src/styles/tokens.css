@@ -87,7 +87,9 @@
   color-scheme: light;
 }
 
-.dark {
+/* El marco de incógnito (barra lateral, cabecera y pestañas) usa los colores oscuros. */
+.dark,
+.incognito {
   --bg: #262624;
   --bg-sidebar: #1f1e1d;
   --surface: #30302e;
@@ -161,6 +163,18 @@
   color-scheme: dark;
 }
 
+/* Fondo del marco en incógnito: casi negro en los dos temas. Igual que WINDOW_COLORS.incognito. */
+:root {
+  --incognito-frame: #141413;
+}
+:root.dark {
+  --incognito-frame: #0e0e0d;
+}
+.incognito {
+  --bg: var(--incognito-frame);
+  --bg-sidebar: var(--incognito-frame);
+}
+
 /* El tema de shiki (`createCssVariablesTheme`) pide estas variables: salen de los tokens. */
 :root {
   --shiki-foreground: var(--code-text);
@@ -189,6 +203,7 @@
   --color-current: currentColor;
   --color-bg: var(--bg);
   --color-bg-sidebar: var(--bg-sidebar);
+  --color-incognito-frame: var(--incognito-frame);
   --color-surface: var(--surface);
   --color-surface-hover: var(--surface-hover);
   --color-bubble-user: var(--bubble-user);

@@ -117,6 +117,11 @@ export const invokeContract = {
     input: z.object({ enabled: z.boolean() }).strict(),
     output: ShellMenuStatusSchema
   },
+  /** La vista activa es de incógnito: marco oscuro también en los botones de la ventana. */
+  'system:setIncognitoFrame': {
+    input: z.object({ on: z.boolean() }).strict(),
+    output: z.void()
+  },
   /** Archivos para adjuntar al chat; vacío si se cancela. */
   'system:pickFiles': {
     input: z.void(),
@@ -395,6 +400,7 @@ export interface Api {
     pickFiles(): Promise<Result<InvokeOutput<'system:pickFiles'>>>
     shellMenu(): Promise<Result<InvokeOutput<'system:shellMenu'>>>
     setShellMenu(enabled: boolean): Promise<Result<InvokeOutput<'system:setShellMenu'>>>
+    setIncognitoFrame(on: boolean): Promise<Result<void>>
   }
   git: {
     info(args: InvokeInput<'git:info'>): Promise<Result<InvokeOutput<'git:info'>>>

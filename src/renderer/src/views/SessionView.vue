@@ -529,7 +529,7 @@ async function send(text: string, now: boolean, files: ChatAttachment[]): Promis
 
 function respond(
   requestId: string,
-  decision: 'allow' | 'always' | 'deny',
+  decision: 'allow' | 'always' | 'all' | 'deny',
   extra: { scope?: 'session' | 'project'; message?: string; answers?: Record<string, string> } = {}
 ): void {
   void chat.respond({
@@ -775,6 +775,7 @@ async function setFavorite(value: boolean): Promise<void> {
                   :autofocus="index === 0 && draft.trim() === ''"
                   @allow="respond(request.requestId, 'allow')"
                   @always="respond(request.requestId, 'always', { scope: $event })"
+                  @all="respond(request.requestId, 'all')"
                   @deny="respond(request.requestId, 'deny', { message: $event })"
                 />
               </template>
@@ -800,6 +801,7 @@ async function setFavorite(value: boolean): Promise<void> {
             :models="chat.catalog.models"
             :commands="commands"
             :mentions="{ sessionId: id }"
+            :incognito="incognito"
             :placeholder="working ? t('Escribe para ponerlo en cola…') : t('Responder…')"
             @send="send"
             @stop="stop"

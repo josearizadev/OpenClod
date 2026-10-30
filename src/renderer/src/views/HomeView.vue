@@ -96,8 +96,11 @@ const attachments = computed({
   set: (value: ChatAttachment[]) => void chat.draftAttachments.set(NEW_DRAFT, value)
 })
 
-/** Solo para la próxima sesión: al empezarla vuelve a apagarse. */
-const incognito = ref(false)
+/** Solo para la próxima sesión: al empezarla vuelve a apagarse. En `ui`: cambia el marco. */
+const incognito = computed({
+  get: () => ui.incognitoNext,
+  set: (value: boolean) => (ui.incognitoNext = value)
+})
 
 /** Mensaje enviado mientras arranca Claude Code. */
 const pending = ref<{
@@ -147,8 +150,8 @@ watch(
   ([sessionId, startError]) => {
     if (sessionId) {
       draft.value = ''
-      incognito.value = false
-      void router.replace(`/sesion/${sessionId}`)
+      // Tras llegar a la sesión: así el marco de incógnito no parpadea.
+      void router.replace(`/sesion/${sessionId}`).then(() => (incognito.value = false))
     } else if (startError && pending.value) {
       draft.value = pending.value.text
       attachments.value = pending.value.attachments
@@ -186,6 +189,7 @@ watch(
         :commands="commands"
         :mentions="cwd ? { cwd } : null"
         :disabled="!cwd || pending !== null"
+        :incognito="incognito"
         :placeholder="cwd ? t('¿En qué puedo ayudarte?') : t('Elige antes una carpeta de trabajo')"
         @send="send"
       >
@@ -201,6 +205,13 @@ watch(
         :readonly="pending !== null"
         @pick="pickFolder"
       />
+      <p v-if="incognito" class="-mt-2 max-w-sm text-center text-sm text-balance text-muted">
+        {{
+          t(
+            'Las sesiones de incógnito no aparecen en tu historial ni en la búsqueda, y se borran al cerrar su pestaña.'
+          )
+        }}
+      </p>
       <SlashCommandHost
         ref="host"
         :session-id="null"
