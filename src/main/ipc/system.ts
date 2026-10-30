@@ -2,8 +2,9 @@ import { app, BrowserWindow, dialog } from 'electron'
 import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { logger } from '../services/logger'
-import { handle } from './handle'
+import { handle, IpcError } from './handle'
 import { t } from '../i18n'
+import type { ShellMenuService } from '../services/shell-menu'
 
 /** `claudeCodeVersion` del `package.json` del Agent SDK (la CLI que trae la app). */
 function claudeCodeVersion(): string | null {
@@ -27,7 +28,10 @@ function claudeCodeVersion(): string | null {
   return null
 }
 
-export function registerSystemIpc(opts: { gitVersion: () => Promise<string | null> }): void {
+export function registerSystemIpc(opts: {
+  gitVersion: () => Promise<string | null>
+  shellMenu: ShellMenuService
+}): void {
   handle('system:ping', ({ msg }) => ({ pong: msg }))
   handle('system:info', async () => ({
     app: app.getVersion(),
@@ -62,5 +66,18 @@ export function registerSystemIpc(opts: { gitVersion: () => Promise<string | nul
       ? await dialog.showOpenDialog(owner, options)
       : await dialog.showOpenDialog(options)
     return result.canceled ? [] : result.filePaths
+  })
+  handle('system:shellMenu', () => opts.shellMenu.status())
+  handle('system:setShellMenu', async ({ enabled }) => {
+    try {
+      const status = enabled
+        ? await opts.shellMenu.enable(t('Abrir en OpenClod'))
+        : await opts.shellMenu.disable()
+      logger.info('system', `Menú del Explorador ${status.enabled ? 'activado' : 'desactivado'}`)
+      return status
+    } catch (error) {
+      logger.error('system', error)
+      throw new IpcError('INTERNAL', t('No se pudo cambiar el menú del Explorador.'))
+    }
   })
 }

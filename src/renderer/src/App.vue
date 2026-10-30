@@ -157,6 +157,7 @@ function runCommand(command: AppCommand): void {
 // Git se refresca al volver el foco y tras cada pasada con cambios.
 const git = useGitStore()
 let unsubscribeNavigate: (() => void) | null = null
+let unsubscribeOpened: (() => void) | null = null
 const onFocus = (): void => git.refresh()
 
 onMounted(() => {
@@ -167,6 +168,10 @@ onMounted(() => {
   })
   // Menú nativo y bandeja: lo mismo que los atajos.
   unsubscribeCommand = window.api.app.onCommand(({ command }) => runCommand(command))
+  // «Abrir en OpenClod» desde el Explorador: el main ya lo importó y lo dejó activo.
+  unsubscribeOpened = window.api.app.onOpenedProject(() => {
+    void projects.load().then(() => tabs.openNew())
+  })
   window.addEventListener('focus', onFocus)
   window.addEventListener('keydown', onTerminalKey)
   unsubscribe = window.api.index.onUpdated((event) => {
@@ -189,6 +194,7 @@ onBeforeUnmount(() => {
   unsubscribeUpdate?.()
   unsubscribeNavigate?.()
   unsubscribeCommand?.()
+  unsubscribeOpened?.()
   window.removeEventListener('focus', onFocus)
   window.removeEventListener('keydown', onTerminalKey)
 })

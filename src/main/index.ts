@@ -3,6 +3,7 @@ import { query as sdkQuery } from '@anthropic-ai/claude-agent-sdk'
 import {
   app,
   BrowserWindow,
+  dialog,
   ipcMain,
   Menu,
   nativeTheme,
@@ -64,6 +65,7 @@ import { mainLocale, setMainLocale, t } from './i18n'
 import { registerAuthIpc } from './ipc/auth'
 import { readAuthStatus } from './services/auth'
 import { isAppUrl } from './window'
+import { createShellMenu, folderFromArgv, runReg } from './services/shell-menu'
 
 // En desarrollo, `userData` propia: la versión instalada y la de desarrollo no comparten
 // `state.json`, índice ni logs. Tiene que ir antes de cualquier uso de `userData`.
@@ -92,8 +94,15 @@ process.on('unhandledRejection', (reason) => logger.error('main', reason))
 // El bloqueo va por `userData`, así que la versión instalada y la de desarrollo conviven.
 const singleInstance = app.requestSingleInstanceLock()
 let showMainWindow: (() => void) | null = null
+/** «Abrir en OpenClod» desde el Explorador: la carpeta llega como argumento. */
+let openFolder: ((path: string) => void) | null = null
 if (!singleInstance) app.quit()
-else app.on('second-instance', () => showMainWindow?.())
+else
+  app.on('second-instance', (_event, argv) => {
+    showMainWindow?.()
+    const folder = folderFromArgv(argv, app.isPackaged)
+    if (folder) openFolder?.(folder)
+  })
 
 app.whenReady().then(() => {
   if (!singleInstance) return
@@ -468,6 +477,7 @@ app.whenReady().then(() => {
       applyLocale()
       if (mainLocale() !== before) {
         buildMenu()
+        syncShellMenu()
         // La bandeja se vuelve a crear con los textos nuevos.
         tray?.dispose()
         tray = null
@@ -484,7 +494,18 @@ app.whenReady().then(() => {
       }
     })
   )
-  registerSystemIpc({ gitVersion: () => git.version() })
+  // «Abrir en OpenClod» en el Explorador: si está activado, se mantiene al día con el
+  // ejecutable (otra carpeta de instalación) y el idioma.
+  const shellMenu = createShellMenu({
+    platform: process.platform,
+    packaged: app.isPackaged,
+    exePath: process.execPath,
+    reg: runReg
+  })
+  const syncShellMenu = (): void =>
+    void shellMenu.sync(t('Abrir en OpenClod')).catch((error) => logger.error('system', error))
+  syncShellMenu()
+  registerSystemIpc({ gitVersion: () => git.version(), shellMenu })
   registerUpdateIpc(updater, { restart: requestRestart })
   // Eliminar conversaciones: a la papelera, y el índice las quita en la pasada.
   const trash = reader
@@ -613,6 +634,37 @@ app.whenReady().then(() => {
     if (!win.webContents.isDestroyed()) win.webContents.send('app:closeRequest', busy)
   })
   syncTray(store.get().window.closeToTray)
+
+  // Carpeta abierta desde el Explorador: se importa (o se reutiliza), se activa y la ventana
+  // abre una «Nueva sesión» en ella.
+  const pageLoaded = new Promise<void>((resolve) =>
+    win.webContents.once('did-finish-load', () => resolve())
+  )
+  openFolder = (path) => {
+    projectsService.import(path).then(
+      async (project) => {
+        logger.info('main', 'Carpeta abierta desde el Explorador')
+        await pageLoaded
+        showWindow()
+        if (!win.isDestroyed() && !win.webContents.isDestroyed()) {
+          win.webContents.send('app:openedProject', { projectId: project.id })
+        }
+      },
+      (error: unknown) => {
+        logger.error('main', error)
+        const detail = error instanceof ProjectError ? error.message : String(error)
+        void dialog.showMessageBox(win, {
+          type: 'warning',
+          title: 'OpenClod',
+          message: t('No se pudo abrir la carpeta en OpenClod.'),
+          detail: `${path}\n\n${detail}`
+        })
+      }
+    )
+  }
+  const startFolder = folderFromArgv(process.argv, app.isPackaged)
+  if (startFolder) openFolder(startFolder)
+
   win.once('ready-to-show', () => {
     logger.info('main', 'Ventana mostrada')
     indexService

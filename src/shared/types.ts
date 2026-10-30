@@ -278,3 +278,15 @@ export const SystemInfoSchema = z.object({
   claudeCode: z.string().nullable()
 })
 export type SystemInfo = z.infer<typeof SystemInfoSchema>
+
+/** «Abrir en OpenClod» en el menú contextual del Explorador de Windows. */
+export const ShellMenuStatusSchema = z
+  .object({
+    /** Solo en Windows y con la app instalada. */
+    supported: z.boolean(),
+    /** Por qué no se puede: `platform` (no es Windows) o `dev` (versión de desarrollo). */
+    reason: z.enum(['platform', 'dev']).optional(),
+    enabled: z.boolean()
+  })
+  .strict()
+export type ShellMenuStatus = z.infer<typeof ShellMenuStatusSchema>

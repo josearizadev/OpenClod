@@ -31,3 +31,12 @@
     Pop $0
   ${EndIf}
 !macroend
+
+; Al desinstalar (no en una actualización) quita «Abrir en OpenClod» del menú contextual del
+; Explorador, que la app añade en HKCU si se activa en Ajustes.
+!macro customUnInstall
+  ${IfNot} ${isUpdated}
+    DeleteRegKey HKCU "Software\Classes\Directory\shell\OpenClod"
+    DeleteRegKey HKCU "Software\Classes\Directory\Background\shell\OpenClod"
+  ${EndIf}
+!macroend

@@ -26,7 +26,9 @@ const api: Api = {
     ping: (msg) => invoke('system:ping', { msg }),
     info: () => invoke('system:info', undefined),
     pickFolder: (purpose) => invoke('system:pickFolder', purpose ? { purpose } : undefined),
-    pickFiles: () => invoke('system:pickFiles', undefined)
+    pickFiles: () => invoke('system:pickFiles', undefined),
+    shellMenu: () => invoke('system:shellMenu', undefined),
+    setShellMenu: (enabled) => invoke('system:setShellMenu', { enabled })
   },
   git: {
     info: (args) => invoke('git:info', args)
@@ -132,7 +134,8 @@ const api: Api = {
     quit: (restart) => invoke('app:quit', restart ? { restart } : undefined),
     onCloseRequest: (callback) => subscribe('app:closeRequest', callback),
     onNavigate: (callback) => subscribe('app:navigate', callback),
-    onCommand: (callback) => subscribe('app:command', callback)
+    onCommand: (callback) => subscribe('app:command', callback),
+    onOpenedProject: (callback) => subscribe('app:openedProject', callback)
   },
   update: {
     status: () => invoke('update:status', undefined),

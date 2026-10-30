@@ -4,7 +4,7 @@ import { FolderOpen, LogIn, RefreshCw, RotateCcw } from 'lucide-vue-next'
 import { computed, onMounted, ref } from 'vue'
 import type { TerminalShells } from '../../../shared/terminal'
 import type { Language } from '../../../shared/i18n'
-import type { NotificationSettings, SystemInfo } from '../../../shared/types'
+import type { NotificationSettings, ShellMenuStatus, SystemInfo } from '../../../shared/types'
 import SettingRow from '../components/settings/SettingRow.vue'
 import SettingSwitch from '../components/settings/SettingSwitch.vue'
 import ThemeToggle from '../components/ui/ThemeToggle.vue'
@@ -60,7 +60,29 @@ const defaultShellLabel = computed(
   () => shells.value?.available.find((s) => s.id === shells.value?.default)?.label ?? '—'
 )
 
+/** «Abrir en OpenClod» en el clic derecho del Explorador: su estado está en el registro. */
+const shellMenu = ref<ShellMenuStatus | null>(null)
+const shellMenuError = ref<string | null>(null)
+const shellMenuBusy = ref(false)
+const shellMenuDescription = computed(() => {
+  const status = shellMenu.value
+  if (status?.reason === 'platform') return t('Solo en Windows.')
+  if (status?.reason === 'dev') return t('Solo en la versión instalada.')
+  return t(
+    'Añade «Abrir en OpenClod» al clic derecho sobre una carpeta: la abre como proyecto. En Windows 11 está en «Mostrar más opciones».'
+  )
+})
+async function setShellMenu(enabled: boolean): Promise<void> {
+  shellMenuError.value = null
+  shellMenuBusy.value = true
+  const result = await window.api.system.setShellMenu(enabled)
+  shellMenuBusy.value = false
+  if (result.ok) shellMenu.value = result.data
+  else shellMenuError.value = result.error.message
+}
+
 onMounted(async () => {
+  void window.api.system.shellMenu().then((r) => (shellMenu.value = r.ok ? r.data : null))
   await ui.loadSettings()
   void auth.refresh()
   void loadClaude()
@@ -366,6 +388,24 @@ const section = 'divide-y divide-border rounded-item border border-border bg-sur
             id="window-tray"
             :model-value="ui.windowSettings.closeToTray"
             @update:model-value="ui.setWindow({ closeToTray: $event })"
+          />
+        </SettingRow>
+        <SettingRow
+          :label="t('Abrir carpetas desde el Explorador')"
+          :description="shellMenuDescription"
+          :disabled="shellMenu ? !shellMenu.supported : false"
+          for="window-shell-menu"
+        >
+          <template #extra>
+            <p v-if="shellMenuError" class="mt-1 text-xs text-danger" role="alert">
+              {{ shellMenuError }}
+            </p>
+          </template>
+          <SettingSwitch
+            id="window-shell-menu"
+            :model-value="shellMenu?.enabled ?? false"
+            :disabled="!shellMenu?.supported || shellMenuBusy"
+            @update:model-value="setShellMenu($event)"
           />
         </SettingRow>
       </div>

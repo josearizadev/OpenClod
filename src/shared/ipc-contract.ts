@@ -40,6 +40,7 @@ import {
   ProjectColorSchema,
   ProjectIconSchema,
   SettingsSchema,
+  ShellMenuStatusSchema,
   SystemInfoSchema
 } from './types'
 import {
@@ -109,6 +110,12 @@ export const invokeContract = {
       .strict()
       .optional(),
     output: z.string().nullable()
+  },
+  /** «Abrir en OpenClod» en el menú contextual del Explorador de Windows. */
+  'system:shellMenu': { input: z.void(), output: ShellMenuStatusSchema },
+  'system:setShellMenu': {
+    input: z.object({ enabled: z.boolean() }).strict(),
+    output: ShellMenuStatusSchema
   },
   /** Archivos para adjuntar al chat; vacío si se cancela. */
   'system:pickFiles': {
@@ -354,6 +361,8 @@ export const eventContract = {
   'app:navigate': z.object({ path: z.string() }),
   /** Menú nativo y bandeja. */
   'app:command': z.object({ command: AppCommandSchema }),
+  /** Carpeta abierta desde el Explorador: ya importada y activa. */
+  'app:openedProject': z.object({ projectId: z.string() }),
   'terminal:data': z.custom<{ id: string; data: string }>(),
   'terminal:exit': z.custom<{ id: string; exitCode: number }>(),
   'update:status': z.custom<UpdateStatus>()
@@ -384,6 +393,8 @@ export interface Api {
       purpose?: 'workdir' | 'claudeDir'
     ): Promise<Result<InvokeOutput<'system:pickFolder'>>>
     pickFiles(): Promise<Result<InvokeOutput<'system:pickFiles'>>>
+    shellMenu(): Promise<Result<InvokeOutput<'system:shellMenu'>>>
+    setShellMenu(enabled: boolean): Promise<Result<InvokeOutput<'system:setShellMenu'>>>
   }
   git: {
     info(args: InvokeInput<'git:info'>): Promise<Result<InvokeOutput<'git:info'>>>
@@ -506,6 +517,7 @@ export interface Api {
     onCloseRequest(callback: (request: EventPayload<'app:closeRequest'>) => void): () => void
     onNavigate(callback: (event: EventPayload<'app:navigate'>) => void): () => void
     onCommand(callback: (event: EventPayload<'app:command'>) => void): () => void
+    onOpenedProject(callback: (event: EventPayload<'app:openedProject'>) => void): () => void
   }
   update: {
     status(): Promise<Result<InvokeOutput<'update:status'>>>

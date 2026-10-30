@@ -1143,5 +1143,15 @@ export const en = {
   'Cerrar (Ctrl+W)': 'Close (Ctrl+W)',
   'Nueva sesión (Ctrl+N)': 'New session (Ctrl+N)',
   'Abrir en pestaña nueva': 'Open in new tab',
-  'Clic central': 'Middle-click'
+  'Clic central': 'Middle-click',
+
+  // --- Menú contextual del Explorador ---
+  'Abrir en OpenClod': 'Open in OpenClod',
+  'Abrir carpetas desde el Explorador': 'Open folders from File Explorer',
+  'Añade «Abrir en OpenClod» al clic derecho sobre una carpeta: la abre como proyecto. En Windows 11 está en «Mostrar más opciones».':
+    'Adds “Open in OpenClod” to the right-click menu of folders: it opens the folder as a project. On Windows 11 it’s under “Show more options”.',
+  'Solo en Windows.': 'Windows only.',
+  'Solo en la versión instalada.': 'Only in the installed version.',
+  'No se pudo cambiar el menú del Explorador.': 'Couldn’t change the File Explorer menu.',
+  'No se pudo abrir la carpeta en OpenClod.': 'Couldn’t open the folder in OpenClod.'
 } satisfies Record<string, string>
