@@ -118,6 +118,9 @@ watch(
 useShortcut('ctrl+w', () => tabs.closeActive())
 useShortcut('ctrl+tab', () => tabs.cycle(1))
 useShortcut('ctrl+shift+tab', () => tabs.cycle(-1))
+// `Ctrl+Mayús+RePág/AvPág`: mueve la pestaña activa.
+useShortcut('ctrl+shift+pageup', () => tabs.shift(-1))
+useShortcut('ctrl+shift+pagedown', () => tabs.shift(1))
 // `Ctrl+K`: búsqueda global, también con el foco en el compositor.
 const search = useSearchStore()
 useShortcut('ctrl+k', () => (search.open = true))

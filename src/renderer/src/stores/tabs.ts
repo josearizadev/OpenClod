@@ -252,6 +252,25 @@ export const useTabsStore = defineStore('tabs', () => {
     if (next) select(next)
   }
 
+  /** Lleva la pestaña `key` a la posición `toIndex` (índice en la lista sin ella). No la activa. */
+  function move(key: string, toIndex: number): void {
+    const from = tabs.value.findIndex((t) => t.key === key)
+    if (from === -1) return
+    const list = [...tabs.value]
+    const [tab] = list.splice(from, 1)
+    const to = Math.max(0, Math.min(list.length, Math.trunc(toIndex)))
+    if (to === from || !tab) return
+    list.splice(to, 0, tab)
+    tabs.value = list
+  }
+
+  /** `Ctrl+Mayús+RePág` / `AvPág`: mueve la pestaña activa una posición (sin dar la vuelta). */
+  function shift(step: 1 | -1): void {
+    const index = tabs.value.findIndex((t) => t.key === activeKey.value)
+    if (index === -1) return
+    move(tabs.value[index]!.key, index + step)
+  }
+
   // Renombrar en la lista cambia también el título de su pestaña.
   const sessions = useSessionsStore()
   watch(
@@ -290,6 +309,8 @@ export const useTabsStore = defineStore('tabs', () => {
     close,
     closeActive,
     cycle,
+    move,
+    shift,
     refreshTitles
   }
 })

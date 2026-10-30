@@ -10,7 +10,7 @@ import ProjectIcon from '../projects/ProjectIcon.vue'
 /**
  * Barra de pestañas de sesiones: icono del proyecto, título y estado (trabajando, esperando
  * permiso o terminado sin ver). Clic central o ✕ cierra; `+` abre una sesión nueva. Las de
- * incógnito llevan el fantasma.
+ * incógnito llevan el fantasma. Se reordenan arrastrándolas (arrastrar no activa la pestaña).
  */
 const tabs = useTabsStore()
 const projects = useProjectsStore()
@@ -55,6 +55,53 @@ watch(
   }
 )
 
+// --- Arrastrar para reordenar ---------------------------------------------------
+
+const DRAG_TYPE = 'application/x-openclod-tab'
+const dragging = ref<string | null>(null)
+/** Dónde caería: índice de la pestaña sobre la que se está y lado. */
+const dropAt = ref<{ index: number; after: boolean } | null>(null)
+
+function onDragStart(event: DragEvent, tab: SessionTab): void {
+  if (!event.dataTransfer) return
+  dragging.value = tab.key
+  event.dataTransfer.effectAllowed = 'move'
+  event.dataTransfer.setData(DRAG_TYPE, tab.key)
+}
+
+function onDragOver(event: DragEvent, index: number): void {
+  if (!dragging.value) return
+  event.preventDefault()
+  if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
+  const box = (event.currentTarget as HTMLElement).getBoundingClientRect()
+  dropAt.value = { index, after: event.clientX > box.left + box.width / 2 }
+}
+
+function onDrop(event: DragEvent): void {
+  event.preventDefault()
+  const key = dragging.value
+  const target = dropAt.value
+  endDrag()
+  if (!key || !target) return
+  const from = tabs.tabs.findIndex((t) => t.key === key)
+  if (from === -1) return
+  let to = target.index + (target.after ? 1 : 0)
+  // `move` cuenta sin la pestaña arrastrada.
+  if (from < to) to -= 1
+  tabs.move(key, to)
+}
+
+function endDrag(): void {
+  dragging.value = null
+  dropAt.value = null
+}
+
+function indicator(index: number): 'before' | 'after' | null {
+  const at = dropAt.value
+  if (!at || at.index !== index) return null
+  return at.after ? 'after' : 'before'
+}
+
 /** Rueda vertical → desplazamiento horizontal de la tira. */
 function onWheel(event: WheelEvent): void {
   if (!strip.value || event.deltaY === 0 || event.shiftKey) return
@@ -72,18 +119,30 @@ function onWheel(event: WheelEvent): void {
       @wheel.passive="onWheel"
     >
       <div
-        v-for="tab in tabs.tabs"
+        v-for="(tab, index) in tabs.tabs"
         :key="tab.key"
         :data-tab="tab.key"
+        draggable="true"
         class="group relative flex h-8 w-[13.75rem] min-w-[7.5rem] shrink items-center gap-1.5 rounded-t-item pr-1 pl-2.5 text-sm transition-colors duration-150"
-        :class="
+        :class="[
           tab.key === tabs.activeKey
             ? 'bg-surface text-text shadow-float'
-            : 'text-muted hover:bg-surface-hover hover:text-text'
-        "
+            : 'text-muted hover:bg-surface-hover hover:text-text',
+          dragging === tab.key ? 'opacity-50' : ''
+        ]"
         @auxclick="onAuxClick($event, tab)"
         @mousedown.middle.prevent
+        @dragstart="onDragStart($event, tab)"
+        @dragover="onDragOver($event, index)"
+        @drop="onDrop"
+        @dragend="endDrag"
       >
+        <span
+          v-if="indicator(index)"
+          class="pointer-events-none absolute inset-y-1 w-0.5 rounded-full bg-accent"
+          :class="indicator(index) === 'before' ? '-left-0.5' : '-right-0.5'"
+          aria-hidden="true"
+        />
         <button
           type="button"
           role="tab"
