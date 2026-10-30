@@ -312,7 +312,7 @@ export const ChatPermissionInputSchema = z
   .object({
     sessionId: SessionIdSchema,
     requestId: z.string().uuid(),
-    decision: z.enum(['allow', 'always', 'deny']),
+    decision: z.enum(['allow', 'always', 'all', 'deny']),
     scope: z.enum(['session', 'project']).optional(),
     message: z.string().max(2000).optional(),
     answers: z.record(AnswerText, AnswerText).optional()

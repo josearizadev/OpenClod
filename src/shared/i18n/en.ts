@@ -497,6 +497,9 @@ export const en = {
   'Se añade: {rules}': 'Adds: {rules}',
   'En esta sesión': 'In this session',
   'Hasta que se cierre; no se guarda nada': 'Until it closes; nothing is saved',
+  'Todo en esta sesión': 'Everything in this session',
+  'Claude no volverá a pedir permiso hasta que cierres la sesión (Saltar permisos)':
+    'Claude won’t ask for permission again until you close the session (Skip permissions)',
   'En este proyecto': 'In this project',
   'Claude Code lo guarda en': 'Claude Code saves it in',
   'Plan propuesto': 'Proposed plan',

@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { t } from '../../i18n'
-import { ChevronDown, ShieldQuestion } from 'lucide-vue-next'
+import { ChevronDown, ShieldOff, ShieldQuestion } from 'lucide-vue-next'
 import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuPortal,
   DropdownMenuRoot,
+  DropdownMenuSeparator,
   DropdownMenuTrigger
 } from 'reka-ui'
 import { computed, nextTick, onMounted, ref, useTemplateRef } from 'vue'
@@ -21,8 +22,8 @@ import WriteContent from '../transcript/tools/WriteContent.vue'
 /**
  * Petición de permiso en línea en el transcript: herramienta,
  * argumento principal, motivo y vista previa con los componentes del visor; **Permitir una vez**,
- * **Permitir siempre** (en la sesión o en el proyecto, con las reglas que se añaden) y **Denegar**
- * con un motivo opcional que recibe Claude.
+ * **Permitir siempre** (en la sesión o en el proyecto, con las reglas que se añaden, o **todo** en
+ * esta sesión: pasa a «Saltar permisos») y **Denegar** con un motivo opcional que recibe Claude.
  */
 const props = defineProps<{
   request: PermissionRequestView
@@ -34,6 +35,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   allow: []
   always: [scope: 'session' | 'project']
+  all: []
   deny: [message: string]
 }>()
 
@@ -82,6 +84,9 @@ function deny(): void {
 onMounted(() => {
   if (props.autofocus) allowButton.value?.focus({ preventScroll: true })
 })
+
+/** Hay reglas sugeridas que añadir (en la sesión o en el proyecto). */
+const hasRules = computed(() => !props.request.noAlways && props.request.alwaysLabels.length > 0)
 
 const itemClass =
   'flex min-h-8 cursor-default flex-col items-start gap-0.5 rounded-item px-2 py-1.5 text-sm outline-none select-none data-[highlighted]:bg-surface-hover'
@@ -160,7 +165,7 @@ const itemClass =
       >
         {{ t('Permitir una vez') }}
       </button>
-      <DropdownMenuRoot v-if="!request.noAlways && request.alwaysLabels.length > 0">
+      <DropdownMenuRoot v-if="request.kind === 'tool'">
         <DropdownMenuTrigger
           class="inline-flex h-8 items-center gap-1 rounded-item border border-border px-3 text-sm transition-colors duration-150 hover:bg-surface-hover"
         >
@@ -174,20 +179,33 @@ const itemClass =
             :collision-padding="8"
             class="z-30 w-80 rounded-menu bg-surface p-1 text-text shadow-float"
           >
-            <DropdownMenuLabel class="px-2 py-1 text-xs text-muted">
-              {{ t('Se añade: {rules}', { rules: request.alwaysLabels.join(', ') }) }}
-            </DropdownMenuLabel>
-            <DropdownMenuItem :class="itemClass" @select="emit('always', 'session')">
-              <span>{{ t('En esta sesión') }}</span>
+            <template v-if="hasRules">
+              <DropdownMenuLabel class="px-2 py-1 text-xs text-muted">
+                {{ t('Se añade: {rules}', { rules: request.alwaysLabels.join(', ') }) }}
+              </DropdownMenuLabel>
+              <DropdownMenuItem :class="itemClass" @select="emit('always', 'session')">
+                <span>{{ t('En esta sesión') }}</span>
+                <span class="text-xs text-muted">{{
+                  t('Hasta que se cierre; no se guarda nada')
+                }}</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem :class="itemClass" @select="emit('always', 'project')">
+                <span>{{ t('En este proyecto') }}</span>
+                <span class="text-xs text-muted"
+                  >{{ t('Claude Code lo guarda en') }}
+                  <code>.claude/settings.local.json</code></span
+                >
+              </DropdownMenuItem>
+              <DropdownMenuSeparator class="my-1 h-px bg-border" />
+            </template>
+            <DropdownMenuItem :class="itemClass" @select="emit('all')">
+              <span class="inline-flex items-center gap-1.5 text-danger">
+                <ShieldOff :size="14" :stroke-width="1.75" aria-hidden="true" />
+                {{ t('Todo en esta sesión') }}
+              </span>
               <span class="text-xs text-muted">{{
-                t('Hasta que se cierre; no se guarda nada')
+                t('Claude no volverá a pedir permiso hasta que cierres la sesión (Saltar permisos)')
               }}</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem :class="itemClass" @select="emit('always', 'project')">
-              <span>{{ t('En este proyecto') }}</span>
-              <span class="text-xs text-muted"
-                >{{ t('Claude Code lo guarda en') }} <code>.claude/settings.local.json</code></span
-              >
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenuPortal>

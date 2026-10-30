@@ -192,6 +192,7 @@ export class ChatSession {
       : { enabled: false, status: 'off' }
     this.lastActivity = this.now()
     this.broker = this.createBroker()
+    this.broker.setAutoAllow(this.mode === 'bypassPermissions')
     this.pacer = createDraftPacer((draft) => {
       this.draft = draft
       this.send_({
@@ -348,20 +349,23 @@ export class ChatSession {
 
   /**
    * Modo de permisos al momento. «Saltar permisos» necesita lanzar el proceso con
-   * `allowDangerouslySkipPermissions` (comprobado): en reposo se cierra el proceso y el
-   * siguiente mensaje lo relanza con el flag; con un turno en curso, se aplica al terminar.
+   * `allowDangerouslySkipPermissions` (comprobado): hasta entonces la app aprueba por su cuenta
+   * las herramientas; en reposo se cierra el proceso y el siguiente mensaje lo relanza con el
+   * flag; con un turno en curso, al terminar. De incógnito ya empezada no se relanza (se perdería
+   * la conversación): la app sigue aprobando.
    */
   async setMode(mode: ChatMode): Promise<void> {
     this.touch()
     this.modeChosen = true
+    this.pendingMode = null
     if (mode === 'bypassPermissions' && !this.bypassAllowed && this.query) {
-      this.assertCanRestart()
+      this.applyModeLocally(mode)
+      if (this.incognito && this.sessionId !== null) return
       if (this.turnActive) {
         this.pendingMode = mode
         return
       }
-      this.applyModeLocally(mode)
-      this.stopProcess()
+      void this.stopProcess()
       return
     }
     this.applyModeLocally(mode)
@@ -845,6 +849,7 @@ export class ChatSession {
   }
 
   private applyModeLocally(mode: ChatMode): void {
+    this.broker.setAutoAllow(mode === 'bypassPermissions')
     if (this.mode === mode) return
     this.mode = mode
     this.send_({ kind: 'mode', mode })
@@ -868,6 +873,11 @@ export class ChatSession {
           this.setStatus(this.turnActive ? 'working' : 'idle')
       },
       onModeChange: (mode) => this.applyModeLocally(mode),
+      onAllowAll: () => {
+        this.setMode('bypassPermissions').catch((error: unknown) =>
+          this.log.warn('chat', `No se pudo pasar a Saltar permisos: ${String(error)}`)
+        )
+      },
       log: (message) => this.log.warn('chat', message)
     })
   }

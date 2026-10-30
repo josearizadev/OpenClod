@@ -182,7 +182,7 @@ describe('ChatService', () => {
     expect(queries.every((q) => q.calls.includes('interrupt'))).toBe(true)
   })
 
-  it('incógnito: sin guardar en disco, sin cierre por inactividad ni relanzamientos; cerrar la borra', async () => {
+  it('incógnito: sin guardar en disco, sin cierre por inactividad ni relanzamientos (Saltar permisos lo aprueba la app); cerrar la borra', async () => {
     const { service, root, queries, clock } = setup()
     const [a] = pushes('saltar')
     await service.start({
@@ -205,11 +205,12 @@ describe('ChatService', () => {
     expect(service.size).toBe(1)
 
     await expect(service.setChrome(id, true)).rejects.toMatchObject({ code: 'INVALID_ARGS' })
-    await expect(service.setMode(id, 'bypassPermissions')).rejects.toMatchObject({
-      code: 'INVALID_ARGS'
-    })
     expect(service.snapshot(id)).toMatchObject({ mode: 'default', chrome: { enabled: false } })
+    // «Saltar permisos» sí: la app aprueba por su cuenta, sin relanzar el proceso.
+    await service.setMode(id, 'bypassPermissions')
+    expect(service.snapshot(id)).toMatchObject({ mode: 'bypassPermissions' })
     expect(queries[0]!.closed).toBe(false)
+    expect(queries[0]!.inputClosed).toBe(false)
 
     await service.close(id)
     expect(service.snapshot(id)).toBeNull()

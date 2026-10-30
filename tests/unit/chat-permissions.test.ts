@@ -221,6 +221,54 @@ describe('PermissionBroker', () => {
     await expect(promise).resolves.toEqual({ behavior: 'allow', updatedInput: { command: 'ls' } })
     expect(broker.decisions['t1']).toBe('allowed')
   })
+
+  it('«Todo en esta sesión» permite la petición y avisa a la sesión, aunque no haya sugerencias', async () => {
+    const requested: PermissionRequestView[] = []
+    const resolved: PermissionDecision[] = []
+    let allowAll = 0
+    const broker = new PermissionBroker({
+      onRequest: (v) => requested.push(v),
+      onResolved: (_, d) => resolved.push(d),
+      onAllowAll: () => (allowAll += 1)
+    })
+    const promise = broker.canUseTool(
+      'Bash',
+      { command: 'ls' },
+      { signal: new AbortController().signal, toolUseID: 't1' }
+    )
+    expect(broker.respond({ requestId: requested[0]!.requestId, decision: 'all' })).toBe(true)
+    await expect(promise).resolves.toEqual({ behavior: 'allow', updatedInput: { command: 'ls' } })
+    expect(resolved).toEqual(['always'])
+    expect(allowAll).toBe(1)
+  })
+
+  it('con aprobación automática las herramientas pasan sin tarjeta; las preguntas no', async () => {
+    const { broker, requested, resolved } = setup()
+    const reqs = requests('edicion')
+    const pending = reqs.map((r) => broker.canUseTool(r.toolName, r.input, r.options))
+    expect(broker.size).toBe(reqs.length)
+
+    broker.setAutoAllow(true)
+    for (const [i, p] of pending.entries())
+      await expect(p).resolves.toEqual({ behavior: 'allow', updatedInput: reqs[i]!.input })
+    expect(resolved.map(([, d]) => d)).toEqual(reqs.map(() => 'always'))
+    expect(broker.size).toBe(0)
+
+    const before = requested.length
+    const [write] = reqs
+    await expect(broker.canUseTool(write!.toolName, write!.input, write!.options)).resolves.toEqual(
+      { behavior: 'allow', updatedInput: write!.input }
+    )
+    expect(requested).toHaveLength(before)
+
+    const [ask] = requests('pregunta')
+    void broker.canUseTool(ask!.toolName, ask!.input, ask!.options)
+    expect(requested.at(-1)).toMatchObject({ kind: 'question' })
+
+    broker.setAutoAllow(false)
+    void broker.canUseTool(write!.toolName, write!.input, write!.options)
+    expect(requested.at(-1)).toMatchObject({ kind: 'tool', toolName: 'Write' })
+  })
 })
 
 describe('reglas de «Permitir siempre» (pregunta abierta 1)', () => {

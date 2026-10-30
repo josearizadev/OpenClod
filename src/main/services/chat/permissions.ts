@@ -40,6 +40,8 @@ export interface PermissionHooks {
   onResolved(view: PermissionRequestView, decision: PermissionDecision): void
   /** El modo de la sesión cambia por la respuesta (sugerencia `setMode`, plan aprobado). */
   onModeChange?(mode: ChatMode): void
+  /** «Todo en esta sesión»: la sesión pasa a «Saltar permisos». */
+  onAllowAll?(): void
   log?: (message: string) => void
 }
 
@@ -100,6 +102,11 @@ export class PermissionBroker {
   private readonly pending = new Map<string, Pending>()
   /** Decisión de cada llamada resuelta, por `toolUseId`. */
   readonly decisions: Record<string, PermissionDecision> = {}
+  /**
+   * Aprobar al momento las herramientas («Saltar permisos» aún sin relanzar el proceso con el
+   * flag: turno en curso o incógnito). Preguntas y planes se siguen mostrando.
+   */
+  private autoAllow = false
 
   constructor(private readonly hooks: PermissionHooks) {}
 
@@ -110,6 +117,16 @@ export class PermissionBroker {
 
   get size(): number {
     return this.pending.size
+  }
+
+  /** Activa o quita la aprobación automática; al activarla, aprueba lo pendiente de herramientas. */
+  setAutoAllow(on: boolean): void {
+    this.autoAllow = on
+    if (!on) return
+    for (const [id, entry] of [...this.pending]) {
+      if (entry.view.kind !== 'tool') continue
+      this.finish(id, 'always', { behavior: 'allow', updatedInput: entry.input })
+    }
   }
 
   readonly canUseTool = (
@@ -133,6 +150,9 @@ export class PermissionBroker {
       ...(options.suppressAlwaysAllowRule || kind !== 'tool' ? { noAlways: true as const } : {}),
       createdAt: new Date().toISOString()
     }
+
+    if (this.autoAllow && kind === 'tool')
+      return Promise.resolve({ behavior: 'allow', updatedInput: input })
 
     return new Promise<PermissionResult>((resolve) => {
       if (options.signal.aborted) {
@@ -208,6 +228,11 @@ export class PermissionBroker {
         behavior: 'deny',
         message: answer.message?.trim() || t('El usuario ha denegado el permiso.')
       })
+      return true
+    }
+    if (answer.decision === 'all') {
+      this.finish(view.requestId, 'always', { behavior: 'allow', updatedInput: input })
+      this.hooks.onAllowAll?.()
       return true
     }
     if (answer.decision === 'always' && !view.noAlways && suggestions.length > 0) {

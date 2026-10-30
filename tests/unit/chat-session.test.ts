@@ -337,6 +337,69 @@ describe('ChatSession: proceso, modelo y modo', () => {
     })
   })
 
+  it('«Todo en esta sesión» con el turno en curso aprueba al momento y relanza al terminar', async () => {
+    const { session, log, queries } = setup({ mode: 'default' })
+    const [first] = pushes('edicion')
+    session.send(first!.text, first!.uuid)
+    await flush()
+    const results: unknown[] = []
+    let cards = 0
+    await emitUntil(queries[0]!, replay('edicion'), isResult, async (_l, promise) => {
+      const pending = session.snapshot().permissions
+      if (pending.length > 0) {
+        cards += 1
+        session.respond({ requestId: pending[0]!.requestId, decision: 'all' })
+      }
+      results.push(await promise)
+    })
+    await flush()
+    // Solo la primera llega a tarjeta; las demás se aprueban sin preguntar.
+    expect(cards).toBe(1)
+    expect(results).toHaveLength(3)
+    for (const r of results) expect(r).toMatchObject({ behavior: 'allow' })
+    expect(events(log, 'mode').at(-1)).toMatchObject({ mode: 'bypassPermissions' })
+    expect(queries[0]!.calls).not.toContain('setPermissionMode:bypassPermissions')
+    // Al terminar el turno se cierra el proceso y el siguiente mensaje lo relanza con el flag.
+    expect(queries[0]!.inputClosed).toBe(true)
+    session.send('otra')
+    await flush()
+    expect(queries[1]!.options).toMatchObject({
+      permissionMode: 'bypassPermissions',
+      allowDangerouslySkipPermissions: true
+    })
+  })
+
+  it('volver a «Preguntar» antes de terminar el turno anula el relanzamiento', async () => {
+    const { session, queries } = setup({ mode: 'default' })
+    const [first] = pushes('edicion')
+    session.send(first!.text, first!.uuid)
+    await flush()
+    let step = 0
+    const results: unknown[] = []
+    await emitUntil(queries[0]!, replay('edicion'), isResult, async (_l, promise) => {
+      step += 1
+      if (step === 1) {
+        await session.setMode('bypassPermissions')
+      } else if (step === 2) {
+        // Ya aprobada sin tarjeta.
+        expect(session.snapshot().permissions).toHaveLength(0)
+        await session.setMode('default')
+      } else {
+        const pending = session.snapshot().permissions
+        expect(pending).toHaveLength(1)
+        session.respond({ requestId: pending[0]!.requestId, decision: 'deny' })
+      }
+      results.push(await promise)
+    })
+    await flush()
+    expect(results).toHaveLength(3)
+    expect(results[0]).toMatchObject({ behavior: 'allow' })
+    expect(results[1]).toMatchObject({ behavior: 'allow' })
+    expect(results[2]).toMatchObject({ behavior: 'deny' })
+    expect(session.snapshot().mode).toBe('default')
+    expect(queries[0]!.inputClosed).toBe(false)
+  })
+
   it('sin modo elegido no fija `permissionMode`: Claude Code aplica `defaultMode`', async () => {
     const { session, queries } = setup({ resume: 'ddc28c77-fa54-4fb2-b8c5-62b8124aa9d1' })
     session.send('hola')
