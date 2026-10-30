@@ -96,6 +96,19 @@ export interface ChatSessionInit {
   mode?: ChatMode
   /** Claude en Chrome (`--chrome`). */
   chrome?: boolean
+  /** De incógnito: `persistSession: false`, así que el proceso no se puede reanudar. */
+  incognito?: boolean
+}
+
+/**
+ * Cambio que obligaría a relanzar el proceso de una sesión de incógnito ya empezada: sin
+ * transcript en disco, el proceso nuevo no recordaría la conversación.
+ */
+export class IncognitoRestartError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'IncognitoRestartError'
+  }
 }
 
 /** Servidor MCP de Claude in Chrome que añade `--chrome`. */
@@ -108,6 +121,7 @@ export class ChatSession {
   readonly chatId = randomUUID()
   sessionId: string | null
   readonly cwd: string
+  readonly incognito: boolean
   status: ChatStatus = 'idle'
   model: string | null
   mode: ChatMode
@@ -168,6 +182,7 @@ export class ChatSession {
     this.log = deps.log ?? defaultLogger
     this.now = deps.now ?? Date.now
     this.cwd = init.cwd
+    this.incognito = init.incognito === true
     this.sessionId = init.resume ?? null
     this.model = init.model ?? null
     this.mode = init.mode ?? 'default'
@@ -201,6 +216,7 @@ export class ChatSession {
   /** Puede cerrarse por inactividad: en reposo, sin tareas vivas ni permisos. */
   get idleForClose(): boolean {
     return (
+      !this.incognito &&
       !this.turnActive &&
       this.broker.size === 0 &&
       !hasRunningTasks(this.tasks) &&
@@ -235,7 +251,8 @@ export class ChatSession {
       turnStartedAt: this.turnStartedAt,
       activity: this.activity,
       commands: this.commands,
-      chrome: { ...this.chrome }
+      chrome: { ...this.chrome },
+      incognito: this.incognito
     }
   }
 
@@ -338,6 +355,7 @@ export class ChatSession {
     this.touch()
     this.modeChosen = true
     if (mode === 'bypassPermissions' && !this.bypassAllowed && this.query) {
+      this.assertCanRestart()
       if (this.turnActive) {
         this.pendingMode = mode
         return
@@ -358,6 +376,7 @@ export class ChatSession {
   setChrome(enabled: boolean): void {
     this.touch()
     if (this.chrome.enabled === enabled && this.pendingChrome === null) return
+    if (this.query && this.chromeLaunched !== enabled) this.assertCanRestart()
     if (this.query && this.turnActive) {
       this.pendingChrome = enabled
       return
@@ -407,6 +426,14 @@ export class ChatSession {
 
   // ------------------------------------------------------------------ proceso
 
+  /** De incógnito, relanzar un proceso ya usado perdería la conversación. */
+  private assertCanRestart(): void {
+    if (!this.incognito || this.sessionId === null) return
+    throw new IncognitoRestartError(
+      t('En una sesión de incógnito este cambio haría perder la conversación.')
+    )
+  }
+
   private ensureQuery(): void {
     if (this.query) return
     const generation = ++this.generation
@@ -422,7 +449,9 @@ export class ChatSession {
       ...(bypass ? { allowDangerouslySkipPermissions: true } : {}),
       // Sin el flag, Claude Code decide según su configuración (`claudeInChromeDefaultEnabled`).
       ...(chrome ? { extraArgs: { ...this.deps.base.extraArgs, chrome: null } } : {}),
-      ...(this.sessionId ? { resume: this.sessionId } : {}),
+      // De incógnito no hay nada en disco que reanudar.
+      ...(this.incognito ? { persistSession: false } : {}),
+      ...(this.sessionId && !this.incognito ? { resume: this.sessionId } : {}),
       ...(this.model ? { model: this.model } : {}),
       canUseTool: (name, toolInput, opts) =>
         this.broker.canUseTool(name, toolInput, opts as CanUseToolOptions)

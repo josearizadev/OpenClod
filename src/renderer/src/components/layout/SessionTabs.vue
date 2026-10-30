@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { t } from '../../i18n'
-import { CircleCheck, Loader2, Plus, X } from 'lucide-vue-next'
+import { CircleCheck, Ghost, Loader2, Plus, X } from 'lucide-vue-next'
 import { nextTick, ref, watch } from 'vue'
 import type { ProjectView } from '../../../../shared/projects'
 import { useProjectsStore } from '../../stores/projects'
@@ -9,7 +9,8 @@ import ProjectIcon from '../projects/ProjectIcon.vue'
 
 /**
  * Barra de pestañas de sesiones: icono del proyecto, título y estado (trabajando, esperando
- * permiso o terminado sin ver). Clic central o ✕ cierra; `+` abre una sesión nueva.
+ * permiso o terminado sin ver). Clic central o ✕ cierra; `+` abre una sesión nueva. Las de
+ * incógnito llevan el fantasma.
  */
 const tabs = useTabsStore()
 const projects = useProjectsStore()
@@ -20,7 +21,8 @@ function projectOf(tab: SessionTab): ProjectView | null {
 }
 
 function label(tab: SessionTab): string {
-  return tab.sessionId ? tab.title : t('Nueva sesión')
+  if (!tab.sessionId) return t('Nueva sesión')
+  return tabs.isIncognito(tab) ? t('Incógnito') : tab.title
 }
 
 function statusLabel(tab: SessionTab): string | null {
@@ -90,7 +92,14 @@ function onWheel(event: WheelEvent): void {
           class="flex h-full min-w-0 flex-1 items-center gap-1.5 text-left outline-none focus-visible:underline"
           @click="tabs.select(tab)"
         >
-          <ProjectIcon :project="projectOf(tab)" :size="14" />
+          <Ghost
+            v-if="tabs.isIncognito(tab)"
+            :size="14"
+            :stroke-width="1.75"
+            class="shrink-0"
+            aria-hidden="true"
+          />
+          <ProjectIcon v-else :project="projectOf(tab)" :size="14" />
           <span class="truncate">{{ label(tab) }}</span>
         </button>
         <span

@@ -158,6 +158,8 @@ export interface ChatSnapshot {
   commands: ChatCommand[]
   /** Claude en Chrome. */
   chrome: ChromeState
+  /** De incógnito: Claude Code no la guarda en disco; al cerrarla se pierde. */
+  incognito: boolean
 }
 
 export type ChatEventBody =
@@ -204,6 +206,7 @@ export interface ChatActiveEntry {
   chatId: string
   sessionId: string | null
   status: ChatStatus
+  incognito: boolean
 }
 
 export interface ChatCatalog {
@@ -273,7 +276,9 @@ export const ChatStartInputSchema = z
     model: ModelValueSchema.nullable().optional(),
     mode: ChatModeSchema.optional(),
     /** Claude en Chrome; sin él, la preferencia del proyecto. */
-    chrome: z.boolean().optional()
+    chrome: z.boolean().optional(),
+    /** De incógnito: Claude Code no guarda la sesión en disco. */
+    incognito: z.boolean().optional()
   })
   .strict()
   .refine(hasContent, EMPTY)

@@ -7,6 +7,7 @@ import { classifySlash, type AppCommandId, type SlashEntry } from '../../lib/sla
 import { useChatStore } from '../../stores/chat'
 import { useProjectsStore } from '../../stores/projects'
 import { useSearchStore } from '../../stores/search'
+import { useTabsStore } from '../../stores/tabs'
 import { useTerminalStore } from '../../stores/terminal'
 import { useUiStore } from '../../stores/ui'
 import ConfirmDialog from '../ui/ConfirmDialog.vue'
@@ -25,6 +26,8 @@ const props = defineProps<{
   cwd: string | null
   commands: SlashEntry[]
   chrome: ChromeState
+  /** Sesión de incógnito: no está en disco, así que no se exporta ni se reanuda en la terminal. */
+  incognito?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -41,6 +44,7 @@ const emit = defineEmits<{
 const router = useRouter()
 const ui = useUiStore()
 const chat = useChatStore()
+const tabs = useTabsStore()
 const projects = useProjectsStore()
 const search = useSearchStore()
 const terminal = useTerminalStore()
@@ -115,6 +119,8 @@ async function exportSession(sessionId: string): Promise<void> {
 
 /** Abre la sesión (o Claude Code, si aún no hay sesión) en la terminal integrada. */
 async function openTerminal(command?: string): Promise<void> {
+  if (props.incognito)
+    return ui.toast(t('Las sesiones de incógnito no se pueden seguir en la terminal.'))
   if (props.sessionId) await terminal.resume(props.sessionId)
   else {
     const opened = await terminal.open(
@@ -163,11 +169,15 @@ function runApp(id: AppCommandId, args: string): void {
       emit('files')
       return
     case 'export': {
+      if (props.incognito)
+        return ui.toast(t('Las sesiones de incógnito no se guardan: no se pueden exportar.'))
       const sessionId = needsSession()
       if (sessionId) void exportSession(sessionId)
       return
     }
     case 'exit': {
+      // De incógnito no hay nada que reanudar: salir es cerrar su pestaña (y borrarla).
+      if (props.incognito) return tabs.closeActive()
       const sessionId = needsSession()
       if (!sessionId) return
       void chat.close(sessionId)

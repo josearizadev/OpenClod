@@ -10,7 +10,8 @@ import { useSessionsStore } from './sessions'
 /**
  * Pestañas de sesiones abiertas. La ruta manda: `/` es la pestaña vacía («Nueva sesión») y
  * `/sesion/:id` la de esa sesión; el store solo decide en qué pestaña cae cada navegación. Cerrar
- * una pestaña no detiene a Claude: el chat sigue en el store `chat`.
+ * una pestaña no detiene a Claude: el chat sigue en el store `chat`. Salvo la de una sesión de
+ * incógnito: cerrarla la borra, nunca se reutiliza para otra sesión y no se recuerda.
  */
 export interface SessionTab {
   /** Clave local de la pestaña (no cambia aunque cambie su sesión). */
@@ -78,7 +79,7 @@ export const useTabsStore = defineStore('tabs', () => {
   function save(): void {
     try {
       const keep = tabs.value
-        .filter((tab) => tab.sessionId)
+        .filter((tab) => tab.sessionId && !isIncognito(tab))
         .map(({ sessionId, title, projectId }) => ({ sessionId, title, projectId }))
       localStorage.setItem(STORAGE_KEY, JSON.stringify(keep))
     } catch {
@@ -86,6 +87,10 @@ export const useTabsStore = defineStore('tabs', () => {
     }
   }
   watch(tabs, save, { deep: true })
+
+  function isIncognito(tab: SessionTab): boolean {
+    return chat.isIncognito(tab.sessionId)
+  }
 
   function statusOf(tab: SessionTab): Status {
     if (!tab.sessionId) return null
@@ -97,7 +102,7 @@ export const useTabsStore = defineStore('tabs', () => {
 
   /** Se puede reutilizar para otra sesión: vacía, o sin trabajo ni avisos pendientes. */
   function replaceable(tab: SessionTab): boolean {
-    return tab.sessionId === null || statusOf(tab) === null
+    return tab.sessionId === null || (statusOf(tab) === null && !isIncognito(tab))
   }
 
   /** Título y proyecto de la sesión, del índice (puede ser de otro proyecto que el activo). */
@@ -227,6 +232,7 @@ export const useTabsStore = defineStore('tabs', () => {
     const index = tabs.value.findIndex((t) => t.key === tab.key)
     if (index === -1) return
     tabs.value = tabs.value.filter((t) => t.key !== tab.key)
+    if (tab.sessionId && isIncognito(tab)) chat.discard(tab.sessionId)
     // Siempre queda al menos una: cerrar la última deja una «Nueva sesión».
     if (tabs.value.length === 0) tabs.value = [emptyTab()]
     if (tab.key !== activeKey.value) return
@@ -276,6 +282,7 @@ export const useTabsStore = defineStore('tabs', () => {
     activeKey,
     active,
     statusOf,
+    isIncognito,
     syncRoute,
     select,
     openInNewTab,

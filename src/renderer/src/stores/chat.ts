@@ -50,6 +50,7 @@ function blank(chatId: string): ChatSessionState {
     activity: null,
     commands: [],
     chrome: { enabled: false, status: 'off' },
+    incognito: false,
     lastTurn: null,
     turnEnds: 0,
     rateLimit: null
@@ -104,6 +105,8 @@ export const useChatStore = defineStore('chat', () => {
   const outbox = reactive(new Map<string, Pick<QueuedMessage, 'uuid' | 'text' | 'images'>[]>())
   /** Sesiones cuyo primer texto del turno ya se marcó. */
   const firstText = new Set<string>()
+  /** Sesiones de incógnito ya cerradas: sus últimos eventos no las resucitan. */
+  const discarded = new Set<string>()
 
   function byChatId(chatId: string): ChatSessionState {
     let state = sessions.get(chatId)
@@ -126,6 +129,7 @@ export const useChatStore = defineStore('chat', () => {
   }
 
   function apply(event: ChatEvent): void {
+    if (discarded.has(event.chatId)) return
     const s = byChatId(event.chatId)
     if (event.seq <= s.seq) return
     s.seq = event.seq
@@ -242,7 +246,12 @@ export const useChatStore = defineStore('chat', () => {
     const [active, cat] = await Promise.all([window.api.chat.active(), window.api.chat.catalog()])
     if (cat.ok) catalog.value = cat.data
     if (active.ok) {
-      for (const entry of active.data) if (entry.sessionId) await sync(entry.sessionId)
+      for (const entry of active.data) {
+        if (!entry.sessionId) continue
+        // De incógnito sin pestaña (la ventana se recargó): ya no hay forma de volver a ella.
+        if (entry.incognito) void window.api.chat.close(entry.sessionId)
+        else await sync(entry.sessionId)
+      }
     }
     return () => {
       off()
@@ -276,6 +285,7 @@ export const useChatStore = defineStore('chat', () => {
     model: string | null
     mode: ChatMode
     chrome?: boolean
+    incognito?: boolean
   }): Promise<{ ok: true; chatId: string } | { ok: false; error: ChatStartError }> {
     const { attachments, ...rest } = args
     const result = await window.api.chat.start({
@@ -288,6 +298,7 @@ export const useChatStore = defineStore('chat', () => {
     s.mode = args.mode
     s.model ??= args.model
     if (args.chrome) s.chrome = { enabled: true, status: 'pending' }
+    if (args.incognito) s.incognito = true
     return { ok: true, chatId: result.data.chatId }
   }
 
@@ -353,6 +364,27 @@ export const useChatStore = defineStore('chat', () => {
     void window.api.chat.reconciled(sessionId, uuids)
   }
 
+  function isIncognito(sessionId: string | null | undefined): boolean {
+    return stateOf(sessionId)?.incognito === true
+  }
+
+  /** Sale de una sesión de incógnito: se cierra su proceso y se olvida todo lo suyo. */
+  function discard(sessionId: string): void {
+    const s = stateOf(sessionId)
+    if (!s?.incognito) return
+    void window.api.chat.close(sessionId)
+    discarded.add(s.chatId)
+    sessions.delete(s.chatId)
+    firstText.delete(s.chatId)
+    for (const [id, chatId] of [...aliases]) {
+      if (chatId !== s.chatId) continue
+      aliases.delete(id)
+      drafts.delete(id)
+      draftAttachments.delete(id)
+      outbox.delete(id)
+    }
+  }
+
   function clearError(sessionId: string): void {
     const s = stateOf(sessionId)
     if (s) s.error = null
@@ -392,6 +424,8 @@ export const useChatStore = defineStore('chat', () => {
     send,
     reconciled,
     clearError,
+    isIncognito,
+    discard,
     refreshCatalog,
     ...call
   }

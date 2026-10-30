@@ -83,7 +83,9 @@ describe('ChatService', () => {
     expect(chatId).toMatch(/^[0-9a-f-]{36}$/)
     expect(queries[0]!.received.map((m) => m.uuid)).toEqual([uuid])
     expect(queries[0]!.options.permissionMode).toBe('plan')
-    expect(service.active()).toEqual([{ chatId, sessionId: null, status: 'starting' }])
+    expect(service.active()).toEqual([
+      { chatId, sessionId: null, status: 'starting', incognito: false }
+    ])
   })
 
   it('al conocer el id, la sesión se encuentra por él; fin de turno avisa', async () => {
@@ -178,6 +180,43 @@ describe('ChatService', () => {
     expect(service.size).toBe(0)
     expect(queries.every((q) => q.inputClosed && q.closed)).toBe(true)
     expect(queries.every((q) => q.calls.includes('interrupt'))).toBe(true)
+  })
+
+  it('incógnito: sin guardar en disco, sin cierre por inactividad ni relanzamientos; cerrar la borra', async () => {
+    const { service, root, queries, clock } = setup()
+    const [a] = pushes('saltar')
+    await service.start({
+      cwd: join(root, 'proyecto'),
+      text: a!.text,
+      uuid: a!.uuid,
+      incognito: true
+    })
+    await flush()
+    expect(queries[0]!.options.persistSession).toBe(false)
+    await emitUntil(queries[0]!, replay('saltar'), isResult)
+    await flush()
+    const [entry] = service.active()
+    expect(entry).toMatchObject({ incognito: true, status: 'idle' })
+    const id = entry!.sessionId!
+    expect(service.snapshot(id)?.incognito).toBe(true)
+
+    clock.now += IDLE_CLOSE_MS * 2
+    service.sweepIdle()
+    expect(service.size).toBe(1)
+
+    await expect(service.setChrome(id, true)).rejects.toMatchObject({ code: 'INVALID_ARGS' })
+    await expect(service.setMode(id, 'bypassPermissions')).rejects.toMatchObject({
+      code: 'INVALID_ARGS'
+    })
+    expect(service.snapshot(id)).toMatchObject({ mode: 'default', chrome: { enabled: false } })
+    expect(queries[0]!.closed).toBe(false)
+
+    await service.close(id)
+    expect(service.snapshot(id)).toBeNull()
+    await expect(service.send({ sessionId: id, text: 'sigue' })).rejects.toMatchObject({
+      code: 'NOT_FOUND'
+    })
+    expect(queries).toHaveLength(1)
   })
 })
 

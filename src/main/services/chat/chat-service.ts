@@ -12,7 +12,7 @@ import type {
 import { logger as defaultLogger, type Logger } from '../logger'
 import { AttachmentError, buildUserContent, type UserContent } from './attachments'
 import { checkCwd, cwdErrorMessage } from './claude-runtime'
-import { ChatSession, type QueryFactory } from './chat-session'
+import { ChatSession, IncognitoRestartError, type QueryFactory } from './chat-session'
 import { t } from '../../i18n'
 
 /**
@@ -70,6 +70,8 @@ export interface StartArgs {
   model?: string | null
   mode?: ChatMode
   chrome?: boolean
+  /** No se guarda en disco: al cerrarla desaparece. */
+  incognito?: boolean
 }
 
 export interface SendArgs {
@@ -102,10 +104,14 @@ export class ChatService {
       cwd: check.path,
       ...(args.model !== undefined ? { model: args.model } : {}),
       ...(args.mode ? { mode: args.mode } : {}),
-      chrome: args.chrome ?? this.deps.chromeDefault?.(check.path) ?? false
+      chrome: args.chrome ?? this.deps.chromeDefault?.(check.path) ?? false,
+      ...(args.incognito ? { incognito: true } : {})
     })
     const uuid = session.send(content.text, args.uuid, false, content.images)
-    this.log.info('chat', `Sesión nueva ${session.chatId}`)
+    this.log.info(
+      'chat',
+      `Sesión nueva ${session.chatId}${session.incognito ? ' (incógnito)' : ''}`
+    )
     return { chatId: session.chatId, uuid }
   }
 
@@ -193,12 +199,14 @@ export class ChatService {
     await this.require(sessionId).setModel(model)
   }
 
-  setMode(sessionId: string, mode: ChatMode): Promise<void> {
-    return this.require(sessionId).setMode(mode)
+  async setMode(sessionId: string, mode: ChatMode): Promise<void> {
+    const session = this.require(sessionId)
+    await rejectRestart(() => session.setMode(mode))
   }
 
-  setChrome(sessionId: string, enabled: boolean): void {
-    this.require(sessionId).setChrome(enabled)
+  async setChrome(sessionId: string, enabled: boolean): Promise<void> {
+    const session = this.require(sessionId)
+    await rejectRestart(() => session.setChrome(enabled))
   }
 
   stopTask(sessionId: string, taskId: string): Promise<void> {
@@ -217,7 +225,8 @@ export class ChatService {
     return [...this.sessions].map((s) => ({
       chatId: s.chatId,
       sessionId: s.sessionId,
-      status: s.status
+      status: s.status,
+      incognito: s.incognito
     }))
   }
 
@@ -239,7 +248,10 @@ export class ChatService {
     return session.status === 'idle' ? 'idle' : 'active'
   }
 
-  /** Cierre explícito: libera el proceso; el siguiente mensaje reanuda. */
+  /**
+   * Cierre explícito: libera el proceso; el siguiente mensaje reanuda. Una de incógnito
+   * no se puede reanudar: cerrarla la borra.
+   */
   async close(sessionId: string): Promise<void> {
     const session = this.bySessionId.get(sessionId)
     if (!session) return
@@ -329,5 +341,16 @@ export class ChatService {
   private stopTimer(): void {
     if (this.timer) clearInterval(this.timer)
     this.timer = null
+  }
+}
+
+/** El cambio pedido haría perder una sesión de incógnito: error previsto para el renderer. */
+async function rejectRestart(fn: () => unknown): Promise<void> {
+  try {
+    await fn()
+  } catch (error) {
+    if (error instanceof IncognitoRestartError)
+      throw new ChatServiceError('INVALID_ARGS', error.message)
+    throw error
   }
 }

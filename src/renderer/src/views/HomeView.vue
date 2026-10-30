@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { t } from '../i18n'
+import { Ghost } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
 import type { ChatAttachment, ChatMode, ChromeState } from '../../../shared/chat'
 import { effective, type ProjectSettings } from '../../../shared/project-settings'
@@ -12,6 +13,7 @@ import Composer from '../components/chat/Composer.vue'
 import UserMessage from '../components/chat/UserMessage.vue'
 import WelcomeHero from '../components/chat/WelcomeHero.vue'
 import WorkdirChip from '../components/chat/WorkdirChip.vue'
+import IconButton from '../components/ui/IconButton.vue'
 import { NEW_DRAFT, useChatStore } from '../stores/chat'
 import { useProjectsStore } from '../stores/projects'
 import { useUiStore } from '../stores/ui'
@@ -19,7 +21,8 @@ import { useUiStore } from '../stores/ui'
 /**
  * Sesión nueva: bienvenida, compositor y carpeta de trabajo (la del proyecto
  * activo). Al enviar arranca Claude Code y, en cuanto se conoce el id, pasa a la vista de la
- * sesión, que sigue mostrando la respuesta en streaming.
+ * sesión, que sigue mostrando la respuesta en streaming. El fantasma la hace de incógnito:
+ * Claude Code no la guarda y desaparece al cerrar su pestaña.
  */
 const chat = useChatStore()
 const projects = useProjectsStore()
@@ -93,6 +96,9 @@ const attachments = computed({
   set: (value: ChatAttachment[]) => void chat.draftAttachments.set(NEW_DRAFT, value)
 })
 
+/** Solo para la próxima sesión: al empezarla vuelve a apagarse. */
+const incognito = ref(false)
+
 /** Mensaje enviado mientras arranca Claude Code. */
 const pending = ref<{
   text: string
@@ -117,7 +123,8 @@ async function send(text: string, _now: boolean, files: ChatAttachment[]): Promi
     ...(files.length > 0 ? { attachments: files } : {}),
     model: model.value,
     mode: mode.value,
-    ...(chromeOverride.value !== null ? { chrome: chromeOverride.value } : {})
+    ...(chromeOverride.value !== null ? { chrome: chromeOverride.value } : {}),
+    ...(incognito.value ? { incognito: true } : {})
   })
   if (!result.ok) {
     // El texto y los adjuntos no se pierden.
@@ -140,6 +147,7 @@ watch(
   ([sessionId, startError]) => {
     if (sessionId) {
       draft.value = ''
+      incognito.value = false
       void router.replace(`/sesion/${sessionId}`)
     } else if (startError && pending.value) {
       draft.value = pending.value.text
@@ -153,9 +161,18 @@ watch(
 
 <template>
   <!-- Bienvenida: saludo, compositor y carpeta de trabajo centrados. -->
-  <div class="flex h-full flex-col items-center justify-center px-6 pb-16">
+  <div class="relative flex h-full flex-col items-center justify-center px-6 pb-16">
+    <IconButton
+      :icon="Ghost"
+      :label="incognito ? t('Desactivar incógnito') : t('Activar incógnito')"
+      :aria-pressed="incognito"
+      :disabled="pending !== null"
+      class="absolute top-3 right-4"
+      :class="incognito ? 'bg-surface-hover text-text' : ''"
+      @click="incognito = !incognito"
+    />
     <div class="flex w-full max-w-chat flex-col items-center gap-8">
-      <WelcomeHero v-if="!pending" />
+      <WelcomeHero v-if="!pending" :incognito="incognito" />
       <div v-else class="flex w-full flex-col gap-3">
         <UserMessage :text="pending.text" :images="imageCount(pending.attachments)" pending />
         <p class="text-sm text-muted" role="status">{{ t('Iniciando Claude Code…') }}</p>

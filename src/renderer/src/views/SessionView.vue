@@ -19,6 +19,7 @@ import ChatErrorNotice from '../components/chat/ChatErrorNotice.vue'
 import RateLimitNotice from '../components/chat/RateLimitNotice.vue'
 import ActivityRow from '../components/chat/ActivityRow.vue'
 import Composer from '../components/chat/Composer.vue'
+import IncognitoHeader from '../components/chat/IncognitoHeader.vue'
 import PermissionCard from '../components/chat/PermissionCard.vue'
 import PlanCard from '../components/chat/PlanCard.vue'
 import QuestionCard from '../components/chat/QuestionCard.vue'
@@ -67,6 +68,8 @@ const fold = provideFoldState()
 const detail = ref<SessionDetail | null>(null)
 const id = computed(() => String(route.params['id'] ?? ''))
 const live = computed(() => chat.stateOf(id.value))
+/** De incógnito: no hay nada en disco; todo es lo vivo del chat. */
+const incognito = computed(() => live.value?.incognito === true)
 const working = computed(() => {
   const status = live.value?.status
   return status === 'working' || status === 'waiting' || status === 'starting'
@@ -169,7 +172,7 @@ async function loadDetail(): Promise<void> {
   const result = await window.api.sessions.get(sessionId)
   if (sessionId !== id.value) return
   detail.value = result.ok ? result.data : null
-  ui.pageTitle = detail.value?.title ?? null
+  ui.pageTitle = detail.value?.title ?? (incognito.value ? t('Incógnito') : null)
 }
 
 watch(
@@ -200,7 +203,7 @@ function reconcile(): void {
 watch(
   () => live.value?.turnEnds,
   async (now, before) => {
-    if (!now || now === before) return
+    if (!now || now === before || incognito.value) return
     await window.api.index.refresh()
     if (transcript.state === 'ready') await transcript.reload()
     else await transcript.open(id.value)
@@ -419,7 +422,7 @@ const mode = computed<ChatMode>({
   get: () => live.value?.mode ?? pendingMode.value ?? 'default',
   set: (value) => {
     if (value !== 'bypassPermissions') void ui.setChat({ permissionMode: value })
-    if (live.value) void chat.setMode(id.value, value)
+    if (live.value) void chat.setMode(id.value, value).then(toastError)
     else pendingMode.value = value
   }
 })
@@ -440,8 +443,14 @@ const chrome = computed<ChromeState>(() => {
 })
 
 function setChrome(enabled: boolean): void {
-  if (live.value && live.value.status !== 'closed') void chat.setChrome(id.value, enabled)
+  if (live.value && live.value.status !== 'closed')
+    void chat.setChrome(id.value, enabled).then(toastError)
   else pendingChrome.value = enabled
+}
+
+/** Cambio rechazado por el main (p. ej. el que haría perder una sesión de incógnito). */
+function toastError(result: { ok: true } | { ok: false; error: { message: string } }): void {
+  if (!result.ok) ui.toast(result.error.message, { tone: 'danger' })
 }
 
 function onPlan(text: string): void {
@@ -555,9 +564,11 @@ const tail = computed(() => {
   return s ? `${s.permissions.length}:${s.error ? 1 : 0}:${activityRow.value ? 1 : 0}` : ''
 })
 
-/** Sesión nueva que aún no está en el índice: se ve solo lo vivo. */
+/** Sesión nueva que aún no está en el índice, o de incógnito: se ve solo lo vivo. */
 const liveOnly = computed(
-  () => transcript.state === 'missing' && live.value !== null && live.value.live.length > 0
+  () =>
+    incognito.value ||
+    (transcript.state === 'missing' && live.value !== null && live.value.live.length > 0)
 )
 
 /** Marca de rendimiento: el final del transcript ya está pintado. */
@@ -573,8 +584,21 @@ async function setFavorite(value: boolean): Promise<void> {
 
 <template>
   <div class="flex h-full flex-col">
+    <IncognitoHeader v-if="incognito" :scrolled="scrolled" :activity="activity">
+      <template #actions>
+        <IconButton
+          :icon="PanelRight"
+          :label="
+            filesOpen ? t('Cerrar el panel de archivos') : t('Archivos ({n})', { n: files.length })
+          "
+          :aria-pressed="filesOpen"
+          :class="filesOpen ? 'text-text' : ''"
+          @click="filesOpen = !filesOpen"
+        />
+      </template>
+    </IncognitoHeader>
     <TranscriptHeader
-      v-if="detail"
+      v-else-if="detail"
       :detail="detail"
       :chat-status="live?.status ?? null"
       :chat-activity="activity"
@@ -687,7 +711,7 @@ async function setFavorite(value: boolean): Promise<void> {
           </div>
 
           <div
-            v-else-if="transcript.state === 'error'"
+            v-else-if="transcript.state === 'error' && !incognito"
             class="mx-auto flex w-full max-w-chat flex-col items-start gap-3 px-6 py-8"
             role="alert"
           >
@@ -803,6 +827,7 @@ async function setFavorite(value: boolean): Promise<void> {
           <SlashCommandHost
             ref="host"
             :session-id="id"
+            :incognito="incognito"
             :cwd="transcript.payload?.cwd ?? live?.cwd ?? null"
             :commands="commands"
             :chrome="chrome"

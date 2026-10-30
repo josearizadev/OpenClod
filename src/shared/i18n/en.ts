@@ -1153,5 +1153,21 @@ export const en = {
   'Solo en Windows.': 'Windows only.',
   'Solo en la versión instalada.': 'Only in the installed version.',
   'No se pudo cambiar el menú del Explorador.': 'Couldn’t change the File Explorer menu.',
-  'No se pudo abrir la carpeta en OpenClod.': 'Couldn’t open the folder in OpenClod.'
+  'No se pudo abrir la carpeta en OpenClod.': 'Couldn’t open the folder in OpenClod.',
+
+  // --- Sesiones de incógnito ---
+  'En una sesión de incógnito este cambio haría perder la conversación.':
+    'In an incognito session this change would lose the conversation.',
+  Incógnito: 'Incognito',
+  'Sesión de incógnito': 'Incognito session',
+  'Activar incógnito': 'Turn on incognito',
+  'Desactivar incógnito': 'Turn off incognito',
+  'No se guarda en el historial: al cerrar su pestaña, desaparece.':
+    'It isn’t saved to history: when you close its tab, it’s gone.',
+  'Esta conversación no se guarda: se borra al cerrar la pestaña.':
+    'This conversation isn’t saved: it’s deleted when you close the tab.',
+  'Las sesiones de incógnito no se guardan: no se pueden exportar.':
+    'Incognito sessions aren’t saved: they can’t be exported.',
+  'Las sesiones de incógnito no se pueden seguir en la terminal.':
+    'Incognito sessions can’t be continued in the terminal.'
 } satisfies Record<string, string>
