@@ -1,26 +1,65 @@
 <script setup lang="ts">
 import { t } from '../../i18n'
-import { Archive, RefreshCw } from 'lucide-vue-next'
+import { Archive, FolderPlus, RefreshCw } from 'lucide-vue-next'
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
-import { archivedCount, groupSessions } from '../../lib/sessions-groups'
+import { draggedSessions, isSessionsDrag } from '../../lib/session-drag'
+import { archivedCount, groupFolders, groupSessions } from '../../lib/sessions-groups'
+import { useFoldersStore } from '../../stores/folders'
 import { useSessionsStore } from '../../stores/sessions'
+import FolderGroup from './FolderGroup.vue'
 import SessionListItem from './SessionListItem.vue'
 import SessionSelectionBar from './SessionSelectionBar.vue'
 
 /**
- * Sesiones del proyecto activo: «Favoritas» y grupos por fecha, con «Actualizar»,
- * «Archivadas (N)» y los estados de carga, vacío y error del índice.
+ * Sesiones del proyecto activo: carpetas, «Favoritas» y grupos por fecha, con «Nueva carpeta»,
+ * «Actualizar», «Archivadas (N)» y los estados de carga, vacío y error del índice. Soltar sesiones
+ * fuera de las carpetas las saca de la suya.
  */
 const sessions = useSessionsStore()
+const folders = useFoldersStore()
 
 // La hora de referencia se renueva cada minuto para que «hace 5 min» no se quede viejo.
 const now = ref(new Date())
 const timer = window.setInterval(() => (now.value = new Date()), 60_000)
 onBeforeUnmount(() => window.clearInterval(timer))
 
-const groups = computed(() => groupSessions(sessions.items, now.value, sessions.showHidden))
+const folderGroups = computed(() => groupFolders(sessions.items, folders.items))
+const groups = computed(() =>
+  groupSessions(sessions.items, now.value, sessions.showHidden, folders.items)
+)
 /** Entradas en el orden en que se ven: rango de `Mayús+clic` y «Seleccionar todo». */
-const order = computed(() => groups.value.flatMap((g) => g.items.map((i) => i.sessionId)))
+const order = computed(() => [
+  ...folderGroups.value.flatMap((g) => (g.folder.collapsed ? [] : g.items.map((i) => i.sessionId))),
+  ...groups.value.flatMap((g) => g.items.map((i) => i.sessionId))
+])
+
+// Soltar fuera de las carpetas: las que estaban en una salen de ella.
+const overRest = ref(false)
+let restDepth = 0
+function onRestDragEnter(event: DragEvent): void {
+  if (!isSessionsDrag(event)) return
+  event.preventDefault()
+  restDepth += 1
+  overRest.value = true
+}
+function onRestDragOver(event: DragEvent): void {
+  if (!isSessionsDrag(event)) return
+  event.preventDefault()
+  if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
+}
+function onRestDragLeave(): void {
+  restDepth = Math.max(0, restDepth - 1)
+  if (restDepth === 0) overRest.value = false
+}
+function onRestDrop(event: DragEvent): void {
+  restDepth = 0
+  overRest.value = false
+  const ids = draggedSessions(event)
+  if (!ids) return
+  event.preventDefault()
+  const inFolder = ids.filter((id) => sessions.items.find((i) => i.sessionId === id)?.folderId)
+  if (inFolder.length > 0) void sessions.setFolderMany(inFolder, null)
+}
 
 function onSelect(sessionId: string, range: boolean): void {
   if (range) sessions.selectRange(sessionId, order.value)
@@ -75,8 +114,17 @@ watch(
 
 <template>
   <section ref="root" aria-labelledby="sidebar-sessions" class="mt-3">
-    <div class="flex items-center justify-between pr-1 pl-2">
+    <div class="flex items-center gap-0.5 pr-1 pl-2">
       <h2 id="sidebar-sessions" class="text-xs font-medium text-muted">{{ t('Sesiones') }}</h2>
+      <button
+        type="button"
+        :aria-label="t('Nueva carpeta')"
+        :title="t('Nueva carpeta')"
+        class="no-drag ml-auto inline-flex size-7 items-center justify-center rounded-item text-muted transition-colors duration-150 hover:bg-surface-hover hover:text-text"
+        @click="folders.startCreate()"
+      >
+        <FolderPlus :size="14" :stroke-width="1.75" />
+      </button>
       <button
         type="button"
         :disabled="sessions.refreshing"
@@ -117,17 +165,39 @@ watch(
 
     <SessionSelectionBar v-if="sessions.selecting" :order="order" />
 
-    <div v-for="group in groups" :key="group.label" class="mt-2">
-      <h3 class="px-2 py-1 text-xs text-muted">{{ group.label }}</h3>
-      <ul class="flex flex-col gap-0.5">
-        <li v-for="item in group.items" :key="item.sessionId">
-          <SessionListItem
-            :item="item"
-            :now="now"
-            @select="(range: boolean) => onSelect(item.sessionId, range)"
-          />
-        </li>
-      </ul>
+    <section v-if="folderGroups.length > 0" class="mt-2" :aria-label="t('Carpetas')">
+      <FolderGroup
+        v-for="group in folderGroups"
+        :key="group.folder.id"
+        :group="group"
+        :now="now"
+        @select="onSelect"
+      />
+    </section>
+
+    <div
+      class="min-h-8 rounded-item transition-colors duration-150"
+      :class="overRest ? 'bg-surface-hover ring-1 ring-accent' : ''"
+      @dragenter="onRestDragEnter"
+      @dragover="onRestDragOver"
+      @dragleave="onRestDragLeave"
+      @drop="onRestDrop"
+    >
+      <div v-for="group in groups" :key="group.label" class="mt-2">
+        <h3 class="px-2 py-1 text-xs text-muted">{{ group.label }}</h3>
+        <ul class="flex flex-col gap-0.5">
+          <li v-for="item in group.items" :key="item.sessionId">
+            <SessionListItem
+              :item="item"
+              :now="now"
+              @select="(range: boolean) => onSelect(item.sessionId, range)"
+            />
+          </li>
+        </ul>
+      </div>
+      <p v-if="overRest && groups.length === 0" class="px-2 py-2 text-xs text-muted">
+        {{ t('Suelta aquí para sacarlas de la carpeta.') }}
+      </p>
     </div>
 
     <button

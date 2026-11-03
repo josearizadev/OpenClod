@@ -6,6 +6,7 @@ import type { ProjectView } from '../../../../shared/projects'
 import { useProjectsStore } from '../../stores/projects'
 import { useTabsStore, type SessionTab } from '../../stores/tabs'
 import ProjectIcon from '../projects/ProjectIcon.vue'
+import SessionLook from '../sessions/SessionLook.vue'
 
 /**
  * Barra de pestañas de sesiones: icono del proyecto, título y estado (trabajando, esperando
@@ -158,6 +159,7 @@ function onWheel(event: WheelEvent): void {
             class="shrink-0"
             aria-hidden="true"
           />
+          <SessionLook v-else-if="tab.icon" :icon="tab.icon" :color="tab.color" :size="14" />
           <ProjectIcon v-else :project="projectOf(tab)" :size="14" />
           <span class="truncate">{{ label(tab) }}</span>
         </button>

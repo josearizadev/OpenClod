@@ -1,6 +1,12 @@
 import { defineStore } from 'pinia'
 import { computed, ref, watch } from 'vue'
 import type { RouteLocationNormalizedLoaded } from 'vue-router'
+import {
+  PROJECT_COLORS,
+  PROJECT_ICONS,
+  type ProjectColor,
+  type ProjectIcon
+} from '../../../shared/types'
 import { t } from '../i18n'
 import { router } from '../router'
 import { useChatStore } from './chat'
@@ -19,6 +25,25 @@ export interface SessionTab {
   sessionId: string | null
   title: string
   projectId: string | null
+  /** Aspecto propio de la sesión: con icono, la pestaña lo muestra en vez del del proyecto. */
+  icon?: ProjectIcon
+  color?: ProjectColor
+}
+
+function isIcon(value: unknown): value is ProjectIcon {
+  return typeof value === 'string' && (PROJECT_ICONS as readonly string[]).includes(value)
+}
+
+function isColor(value: unknown): value is ProjectColor {
+  return typeof value === 'string' && (PROJECT_COLORS as readonly string[]).includes(value)
+}
+
+/** Copia el aspecto de `look` en `tab` (quita lo que ya no tenga). */
+function setLook(tab: SessionTab, look: { icon?: ProjectIcon; color?: ProjectColor }): void {
+  if (look.icon) tab.icon = look.icon
+  else delete tab.icon
+  if (look.color) tab.color = look.color
+  else delete tab.color
 }
 
 const STORAGE_KEY = 'openclod.tabs'
@@ -47,14 +72,16 @@ function restore(): SessionTab[] {
     if (!Array.isArray(raw)) return []
     return raw.flatMap((item: unknown) => {
       if (typeof item !== 'object' || item === null) return []
-      const { sessionId, title, projectId } = item as Record<string, unknown>
+      const { sessionId, title, projectId, icon, color } = item as Record<string, unknown>
       if (typeof sessionId !== 'string' || sessionId.length > 100) return []
       return [
         {
           key: newKey(),
           sessionId,
           title: typeof title === 'string' ? title.slice(0, 200) : t('Sesión'),
-          projectId: typeof projectId === 'string' ? projectId : null
+          projectId: typeof projectId === 'string' ? projectId : null,
+          ...(isIcon(icon) ? { icon } : {}),
+          ...(isColor(color) ? { color } : {})
         }
       ]
     })
@@ -80,7 +107,13 @@ export const useTabsStore = defineStore('tabs', () => {
     try {
       const keep = tabs.value
         .filter((tab) => tab.sessionId && !isIncognito(tab))
-        .map(({ sessionId, title, projectId }) => ({ sessionId, title, projectId }))
+        .map(({ sessionId, title, projectId, icon, color }) => ({
+          sessionId,
+          title,
+          projectId,
+          icon,
+          color
+        }))
       localStorage.setItem(STORAGE_KEY, JSON.stringify(keep))
     } catch {
       // Sin almacenamiento: las pestañas no se recuerdan.
@@ -113,6 +146,7 @@ export const useTabsStore = defineStore('tabs', () => {
     const current = tabs.value.find((t) => t.key === tab.key)
     if (!result.ok || !result.data || !current || current.sessionId !== sessionId) return
     current.title = result.data.title
+    setLook(current, result.data)
     const cwd = result.data.cwd
     current.projectId = cwd
       ? (projects.projects.find((p) => pathKey(p.path) === pathKey(cwd))?.id ?? null)
@@ -278,7 +312,9 @@ export const useTabsStore = defineStore('tabs', () => {
     (items) => {
       for (const tab of tabs.value) {
         const item = tab.sessionId ? items.find((i) => i.sessionId === tab.sessionId) : null
-        if (item && item.title !== tab.title) tab.title = item.title
+        if (!item) continue
+        if (item.title !== tab.title) tab.title = item.title
+        if (item.icon !== tab.icon || item.color !== tab.color) setLook(tab, item)
       }
     }
   )

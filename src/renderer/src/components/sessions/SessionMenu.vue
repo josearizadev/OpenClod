@@ -15,6 +15,8 @@ import {
   FileCode,
   FileDown,
   FolderInput,
+  FolderOutput,
+  Palette,
   PanelTop,
   Pencil,
   SquareTerminal,
@@ -26,12 +28,14 @@ import {
 } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { useSessionsStore } from '../../stores/sessions'
+import FolderSubmenu from './FolderSubmenu.vue'
 import { useTabsStore } from '../../stores/tabs'
 import { useTerminalStore } from '../../stores/terminal'
 import { useUiStore } from '../../stores/ui'
 
 /**
- * Acciones de una sesión: Renombrar… · Favorita · Archivar/Desarchivar ·
+ * Acciones de una sesión: Renombrar… · Favorita · Archivar/Desarchivar · Personalizar… ·
+ * Mover a carpeta ▸ / Sacar de la carpeta (en la lista) ·
  * Copiar id · Eliminar…. Lo usan el botón ⋯ y el menú contextual de la fila, y el ⋯ de
  * la cabecera; `kind` elige los primitivos de Reka del menú que lo contiene. `inList` añade
  * «Seleccionar». En la lista, si la sesión es parte de una selección de varias, el menú actúa
@@ -44,6 +48,8 @@ const props = defineProps<{
   title: string
   favorite: boolean
   hidden: boolean
+  /** Carpeta en la que está (solo en la lista del proyecto). */
+  folderId?: string | undefined
 }>()
 
 const emit = defineEmits<{ changed: [] }>()
@@ -67,6 +73,25 @@ const allFavorite = computed(() =>
 const allHidden = computed(() =>
   many.value ? itemsOf.value.every((i) => i?.hidden) : props.hidden
 )
+
+/** Carpeta común de todas, o `null`; y si alguna está en una carpeta. */
+const commonFolder = computed(() => {
+  const ids = itemsOf.value.map((i) => i?.folderId ?? null)
+  return ids.every((id) => id === ids[0]) ? (ids[0] ?? null) : null
+})
+const anyInFolder = computed(() =>
+  many.value ? itemsOf.value.some((i) => i?.folderId) : Boolean(props.folderId)
+)
+
+function leaveFolder(): void {
+  void sessions.setFolderMany(targets.value, null)
+}
+
+/** Igual que renombrar: el diálogo se abre con el menú ya cerrado. */
+function askLook(): void {
+  const ids = targets.value
+  setTimeout(() => sessions.askLook(ids), 0)
+}
 
 const Label = computed(() => (props.kind === 'context' ? ContextMenuLabel : DropdownMenuLabel))
 const Item = computed(() => (props.kind === 'context' ? ContextMenuItem : DropdownMenuItem))
@@ -172,6 +197,15 @@ const itemClass =
       />
       {{ allHidden ? t('Desarchivar') : t('Archivar') }}
     </component>
+    <component :is="Item" :class="itemClass" @select="askLook">
+      <Palette :size="16" :stroke-width="1.75" aria-hidden="true" />
+      {{ t('Personalizar…') }}
+    </component>
+    <FolderSubmenu v-if="inList" :kind="kind" :targets="targets" :current="commonFolder" />
+    <component :is="Item" v-if="inList && anyInFolder" :class="itemClass" @select="leaveFolder">
+      <FolderOutput :size="16" :stroke-width="1.75" aria-hidden="true" />
+      {{ t('Sacar de la carpeta') }}
+    </component>
     <component :is="Item" :class="itemClass" @select="askMove">
       <FolderInput :size="16" :stroke-width="1.75" aria-hidden="true" />
       {{ t('Mover a proyecto…') }}
@@ -221,6 +255,15 @@ const itemClass =
       <SquareCheck :size="16" :stroke-width="1.75" aria-hidden="true" />
       {{ sessions.isSelected(sessionId) ? t('Quitar de la selección') : t('Seleccionar') }}
       <span class="ml-auto pl-4 text-xs text-muted">{{ t('Ctrl+clic') }}</span>
+    </component>
+    <component :is="Item" :class="itemClass" @select="askLook">
+      <Palette :size="16" :stroke-width="1.75" aria-hidden="true" />
+      {{ t('Personalizar…') }}
+    </component>
+    <FolderSubmenu v-if="inList" :kind="kind" :targets="targets" :current="folderId ?? null" />
+    <component :is="Item" v-if="inList && folderId" :class="itemClass" @select="leaveFolder">
+      <FolderOutput :size="16" :stroke-width="1.75" aria-hidden="true" />
+      {{ t('Sacar de la carpeta') }}
     </component>
     <component :is="Separator" class="my-1 h-px bg-border" />
     <component :is="Item" v-if="inList" :class="itemClass" @select="tabs.openInNewTab(sessionId)">

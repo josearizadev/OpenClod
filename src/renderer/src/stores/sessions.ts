@@ -7,6 +7,7 @@ import type {
   SessionMoveResult,
   SessionTrashResult
 } from '../../../shared/projects'
+import type { ProjectColor, ProjectIcon } from '../../../shared/types'
 import { useLiveClock } from '../composables/useLiveClock'
 import { router } from '../router'
 import { useProjectsStore } from './projects'
@@ -107,7 +108,14 @@ export const useSessionsStore = defineStore('sessions', () => {
    */
   async function update(
     sessionId: string,
-    patch: { title?: string | null; favorite?: boolean; hidden?: boolean }
+    patch: {
+      title?: string | null
+      favorite?: boolean
+      hidden?: boolean
+      icon?: ProjectIcon | null
+      color?: ProjectColor | null
+      folderId?: string | null
+    }
   ): Promise<SessionListItem | null> {
     const result = await window.api.sessions.update({ sessionId, ...patch })
     await load()
@@ -187,6 +195,39 @@ export const useSessionsStore = defineStore('sessions', () => {
     await load()
   }
 
+  /** Icono y color de varias a la vez (`null` los quita); la selección se mantiene. */
+  async function setLookMany(
+    sessionIds: readonly string[],
+    look: { icon: ProjectIcon | null; color: ProjectColor | null }
+  ): Promise<void> {
+    for (const sessionId of sessionIds) {
+      const result = await window.api.sessions.update({ sessionId, ...look })
+      if (!result.ok) error.value = result.error.message
+    }
+    await load()
+  }
+
+  /** Meter en una carpeta (o sacar con `null`) varias a la vez. */
+  async function setFolderMany(
+    sessionIds: readonly string[],
+    folderId: string | null
+  ): Promise<void> {
+    for (const sessionId of sessionIds) {
+      const result = await window.api.sessions.update({ sessionId, folderId })
+      if (!result.ok) error.value = result.error.message
+    }
+    // Cambian de sitio en la lista: la selección ya no tiene sentido.
+    clearSelection()
+    await load()
+  }
+
+  /** Entradas que esperan «Personalizar…» (un solo diálogo, en `App.vue`). */
+  const lookRequest = ref<string[] | null>(null)
+
+  function askLook(sessionIds: readonly string[]): void {
+    if (sessionIds.length > 0) lookRequest.value = [...sessionIds]
+  }
+
   /** Entradas que esperan la confirmación de «Eliminar…» (un solo diálogo, en `App.vue`). */
   const trashRequest = ref<string[] | null>(null)
 
@@ -246,6 +287,10 @@ export const useSessionsStore = defineStore('sessions', () => {
     clearSelection,
     setHiddenMany,
     setFavoriteMany,
+    setLookMany,
+    setFolderMany,
+    lookRequest,
+    askLook,
     trashRequest,
     askTrash,
     moveRequest,

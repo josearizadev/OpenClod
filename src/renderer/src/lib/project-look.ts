@@ -104,6 +104,19 @@ export const PROJECT_ICON_LABELS: Record<ProjectIcon, MessageKey> = {
   leaf: 'Naturaleza'
 }
 
+/** Nombre de cada color (clave de traducción). */
+export const PROJECT_COLOR_NAMES: Record<ProjectColor, MessageKey> = {
+  red: 'Rojo',
+  orange: 'Naranja',
+  amber: 'Ámbar',
+  green: 'Verde',
+  teal: 'Turquesa',
+  blue: 'Azul',
+  violet: 'Violeta',
+  pink: 'Rosa',
+  gray: 'Gris'
+}
+
 /** Clases estáticas para que Tailwind las genere. */
 export const PROJECT_COLOR_CLASSES: Record<ProjectColor, { text: string; bg: string }> = {
   red: { text: 'text-project-red', bg: 'bg-project-red' },

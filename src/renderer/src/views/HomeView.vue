@@ -14,7 +14,9 @@ import UserMessage from '../components/chat/UserMessage.vue'
 import WelcomeHero from '../components/chat/WelcomeHero.vue'
 import WorkdirChip from '../components/chat/WorkdirChip.vue'
 import IconButton from '../components/ui/IconButton.vue'
+import FolderChip from '../components/sessions/FolderChip.vue'
 import { NEW_DRAFT, useChatStore } from '../stores/chat'
+import { useFoldersStore } from '../stores/folders'
 import { useProjectsStore } from '../stores/projects'
 import { useUiStore } from '../stores/ui'
 
@@ -28,6 +30,12 @@ const chat = useChatStore()
 const projects = useProjectsStore()
 const ui = useUiStore()
 const router = useRouter()
+const folders = useFoldersStore()
+
+/** Carpeta de sesiones donde nacerá: solo si se trabaja en la carpeta del proyecto. */
+const targetFolder = computed(() =>
+  folders.nextFolder && cwd.value === projects.active?.path ? folders.nextFolder : null
+)
 
 const cwd = ref<string | null>(projects.active?.path ?? null)
 /** Modelo y modo de la sesión nueva: la última elección; «Saltar permisos» no se guarda. */
@@ -127,7 +135,8 @@ async function send(text: string, _now: boolean, files: ChatAttachment[]): Promi
     model: model.value,
     mode: mode.value,
     ...(chromeOverride.value !== null ? { chrome: chromeOverride.value } : {}),
-    ...(incognito.value ? { incognito: true } : {})
+    ...(incognito.value ? { incognito: true } : {}),
+    ...(targetFolder.value ? { folderId: targetFolder.value.id } : {})
   })
   if (!result.ok) {
     // El texto y los adjuntos no se pierden.
@@ -150,6 +159,7 @@ watch(
   ([sessionId, startError]) => {
     if (sessionId) {
       draft.value = ''
+      folders.nextFolderId = null
       // Tras llegar a la sesión: así el marco de incógnito no parpadea.
       void router.replace(`/sesion/${sessionId}`).then(() => (incognito.value = false))
     } else if (startError && pending.value) {
@@ -204,6 +214,13 @@ watch(
         :project="projects.active"
         :readonly="pending !== null"
         @pick="pickFolder"
+      />
+      <FolderChip
+        v-if="targetFolder"
+        class="-mt-6"
+        :folder="targetFolder"
+        :readonly="pending !== null"
+        @clear="folders.nextFolderId = null"
       />
       <p v-if="incognito" class="-mt-2 max-w-sm text-center text-sm text-balance text-muted">
         {{

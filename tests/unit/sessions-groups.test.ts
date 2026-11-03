@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { archivedCount, groupSessions } from '../../src/renderer/src/lib/sessions-groups'
+import {
+  archivedCount,
+  groupFolders,
+  groupSessions
+} from '../../src/renderer/src/lib/sessions-groups'
 import type { SessionListItem } from '../../src/shared/projects'
+import type { SessionFolder } from '../../src/shared/types'
 
 const now = new Date(2026, 9, 14, 12, 0)
 const usage = { input: 0, output: 0, cacheCreation: 0, cacheRead: 0 }
@@ -68,5 +73,41 @@ describe('groupSessions', () => {
 
   it('archivedCount', () => {
     expect(archivedCount(list)).toBe(2)
+  })
+})
+
+describe('carpetas', () => {
+  const folder = (id: string, createdAt: string): SessionFolder => ({
+    id,
+    projectId: '6f1c2b4e-8d3a-4f5b-9c7e-1a2b3c4d5e6f',
+    name: id,
+    context: '',
+    createdAt
+  })
+  const a = folder('a', '2026-01-01T00:00:00.000Z')
+  const b = folder('b', '2026-10-14T11:00:00.000Z')
+  const c = folder('c', '2026-10-01T00:00:00.000Z')
+  const withFolders = [
+    item('hoy', 0),
+    item('en-a-vieja', 40, { folderId: 'a' }),
+    item('en-a-ayer', 1, { folderId: 'a', favorite: true }),
+    item('en-a-archivada', 0, { folderId: 'a', hidden: true }),
+    item('carpeta-borrada', 0, { folderId: 'zzz' })
+  ]
+
+  it('las sesiones de una carpeta solo salen en ella, también si son favoritas', () => {
+    expect(shape(groupSessions(withFolders, now, true, [a, b, c]))).toEqual([
+      ['Hoy', ['hoy', 'carpeta-borrada']],
+      ['Archivadas', ['en-a-archivada']]
+    ])
+  })
+
+  it('carpetas por actividad (vacías por creación) y sesiones por fecha, sin archivadas', () => {
+    const groups = groupFolders(withFolders, [a, b, c])
+    expect(groups.map((g) => [g.folder.id, g.items.map((i) => i.sessionId)])).toEqual([
+      ['b', []],
+      ['a', ['en-a-ayer', 'en-a-vieja']],
+      ['c', []]
+    ])
   })
 })

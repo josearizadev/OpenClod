@@ -23,6 +23,8 @@ import { formatTokens, totalTokens } from '../../lib/tokens'
 import { useChatStore } from '../../stores/chat'
 import { useSessionsStore } from '../../stores/sessions'
 import { useTabsStore } from '../../stores/tabs'
+import { SESSIONS_DRAG_TYPE } from '../../lib/session-drag'
+import SessionLook from './SessionLook.vue'
 import SessionMenu from './SessionMenu.vue'
 import TokenBreakdown from './TokenBreakdown.vue'
 
@@ -78,6 +80,15 @@ function onAuxClick(event: MouseEvent): void {
   tabs.openInNewTab(props.item.sessionId)
 }
 
+/** Arrastrar a una carpeta: la selección entera si la fila está en ella. */
+function onDragStart(event: DragEvent): void {
+  if (!event.dataTransfer) return
+  const ids =
+    selected.value && sessions.selected.length > 1 ? [...sessions.selected] : [props.item.sessionId]
+  event.dataTransfer.setData(SESSIONS_DRAG_TYPE, JSON.stringify(ids))
+  event.dataTransfer.effectAllowed = 'move'
+}
+
 function onKeydown(event: KeyboardEvent): void {
   if (event.key !== 'F2') return
   event.preventDefault()
@@ -98,6 +109,8 @@ const menuContent = 'z-30 min-w-56 rounded-menu bg-surface p-1 text-text shadow-
               class="no-drag flex flex-col gap-0.5 rounded-item py-1.5 pr-8 pl-2 transition-colors duration-150 hover:bg-surface-hover focus-visible:outline-offset-[-2px] aria-[current=page]:bg-surface-hover"
               :class="selected ? 'bg-surface-hover' : ''"
               :aria-selected="sessions.selecting ? selected : undefined"
+              draggable="true"
+              @dragstart="onDragStart"
               @mousedown="onMouseDown"
               @auxclick="onAuxClick"
               @click.capture="onClickCapture"
@@ -118,6 +131,7 @@ const menuContent = 'z-30 min-w-56 rounded-menu bg-surface p-1 text-text shadow-
                   class="shrink-0 fill-current text-accent"
                   :aria-label="t('Favorita')"
                 />
+                <SessionLook :icon="item.icon" :color="item.color" />
                 <span
                   v-if="chatStatus"
                   class="size-2 shrink-0 rounded-full"
@@ -200,6 +214,7 @@ const menuContent = 'z-30 min-w-56 rounded-menu bg-surface p-1 text-text shadow-
                 :title="item.title"
                 :favorite="item.favorite"
                 :hidden="item.hidden"
+                :folder-id="item.folderId"
               />
             </DropdownMenuContent>
           </DropdownMenuPortal>
@@ -215,6 +230,7 @@ const menuContent = 'z-30 min-w-56 rounded-menu bg-surface p-1 text-text shadow-
           :title="item.title"
           :favorite="item.favorite"
           :hidden="item.hidden"
+          :folder-id="item.folderId"
         />
       </ContextMenuContent>
     </ContextMenuPortal>

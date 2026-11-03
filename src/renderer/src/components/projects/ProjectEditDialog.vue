@@ -9,19 +9,10 @@ import {
   DialogRoot,
   DialogTitle
 } from 'reka-ui'
-import { Ban, Check } from 'lucide-vue-next'
 import { computed, ref, watch } from 'vue'
-import {
-  PROJECT_COLORS,
-  PROJECT_ICONS,
-  type ProjectColor,
-  type ProjectIcon as ProjectIconId
-} from '../../../../shared/types'
-import {
-  PROJECT_COLOR_CLASSES,
-  PROJECT_ICON_COMPONENTS,
-  PROJECT_ICON_LABELS
-} from '../../lib/project-look'
+import type { ProjectColor, ProjectIcon as ProjectIconId } from '../../../../shared/types'
+import { projectIcon } from '../../lib/project-look'
+import LookPicker from '../ui/LookPicker.vue'
 import { useProjectsStore } from '../../stores/projects'
 import ProjectIcon from './ProjectIcon.vue'
 
@@ -57,18 +48,6 @@ const preview = computed(() => ({
   color: color.value ?? undefined
 }))
 
-const COLOR_NAMES: Record<ProjectColor, string> = {
-  red: t('Rojo'),
-  orange: t('Naranja'),
-  amber: t('Ámbar'),
-  green: t('Verde'),
-  teal: t('Turquesa'),
-  blue: t('Azul'),
-  violet: t('Violeta'),
-  pink: t('Rosa'),
-  gray: t('Gris')
-}
-
 watch(target, (project) => {
   if (!project) return
   name.value = project.name
@@ -90,33 +69,8 @@ async function save(): Promise<void> {
   if (ok) projects.editing = null
 }
 
-/** Flechas dentro de un grupo de opciones: mueve la elegida, como un `radiogroup`. */
-function onArrows<T>(
-  event: KeyboardEvent,
-  list: readonly T[],
-  current: T,
-  pick: (v: T) => void
-): void {
-  const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[event.key]
-  if (!step) return
-  event.preventDefault()
-  const next = list[(list.indexOf(current) + step + list.length) % list.length]
-  if (next === undefined) return
-  pick(next)
-  const group = event.currentTarget as HTMLElement
-  void Promise.resolve().then(() =>
-    group.querySelector<HTMLElement>('[aria-checked="true"]')?.focus()
-  )
-}
-
-const ICON_OPTIONS: readonly (ProjectIconId | null)[] = [
-  null,
-  ...PROJECT_ICONS.filter((i) => i !== 'folder')
-]
-const COLOR_OPTIONS: readonly (ProjectColor | null)[] = [null, ...PROJECT_COLORS]
-
-const option =
-  'inline-flex size-8 items-center justify-center rounded-item transition-colors duration-150 hover:bg-surface-hover focus-visible:outline-offset-0'
+/** Lo que se ve en «Predeterminado»: carpeta, o monitor para Mi PC. */
+const defaultIcon = computed(() => projectIcon({ kind: target.value?.kind }))
 </script>
 
 <template>
@@ -151,75 +105,13 @@ const option =
             </span>
           </label>
 
-          <fieldset class="flex flex-col gap-1.5">
-            <legend class="mb-1.5 text-sm font-medium">{{ t('Icono') }}</legend>
-            <div
-              role="radiogroup"
-              :aria-label="t('Icono')"
-              class="grid grid-cols-[repeat(auto-fill,2rem)] gap-1"
-              @keydown="onArrows($event, ICON_OPTIONS, icon, (v) => (icon = v))"
-            >
-              <button
-                v-for="id in ICON_OPTIONS"
-                :key="id ?? 'default'"
-                type="button"
-                role="radio"
-                :aria-checked="icon === id"
-                :tabindex="icon === id ? 0 : -1"
-                :aria-label="id ? t(PROJECT_ICON_LABELS[id]) : t('Predeterminado')"
-                :title="id ? t(PROJECT_ICON_LABELS[id]) : t('Predeterminado')"
-                :class="[option, icon === id ? 'bg-surface-hover ring-1 ring-accent' : '']"
-                @click="icon = id"
-              >
-                <ProjectIcon
-                  v-if="id === null"
-                  :project="{ kind: target?.kind, color: color ?? undefined }"
-                />
-                <component
-                  :is="PROJECT_ICON_COMPONENTS[id]"
-                  v-else
-                  :size="16"
-                  :stroke-width="1.75"
-                  :class="color ? PROJECT_COLOR_CLASSES[color].text : ''"
-                  aria-hidden="true"
-                />
-              </button>
-            </div>
-          </fieldset>
-
-          <fieldset class="flex flex-col gap-1.5">
-            <legend class="mb-1.5 text-sm font-medium">{{ t('Color') }}</legend>
-            <div
-              role="radiogroup"
-              :aria-label="t('Color')"
-              class="flex flex-wrap gap-1"
-              @keydown="onArrows($event, COLOR_OPTIONS, color, (v) => (color = v))"
-            >
-              <button
-                v-for="id in COLOR_OPTIONS"
-                :key="id ?? 'none'"
-                type="button"
-                role="radio"
-                :aria-checked="color === id"
-                :tabindex="color === id ? 0 : -1"
-                :aria-label="id ? COLOR_NAMES[id] : t('Sin color')"
-                :title="id ? COLOR_NAMES[id] : t('Sin color')"
-                :class="[option, color === id ? 'bg-surface-hover ring-1 ring-accent' : '']"
-                @click="color = id"
-              >
-                <Ban v-if="id === null" :size="16" :stroke-width="1.75" class="text-muted" />
-                <span
-                  v-else
-                  :class="[
-                    'inline-flex size-5 items-center justify-center rounded-full text-bg',
-                    PROJECT_COLOR_CLASSES[id].bg
-                  ]"
-                >
-                  <Check v-if="color === id" :size="12" :stroke-width="2.5" />
-                </span>
-              </button>
-            </div>
-          </fieldset>
+          <LookPicker
+            v-model:icon="icon"
+            v-model:color="color"
+            :default-icon="defaultIcon"
+            :no-icon-label="t('Predeterminado')"
+            :exclude="['folder']"
+          />
 
           <p v-if="projects.error" class="text-sm text-danger" role="alert">{{ projects.error }}</p>
 

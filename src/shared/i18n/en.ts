@@ -1173,5 +1173,37 @@ export const en = {
     'Incognito sessions aren’t saved: they can’t be exported.',
   'Las sesiones de incógnito no se pueden seguir en la terminal.':
     'Incognito sessions can’t be continued in the terminal.',
-  'La carpeta necesita un nombre.': 'The folder needs a name.'
+  'La carpeta necesita un nombre.': 'The folder needs a name.',
+  'Acciones de la carpeta «{name}»': 'Actions for folder “{name}”',
+  'Agrupa sesiones de una misma tarea.': 'Group sessions that belong to the same task.',
+  'Arrastra sesiones aquí o usa «Mover a carpeta».': 'Drag sessions here or use “Move to folder”.',
+  Carpetas: 'Folders',
+  Contexto: 'Context',
+  Crear: 'Create',
+  'Editar carpeta': 'Edit folder',
+  'Editar carpeta…': 'Edit folder…',
+  'El icono y el color se aplican a todas.': 'The icon and color apply to all of them.',
+  Eliminar: 'Delete',
+  'Eliminar carpeta…': 'Delete folder…',
+  'En la carpeta «{name}»': 'In the folder “{name}”',
+  Escribir: 'Write',
+  'Mover a carpeta': 'Move to folder',
+  'No crear en la carpeta': 'Don’t create it in the folder',
+  'Nueva carpeta': 'New folder',
+  'Nueva carpeta…': 'New folder…',
+  'Nueva sesión en esta carpeta': 'New session in this folder',
+  'Personalizar sesión': 'Customize session',
+  'Personalizar {n} sesiones': 'Customize {n} sessions',
+  'Por ejemplo: Migración del login': 'For example: Login migration',
+  'Qué tarea es, decisiones tomadas, archivos importantes, qué no tocar…':
+    'What the task is, decisions made, key files, what not to touch…',
+  'Sacar de la carpeta': 'Remove from folder',
+  'Se envía a Claude Code al empezar cada sesión nueva de esta carpeta. No cambia las sesiones ya empezadas.':
+    'Sent to Claude Code when each new session in this folder starts. It doesn’t change sessions already started.',
+  'Sin contexto.': 'No context.',
+  'Sin icono': 'No icon',
+  'Suelta aquí para sacarlas de la carpeta.': 'Drop here to take them out of the folder.',
+  'Sus sesiones no se eliminan: vuelven a la lista del proyecto. Se pierde el contexto de la carpeta.':
+    'Its sessions aren’t deleted: they go back to the project list. The folder’s context is lost.',
+  '¿Eliminar la carpeta «{name}»?': 'Delete the folder “{name}”?'
 } satisfies Record<string, string>
