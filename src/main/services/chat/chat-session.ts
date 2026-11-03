@@ -98,6 +98,8 @@ export interface ChatSessionInit {
   chrome?: boolean
   /** De incógnito: `persistSession: false`, así que el proceso no se puede reanudar. */
   incognito?: boolean
+  /** Contexto de OpenClod que se añade al system prompt de Claude Code (fijo para la sesión). */
+  context?: string
 }
 
 /**
@@ -122,6 +124,8 @@ export class ChatSession {
   sessionId: string | null
   readonly cwd: string
   readonly incognito: boolean
+  /** Contexto añadido al system prompt; el mismo en cada relanzamiento del proceso. */
+  readonly context: string
   status: ChatStatus = 'idle'
   model: string | null
   mode: ChatMode
@@ -183,6 +187,7 @@ export class ChatSession {
     this.now = deps.now ?? Date.now
     this.cwd = init.cwd
     this.incognito = init.incognito === true
+    this.context = init.context ?? ''
     this.sessionId = init.resume ?? null
     this.model = init.model ?? null
     this.mode = init.mode ?? 'default'
@@ -457,6 +462,10 @@ export class ChatSession {
       ...(this.incognito ? { persistSession: false } : {}),
       ...(this.sessionId && !this.incognito ? { resume: this.sessionId } : {}),
       ...(this.model ? { model: this.model } : {}),
+      // El prompt de Claude Code más el contexto de OpenClod (sin él, el mismo prompt por defecto).
+      ...(this.context
+        ? { systemPrompt: { type: 'preset', preset: 'claude_code', append: this.context } }
+        : {}),
       canUseTool: (name, toolInput, opts) =>
         this.broker.canUseTool(name, toolInput, opts as CanUseToolOptions)
     }

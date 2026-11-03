@@ -55,13 +55,23 @@ export interface ChatServiceDeps {
   onRateLimit?: (window: LimitWindow) => void
   /** Claude en Chrome por defecto en esa carpeta (preferencia del proyecto). */
   chromeDefault?: (cwd: string) => boolean
-  /** Una sesión nueva (no de incógnito) recibió su id: p. ej. meterla en su carpeta. */
-  onNewSession?: (sessionId: string, info: { folderId?: string }) => void
+  /** Una sesión nueva (no de incógnito) recibió su id: meterla en su carpeta, fijar su contexto. */
+  onNewSession?: (sessionId: string, info: NewSessionInfo) => void
+  /** Contexto de OpenClod para una sesión nueva en `cwd` (y carpeta de sesiones). */
+  contextFor?: (cwd: string, folderId: string | undefined) => Promise<string>
+  /** Contexto que se fijó al empezar la conversación de `sessionId`, o `null`. */
+  appliedContext?: (sessionId: string) => Promise<string | null>
   /** Modelos conocidos: `setModel` solo acepta estos (y `null`). */
   knownModels?: () => string[]
   log?: Pick<Logger, 'info' | 'warn' | 'error'>
   now?: () => number
   closeGraceMs?: number
+}
+
+export interface NewSessionInfo {
+  folderId?: string
+  /** Contexto enviado (vacío si no había). */
+  context: string
 }
 
 export interface StartArgs {
@@ -76,6 +86,8 @@ export interface StartArgs {
   incognito?: boolean
   /** Carpeta de sesiones donde nace. */
   folderId?: string
+  /** `false`: sin contexto de OpenClod. */
+  context?: boolean
 }
 
 export interface SendArgs {
@@ -104,15 +116,17 @@ export class ChatService {
     const check = await checkCwd(args.cwd, this.deps.claudeDir())
     if (!check.ok) throw new ChatServiceError('INVALID_CWD', cwdErrorMessage(check.reason))
     const content = await this.content(args.text, args.attachments)
+    const context = args.context === false ? '' : await this.contextOf(check.path, args.folderId)
     const session = this.create(
       {
         cwd: check.path,
         ...(args.model !== undefined ? { model: args.model } : {}),
         ...(args.mode ? { mode: args.mode } : {}),
         chrome: args.chrome ?? this.deps.chromeDefault?.(check.path) ?? false,
-        ...(args.incognito ? { incognito: true } : {})
+        ...(args.incognito ? { incognito: true } : {}),
+        ...(context ? { context } : {})
       },
-      args.folderId ? { folderId: args.folderId } : {}
+      { ...(args.folderId ? { folderId: args.folderId } : {}), context }
     )
     const uuid = session.send(content.text, args.uuid, false, content.images)
     this.log.info(
@@ -142,12 +156,18 @@ export class ChatService {
           )
         }
         const model = this.validModel(target.model)
-        session = this.create({
-          cwd: check.path,
-          resume: target.sessionId,
-          ...(model ? { model } : {}),
-          chrome: args.chrome ?? this.deps.chromeDefault?.(check.path) ?? false
-        })
+        // El contexto con el que empezó: se reenvía igual (fijado).
+        const context = await this.appliedOf(target.sessionId)
+        // Otro mensaje pudo reanudarla mientras se leía el contexto.
+        session =
+          this.bySessionId.get(target.sessionId) ??
+          this.create({
+            cwd: check.path,
+            resume: target.sessionId,
+            ...(model ? { model } : {}),
+            chrome: args.chrome ?? this.deps.chromeDefault?.(check.path) ?? false,
+            ...(context ? { context } : {})
+          })
         // El renderer puede seguir usando el id que tenía (la sesión anterior de la cadena).
         if (args.sessionId !== target.sessionId) this.bySessionId.set(args.sessionId, session)
         this.log.info('chat', `Sesión ${target.sessionId} reanudada (${session.chatId})`)
@@ -155,6 +175,25 @@ export class ChatService {
     }
     const uuid = session.send(content.text, args.uuid, args.now === true, content.images)
     return { chatId: session.chatId, uuid }
+  }
+
+  /** Contexto para una sesión nueva; un fallo deja la sesión sin contexto, no sin sesión. */
+  private async contextOf(cwd: string, folderId: string | undefined): Promise<string> {
+    try {
+      return (await this.deps.contextFor?.(cwd, folderId)) ?? ''
+    } catch (error) {
+      this.log.error('chat', error)
+      return ''
+    }
+  }
+
+  private async appliedOf(sessionId: string): Promise<string> {
+    try {
+      return (await this.deps.appliedContext?.(sessionId)) ?? ''
+    } catch (error) {
+      this.log.error('chat', error)
+      return ''
+    }
   }
 
   /** Texto e imágenes del mensaje. */
@@ -307,7 +346,7 @@ export class ChatService {
   /** `info`: solo para sesiones nuevas; se entrega con su primer id (`onNewSession`). */
   private create(
     init: ConstructorParameters<typeof ChatSession>[0],
-    info?: { folderId?: string }
+    info?: NewSessionInfo
   ): ChatSession {
     const fresh = !init.resume && !init.incognito
     const session = new ChatSession(init, {
@@ -321,7 +360,7 @@ export class ChatService {
         this.bySessionId.set(s.sessionId, s)
         if (fresh && previous === null) {
           try {
-            this.deps.onNewSession?.(s.sessionId, info ?? {})
+            this.deps.onNewSession?.(s.sessionId, info ?? { context: '' })
           } catch (error) {
             this.log.error('chat', error)
           }

@@ -68,7 +68,7 @@ function setup(
 
 describe('ChatService', () => {
   it('sesión nueva: avisa una vez con su id y su carpeta; reanudar o incógnito no avisa', async () => {
-    const calls: [string, { folderId?: string }][] = []
+    const calls: [string, { folderId?: string; context: string }][] = []
     const id = '23a86f7b-e53a-4322-9146-2d28cfab6b81'
     const { service, root, queries } = setup(
       { [id]: { sessionId: id, cwd: '' } },
@@ -87,7 +87,7 @@ describe('ChatService', () => {
         service.respond({ sessionId: id, requestId: req.requestId, decision: 'deny' })
       }
     )
-    expect(calls).toEqual([[id, { folderId }]])
+    expect(calls).toEqual([[id, { folderId, context: '' }]])
 
     const [b] = pushes('pregunta')
     await service.start({
@@ -177,6 +177,65 @@ describe('ChatService', () => {
     expect(service.get('ultima')?.chatId).toBe(chatId)
     await service.send({ sessionId: 'ultima', text: 'más' })
     expect(queries).toHaveLength(1)
+  })
+
+  it('contexto: sesión nueva con preset + append; sin contexto o con `context: false`, sin systemPrompt', async () => {
+    const asked: [string, string | undefined][] = []
+    const { service, root, queries } = setup(
+      {},
+      {
+        contextFor: async (cwd, folderId) => {
+          asked.push([cwd, folderId])
+          return folderId ? 'CONTEXTO' : ''
+        }
+      }
+    )
+    const cwd = join(root, 'proyecto')
+    const folderId = '6f1c2b4e-8d3a-4f5b-9c7e-1a2b3c4d5e6f'
+    await service.start({ cwd, text: 'a', folderId })
+    await service.start({ cwd, text: 'b' })
+    await service.start({ cwd, text: 'c', folderId, context: false })
+    await service.start({ cwd, text: 'd', folderId, incognito: true })
+    await flush()
+    expect(queries[0]!.options.systemPrompt).toEqual({
+      type: 'preset',
+      preset: 'claude_code',
+      append: 'CONTEXTO'
+    })
+    expect(queries[1]!.options.systemPrompt).toBeUndefined()
+    expect(queries[2]!.options.systemPrompt).toBeUndefined()
+    // De incógnito también recibe el contexto.
+    expect(queries[3]!.options.systemPrompt).toMatchObject({ append: 'CONTEXTO' })
+    // Con `context: false` ni se calcula.
+    expect(asked).toHaveLength(3)
+  })
+
+  it('contexto: al reanudar se envía el que se fijó, no el actual; un fallo no impide la sesión', async () => {
+    const root = tempDir()
+    const cwd = join(root, 'p')
+    mkdirSync(cwd)
+    const { service, queries } = setup(
+      {
+        a: { sessionId: 'a', cwd },
+        b: { sessionId: 'b', cwd }
+      },
+      {
+        contextFor: async () => 'ACTUAL',
+        appliedContext: async (id) => {
+          if (id === 'b') throw new Error('disco')
+          return id === 'a' ? 'FIJADO' : null
+        }
+      }
+    )
+    await service.send({ sessionId: 'a', text: 'sigue' })
+    await service.send({ sessionId: 'b', text: 'sigue' })
+    await flush()
+    expect(queries[0]!.options).toMatchObject({
+      resume: 'a',
+      systemPrompt: { type: 'preset', preset: 'claude_code', append: 'FIJADO' }
+    })
+    expect(queries[1]!.options).toMatchObject({ resume: 'b' })
+    expect(queries[1]!.options.systemPrompt).toBeUndefined()
   })
 
   it('un modelo guardado que ya no existe no se pasa', async () => {

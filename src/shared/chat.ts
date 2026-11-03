@@ -280,7 +280,9 @@ export const ChatStartInputSchema = z
     /** De incógnito: Claude Code no guarda la sesión en disco. */
     incognito: z.boolean().optional(),
     /** Carpeta de sesiones donde nace la sesión. */
-    folderId: z.string().uuid().optional()
+    folderId: z.string().uuid().optional(),
+    /** `false`: sin el contexto del proyecto ni el de la carpeta. */
+    context: z.boolean().optional()
   })
   .strict()
   .refine(hasContent, EMPTY)

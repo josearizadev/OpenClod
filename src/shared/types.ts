@@ -253,6 +253,11 @@ export const StateSchema = SettingsSchema.extend({
   sessionMeta: z.record(z.string().max(100), SessionMetaSchema),
   /** Carpetas de sesiones de todos los proyectos. */
   sessionFolders: z.array(SessionFolderSchema).max(2000),
+  /** Contexto del proyecto: archivos `.md` desactivados de cada proyecto. */
+  projectContext: z.record(
+    z.string().uuid(),
+    z.object({ disabled: z.array(z.string().max(100)).max(1000) }).strict()
+  ),
   /** Preferencias de la app por proyecto: Claude en Chrome en sus sesiones. */
   projectPrefs: z.record(z.string().uuid(), ProjectPrefsSchema),
   /** Sesiones movidas a otro proyecto desde la app: `sessionId` → carpeta del destino. */
@@ -284,6 +289,7 @@ export const DEFAULT_STATE: State = {
   activeProjectId: null,
   sessionMeta: {},
   sessionFolders: [],
+  projectContext: {},
   projectPrefs: {},
   sessionMoves: {},
   chatCache: { models: [], commands: [], updatedAt: null },

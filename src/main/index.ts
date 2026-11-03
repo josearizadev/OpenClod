@@ -13,6 +13,7 @@ import {
 } from 'electron'
 import trayIcon from '../../resources/tray.png?asset'
 import type { AppCommand } from '../shared/types'
+import type { ComposedContext } from '../shared/context'
 import { buildMenuTemplate } from './menu'
 import { restoreBounds } from './services/window-state'
 import { createTray, type AppTray } from './tray'
@@ -28,6 +29,8 @@ import { registerSearchIpc } from './ipc/search'
 import { registerUsageIpc } from './ipc/usage'
 import { registerFilesIpc } from './ipc/files'
 import { registerProjectSettingsIpc } from './ipc/project-settings'
+import { registerContextIpc } from './ipc/context'
+import { createProjectContext } from './services/project-context'
 import { pathKey } from './services/paths'
 import { registerTerminalIpc } from './ipc/terminal'
 import { setupTerminal } from './terminal-setup'
@@ -193,6 +196,23 @@ app.whenReady().then(() => {
   })
   const transcripts = createTranscriptService({ reader, claudeDir, follower })
   const projectsService = createProjectsService({ store, reader, claudeDir, home: homedir })
+  // Contexto de OpenClod: `.md` de cada proyecto y contexto de las carpetas de sesiones.
+  const projectContext = createProjectContext({
+    root: join(app.getPath('userData'), 'contexto'),
+    store,
+    trash: (path) => shell.trashItem(path)
+  })
+  /** Contexto de una sesión nueva en `cwd`: el del proyecto de esa carpeta y el de la carpeta. */
+  const composeContext = (cwd: string, folderId: string | undefined): Promise<ComposedContext> => {
+    const state = store.get()
+    const project = state.projects.find((p) => pathKey(p.path) === pathKey(cwd))
+    const folder = folderId ? (state.sessionFolders.find((f) => f.id === folderId) ?? null) : null
+    return projectContext.compose({
+      projectId: project?.id ?? null,
+      // La carpeta solo cuenta en la carpeta de trabajo de su proyecto.
+      folder: folder && folder.projectId === project?.id ? folder : null
+    })
+  }
   // Git de solo lectura.
   const git = createGitService({ projects: () => store.get().projects, log: logger })
 
@@ -314,9 +334,26 @@ app.whenReady().then(() => {
     },
     onRateLimit: (window) => limits.fromChatEvent(window),
     // La sesión nueva es su propia conversación: su id es el `conversationId`.
-    onNewSession: (sessionId, { folderId }) => {
+    onNewSession: (sessionId, { folderId, context }) => {
       if (folderId) projectsService.assignFolder(sessionId, folderId)
+      if (context) {
+        projectContext
+          .saveApplied(sessionId, context)
+          .catch((error) => logger.error('context', error))
+      }
     },
+    contextFor: async (cwd, folderId) => {
+      const composed = await composeContext(cwd, folderId)
+      if (composed.text) {
+        logger.info(
+          'context',
+          `Contexto de OpenClod: ${composed.parts.length} partes, ${composed.chars} caracteres`
+        )
+      }
+      return composed.text
+    },
+    appliedContext: (sessionId) =>
+      projectContext.readApplied(projectsService.conversationsOf([sessionId])[0] ?? sessionId),
     onCatalog: (catalog) => {
       try {
         store.set({ chatCache: { ...catalog, updatedAt: new Date().toISOString() } })
@@ -523,6 +560,9 @@ app.whenReady().then(() => {
         })
         if (outcome.conversations.length > 0) {
           projectsService.forget(outcome.conversations)
+          void projectContext
+            .forgetApplied(outcome.conversations)
+            .catch((error) => logger.error('context', error))
           logger.info('sessions', `${outcome.conversations.length} conversaciones a la papelera`)
           await indexService?.refresh().catch((error) => logger.error('index', error))
         }
@@ -572,6 +612,12 @@ app.whenReady().then(() => {
     transcripts
   })
   registerProjectSettingsIpc({ ...rootDeps, store })
+  registerContextIpc({
+    service: projectContext,
+    projectExists: (id) => store.get().projects.some((p) => p.id === id),
+    openPath: (path) => shell.openPath(path),
+    preview: (cwd, folderId) => composeContext(cwd, folderId)
+  })
   registerTerminalIpc(terminal.service, terminal.shells)
   // «Actualizar» reintenta la vigilancia si estaba apagada o en sondeo.
   registerIndexIpc(

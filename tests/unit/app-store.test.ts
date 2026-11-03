@@ -123,7 +123,8 @@ describe('AppStore', () => {
       windowState: null,
       projectPrefs: {},
       sessionMoves: {},
-      sessionFolders: []
+      sessionFolders: [],
+      projectContext: {}
     })
     expect(warn).not.toHaveBeenCalled()
   })
@@ -161,7 +162,8 @@ describe('AppStore', () => {
       windowState: null,
       projectPrefs: {},
       sessionMoves: {},
-      sessionFolders: []
+      sessionFolders: [],
+      projectContext: {}
     })
     expect(warn).not.toHaveBeenCalled()
   })
@@ -193,7 +195,8 @@ describe('AppStore', () => {
       windowState: null,
       projectPrefs: {},
       sessionMoves: {},
-      sessionFolders: []
+      sessionFolders: [],
+      projectContext: {}
     })
     expect(warn).not.toHaveBeenCalled()
   })

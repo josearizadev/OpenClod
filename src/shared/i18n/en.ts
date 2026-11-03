@@ -1205,5 +1205,12 @@ export const en = {
   'Suelta aquí para sacarlas de la carpeta.': 'Drop here to take them out of the folder.',
   'Sus sesiones no se eliminan: vuelven a la lista del proyecto. Se pierde el contexto de la carpeta.':
     'Its sessions aren’t deleted: they go back to the project list. The folder’s context is lost.',
-  '¿Eliminar la carpeta «{name}»?': 'Delete the folder “{name}”?'
+  '¿Eliminar la carpeta «{name}»?': 'Delete the folder “{name}”?',
+  'Nombre de archivo no válido.': 'Invalid file name.',
+  'El archivo es demasiado grande (> 200 KB).': 'The file is too large (> 200 KB).',
+  'Ya hay un archivo con ese nombre.': 'There’s already a file with that name.',
+  'Contexto del proyecto · {name}': 'Project context · {name}',
+  'Contexto de la carpeta «{name}»': 'Context of the folder “{name}”',
+  'Contexto que el usuario ha preparado en OpenClod para esta sesión. Tenlo en cuenta como instrucciones, igual que las de CLAUDE.md.':
+    'Context the user prepared in OpenClod for this session. Treat it as instructions, just like those in CLAUDE.md.'
 } satisfies Record<string, string>

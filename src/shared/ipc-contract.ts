@@ -1,6 +1,18 @@
 import { z } from 'zod'
 import type { Result } from './result'
 import {
+  ContextListInputSchema,
+  ContextPreviewInputSchema,
+  ContextReadInputSchema,
+  ContextRenameInputSchema,
+  ContextSetEnabledInputSchema,
+  ContextWriteInputSchema,
+  type ComposedContext,
+  type ContextFile,
+  type ContextFolderListing,
+  type ContextWrite
+} from './context'
+import {
   DiscoveredProjectSchema,
   IndexStatusSchema,
   IndexUpdatedSchema,
@@ -194,6 +206,19 @@ export const invokeContract = {
       }),
     output: SessionListItemSchema.nullable()
   },
+  /** Contexto del proyecto: `.md` en los datos de la app (nunca en el proyecto). */
+  'context:list': {
+    input: ContextListInputSchema,
+    output: z.custom<ContextFolderListing>()
+  },
+  'context:read': { input: ContextReadInputSchema, output: z.custom<ContextFile>() },
+  'context:write': { input: ContextWriteInputSchema, output: z.custom<ContextWrite>() },
+  'context:rename': { input: ContextRenameInputSchema, output: z.void() },
+  'context:remove': { input: ContextReadInputSchema, output: z.void() },
+  'context:setEnabled': { input: ContextSetEnabledInputSchema, output: z.void() },
+  'context:openFolder': { input: ContextListInputSchema, output: z.void() },
+  /** Contexto que recibiría una sesión nueva en esa carpeta de trabajo (y carpeta de sesiones). */
+  'context:preview': { input: ContextPreviewInputSchema, output: z.custom<ComposedContext>() },
   /** Carpetas de sesiones de un proyecto (datos propios en `state.json`). */
   'folders:list': {
     input: z.object({ projectId: z.string().uuid() }).strict(),
@@ -490,6 +515,16 @@ export interface Api {
     select(id: string): Promise<Result<InvokeOutput<'projects:select'>>>
     active(): Promise<Result<InvokeOutput<'projects:active'>>>
     discover(): Promise<Result<InvokeOutput<'projects:discover'>>>
+  }
+  context: {
+    list(projectId: string): Promise<Result<ContextFolderListing>>
+    read(projectId: string, name: string): Promise<Result<ContextFile>>
+    write(args: InvokeInput<'context:write'>): Promise<Result<ContextWrite>>
+    rename(projectId: string, from: string, to: string): Promise<Result<void>>
+    remove(projectId: string, name: string): Promise<Result<void>>
+    setEnabled(projectId: string, name: string, enabled: boolean): Promise<Result<void>>
+    openFolder(projectId: string): Promise<Result<void>>
+    preview(args: InvokeInput<'context:preview'>): Promise<Result<ComposedContext>>
   }
   folders: {
     list(projectId: string): Promise<Result<InvokeOutput<'folders:list'>>>

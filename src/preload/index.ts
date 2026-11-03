@@ -79,6 +79,17 @@ const api: Api = {
     active: () => invoke('projects:active', undefined),
     discover: () => invoke('projects:discover', undefined)
   },
+  context: {
+    list: (projectId) => invoke('context:list', { projectId }),
+    read: (projectId, name) => invoke('context:read', { projectId, name }),
+    write: (args) => invoke('context:write', args),
+    rename: (projectId, from, to) => invoke('context:rename', { projectId, from, to }),
+    remove: (projectId, name) => invoke('context:remove', { projectId, name }),
+    setEnabled: (projectId, name, enabled) =>
+      invoke('context:setEnabled', { projectId, name, enabled }),
+    openFolder: (projectId) => invoke('context:openFolder', { projectId }),
+    preview: (args) => invoke('context:preview', args)
+  },
   folders: {
     list: (projectId) => invoke('folders:list', { projectId }),
     create: (input) => invoke('folders:create', input),
