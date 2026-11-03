@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { t } from '../i18n'
 import { Ghost } from 'lucide-vue-next'
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import type { ChatAttachment, ChatMode, ChromeState } from '../../../shared/chat'
 import { effective, type ProjectSettings } from '../../../shared/project-settings'
 import ChromeChip from '../components/commands/ChromeChip.vue'
@@ -15,6 +15,8 @@ import WelcomeHero from '../components/chat/WelcomeHero.vue'
 import WorkdirChip from '../components/chat/WorkdirChip.vue'
 import IconButton from '../components/ui/IconButton.vue'
 import FolderChip from '../components/sessions/FolderChip.vue'
+import ContextChip from '../components/chat/ContextChip.vue'
+import type { ComposedContext } from '../../../shared/context'
 import { NEW_DRAFT, useChatStore } from '../stores/chat'
 import { useFoldersStore } from '../stores/folders'
 import { useProjectsStore } from '../stores/projects'
@@ -49,6 +51,37 @@ watch(
     if (path && !pending.value) cwd.value = path
   }
 )
+
+/**
+ * Contexto de OpenClod que recibirá la sesión (archivos del proyecto y carpeta de sesiones).
+ * `contextOn` se puede apagar solo para la próxima sesión.
+ */
+const context = ref<ComposedContext | null>(null)
+const contextOn = ref(true)
+let contextTicket = 0
+async function loadContext(): Promise<void> {
+  const mine = ++contextTicket
+  const folder = cwd.value
+  if (!folder) {
+    context.value = null
+    return
+  }
+  const result = await window.api.context.preview({
+    cwd: folder,
+    ...(targetFolder.value ? { folderId: targetFolder.value.id } : {}),
+    ...(context.value && !contextOn.value ? { context: false } : {})
+  })
+  if (mine === contextTicket) context.value = result.ok && result.data.text ? result.data : null
+}
+watch(
+  () => [cwd.value, targetFolder.value?.id, targetFolder.value?.context] as const,
+  () => void loadContext(),
+  { immediate: true }
+)
+// Al volver a la ventana (p. ej. tras editar los archivos), se recalcula.
+const onFocus = (): void => void loadContext()
+window.addEventListener('focus', onFocus)
+onBeforeUnmount(() => window.removeEventListener('focus', onFocus))
 
 /** Ajustes del proyecto de la carpeta: su modo y Claude en Chrome. */
 const projectSettings = ref<ProjectSettings | null>(null)
@@ -160,6 +193,7 @@ watch(
     if (sessionId) {
       draft.value = ''
       folders.nextFolderId = null
+      contextOn.value = true
       // Tras llegar a la sesión: así el marco de incógnito no parpadea.
       void router.replace(`/sesion/${sessionId}`).then(() => (incognito.value = false))
     } else if (startError && pending.value) {
@@ -221,6 +255,13 @@ watch(
         :folder="targetFolder"
         :readonly="pending !== null"
         @clear="folders.nextFolderId = null"
+      />
+      <ContextChip
+        v-if="context"
+        v-model="contextOn"
+        class="-mt-6"
+        :context="context"
+        :readonly="pending !== null"
       />
       <p v-if="incognito" class="-mt-2 max-w-sm text-center text-sm text-balance text-muted">
         {{

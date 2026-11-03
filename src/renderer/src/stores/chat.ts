@@ -287,6 +287,7 @@ export const useChatStore = defineStore('chat', () => {
     chrome?: boolean
     incognito?: boolean
     folderId?: string
+    context?: boolean
   }): Promise<{ ok: true; chatId: string } | { ok: false; error: ChatStartError }> {
     const { attachments, ...rest } = args
     const result = await window.api.chat.start({

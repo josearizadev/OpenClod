@@ -1212,5 +1212,41 @@ export const en = {
   'Contexto del proyecto · {name}': 'Project context · {name}',
   'Contexto de la carpeta «{name}»': 'Context of the folder “{name}”',
   'Contexto que el usuario ha preparado en OpenClod para esta sesión. Tenlo en cuenta como instrucciones, igual que las de CLAUDE.md.':
-    'Context the user prepared in OpenClod for this session. Treat it as instructions, just like those in CLAUDE.md.'
+    'Context the user prepared in OpenClod for this session. Treat it as instructions, just like those in CLAUDE.md.',
+  '(recortado)': '(trimmed)',
+  '1 archivo': '1 file',
+  'Abrir carpeta': 'Open folder',
+  'Archivo vacío.': 'Empty file.',
+  'Archivos Markdown que OpenClod añade a las instrucciones de Claude Code al empezar cada sesión nueva de este proyecto, como un CLAUDE.md que no está en el repositorio. Las sesiones ya empezadas conservan el contexto con el que empezaron.':
+    'Markdown files that OpenClod adds to Claude Code’s instructions when each new session of this project starts, like a CLAUDE.md that isn’t in the repository. Sessions already started keep the context they started with.',
+  'Aún no hay archivos. Crea uno o añádelos con «Abrir carpeta».':
+    'No files yet. Create one or add them with “Open folder”.',
+  'Carpeta «{name}»': 'Folder “{name}”',
+  'Contenido de {name}': 'Contents of {name}',
+  'Contexto de la sesión': 'Session context',
+  'Contexto del proyecto': 'Project context',
+  'Contexto: {summary}': 'Context: {summary}',
+  'El archivo ha cambiado en disco desde que lo abriste. No se ha guardado nada.':
+    'The file changed on disk since you opened it. Nothing was saved.',
+  'El archivo irá a la papelera del sistema.': 'The file will go to the system trash.',
+  'Elige un archivo para editarlo.': 'Choose a file to edit it.',
+  'Enviar el contexto en esta sesión': 'Send the context in this session',
+  'Enviar {name}': 'Send {name}',
+  Guardado: 'Saved',
+  'Nombre del archivo': 'File name',
+  'Nuevo archivo': 'New file',
+  Renombrar: 'Rename',
+  'Se añade a las instrucciones de Claude Code al empezar la sesión y se mantiene al continuarla.':
+    'It’s added to Claude Code’s instructions when the session starts and kept when you continue it.',
+  'Se recortará: el máximo son {n} caracteres.':
+    'It will be trimmed: the maximum is {n} characters.',
+  'Tienes cambios sin guardar en {name}.': 'You have unsaved changes in {name}.',
+  'Ver el contexto': 'View the context',
+  carpeta: 'folder',
+  convenciones: 'conventions',
+  '{n} archivos': '{n} files',
+  '{n} de {total} activos · ≈ {tokens} tokens en cada sesión nueva':
+    '{n} of {total} active · ≈ {tokens} tokens in each new session',
+  '¿Eliminar «{name}»?': 'Delete “{name}”?',
+  '≈ {tokens} tokens': '≈ {tokens} tokens'
 } satisfies Record<string, string>

@@ -48,6 +48,12 @@ export const router = createRouter({
       meta: { title: t('Instrucciones del proyecto') }
     },
     {
+      path: '/proyecto/:id/contexto',
+      name: 'project-context',
+      component: () => import('./views/ProjectContextView.vue'),
+      meta: { title: t('Contexto del proyecto') }
+    },
+    {
       path: '/proyecto/:id/ajustes',
       name: 'project-settings',
       component: () => import('./views/ProjectSettingsView.vue'),

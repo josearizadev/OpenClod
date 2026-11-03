@@ -7,18 +7,19 @@ import {
   DropdownMenuRoot,
   DropdownMenuTrigger
 } from 'reka-ui'
-import { Palette, ScrollText, Settings2, SlidersHorizontal } from 'lucide-vue-next'
+import { BookText, Palette, ScrollText, Settings2, SlidersHorizontal } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import { useProjectsStore } from '../../stores/projects'
 
 /**
- * Botón junto al selector de proyecto: personalizarlo, sus instrucciones y sus ajustes. «Mi PC» no
+ * Botón junto al selector de proyecto: personalizarlo, sus instrucciones, su contexto de OpenClod y
+ * sus ajustes. «Mi PC» no
  * tiene ajustes: su archivo personal estaría en la carpeta de Claude Code.
  */
 const projects = useProjectsStore()
 const router = useRouter()
 
-function go(section: 'instrucciones' | 'ajustes'): void {
+function go(section: 'instrucciones' | 'contexto' | 'ajustes'): void {
   if (projects.activeId) void router.push(`/proyecto/${projects.activeId}/${section}`)
 }
 
@@ -55,6 +56,10 @@ const itemClass =
           <ScrollText :size="16" :stroke-width="1.75" class="shrink-0" />
           <span class="flex-1">{{ t('Instrucciones') }}</span>
           <span class="pl-4 text-xs text-muted">CLAUDE.md</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem :class="itemClass" @select="go('contexto')">
+          <BookText :size="16" :stroke-width="1.75" class="shrink-0" />
+          <span class="flex-1">{{ t('Contexto del proyecto') }}</span>
         </DropdownMenuItem>
         <DropdownMenuItem
           v-if="projects.active?.kind !== 'computer'"
