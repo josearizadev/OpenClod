@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { t } from '../../i18n'
-import { Search } from 'lucide-vue-next'
+import { Folder, Search } from 'lucide-vue-next'
 import {
   DialogContent,
   DialogDescription,
@@ -14,14 +14,23 @@ import {
 } from 'reka-ui'
 import { computed, nextTick, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import type { SearchAuthor, SearchGroup, SearchHit, SearchSort } from '../../../../shared/search'
+import type {
+  SearchAuthor,
+  SearchFolder,
+  SearchGroup,
+  SearchHit,
+  SearchSort
+} from '../../../../shared/search'
+import { useFoldersStore } from '../../stores/folders'
 import { useProjectsStore } from '../../stores/projects'
 import { useSearchStore } from '../../stores/search'
+import SessionLook from '../sessions/SessionLook.vue'
 import SearchResultGroup from './SearchResultGroup.vue'
+import SnippetText from './SnippetText.vue'
 
 /**
- * Búsqueda global: `Ctrl+K` o «Buscar». Resultados agrupados por
- * conversación; `↑/↓` recorre, `Enter` abre el mensaje, `Esc` cierra, `Alt+P` cambia el ámbito.
+ * Búsqueda global: `Ctrl+K` o «Buscar». Primero las carpetas que coinciden por nombre y después
+ * los resultados agrupados por conversación; `↑/↓` recorre, `Enter` abre el mensaje, `Esc` cierra, `Alt+P` cambia el ámbito.
  */
 const search = useSearchStore()
 const projects = useProjectsStore()
@@ -29,20 +38,19 @@ const router = useRouter()
 const input = ref<HTMLInputElement | null>(null)
 const now = ref(new Date())
 
-interface Option {
-  group: SearchGroup
-  hit: SearchHit | null
-}
+type Option = { folder: SearchFolder } | { group: SearchGroup; hit: SearchHit | null }
 const groups = computed(() => search.results?.groups ?? [])
-const options = computed<Option[]>(() =>
-  groups.value.flatMap((group) => [
+const folderHits = computed(() => search.results?.folders ?? [])
+const options = computed<Option[]>(() => [
+  ...folderHits.value.map((folder) => ({ folder })),
+  ...groups.value.flatMap((group) => [
     { group, hit: null },
     ...group.hits.map((hit) => ({ group, hit }))
   ])
-)
-/** Índice plano de la opción del título de cada grupo. */
+])
+/** Índice plano de la opción del título de cada grupo (tras las carpetas). */
 const firsts = computed(() => {
-  let index = 0
+  let index = folderHits.value.length
   return groups.value.map((g) => {
     const first = index
     index += 1 + g.hits.length
@@ -84,9 +92,16 @@ watch(
   () => void nextTick(() => requestAnimationFrame(() => search.painted()))
 )
 
+const folders = useFoldersStore()
+
 function pick(index: number): void {
   const option = options.value[index]
   if (!option) return
+  if ('folder' in option) {
+    search.open = false
+    void folders.reveal(option.folder)
+    return
+  }
   const hit = option.hit ?? option.group.hits[0] ?? null
   search.open = false
   void router.push({
@@ -235,7 +250,9 @@ const segmented =
             {{ t('Busca en lo que dijiste tú y lo que respondió Claude.') }}
           </p>
           <div
-            v-else-if="search.results && groups.length === 0 && !search.loading"
+            v-else-if="
+              search.results && groups.length === 0 && folderHits.length === 0 && !search.loading
+            "
             class="flex flex-wrap items-center gap-2 px-3 py-6 text-sm text-muted"
           >
             <span>{{
@@ -255,6 +272,47 @@ const segmented =
             </template>
           </div>
           <div v-else id="busqueda-resultados" role="listbox" :aria-label="t('Resultados')">
+            <div
+              v-if="folderHits.length > 0"
+              class="flex flex-col py-1"
+              role="group"
+              :aria-label="t('Carpetas')"
+            >
+              <p class="px-3 pt-1 pb-0.5 text-xs text-muted" aria-hidden="true">
+                {{ t('Carpetas') }}
+              </p>
+              <div
+                v-for="(folder, index) in folderHits"
+                :id="`busqueda-opcion-${index}`"
+                :key="folder.id"
+                role="option"
+                :aria-selected="search.selected === index"
+                class="flex cursor-pointer items-center gap-2 rounded-item px-3 py-1.5"
+                :class="search.selected === index ? 'bg-surface-hover' : ''"
+                @click="pick(index)"
+                @mousemove="search.selected = index"
+              >
+                <SessionLook
+                  v-if="folder.icon || folder.color"
+                  :icon="folder.icon"
+                  :color="folder.color"
+                  :size="16"
+                />
+                <Folder
+                  v-else
+                  :size="16"
+                  :stroke-width="1.75"
+                  class="shrink-0 text-muted"
+                  aria-hidden="true"
+                />
+                <span class="min-w-0 flex-1 truncate font-medium">
+                  <SnippetText :parts="folder.nameMatch" />
+                </span>
+                <span v-if="folder.projectName" class="shrink-0 text-xs text-muted">
+                  {{ folder.projectName }}
+                </span>
+              </div>
+            </div>
             <SearchResultGroup
               v-for="(group, index) in groups"
               :key="group.entryId"

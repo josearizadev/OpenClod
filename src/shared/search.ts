@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import type { ProjectColor, ProjectIcon } from './types'
 
 /**
  * Búsqueda global. Esquemas del canal `search:query` y normalización
@@ -46,12 +47,28 @@ export interface SearchGroup {
   projectName?: string
   updatedAt?: string
   titleMatch: SnippetPart[] | null
+  /** Carpeta de sesiones en la que está la conversación. */
+  folderName?: string
   hitCount: number
   /** Los 3 mejores. */
   hits: SearchHit[]
 }
 
+/** Carpeta de sesiones cuyo nombre coincide con la búsqueda. */
+export interface SearchFolder {
+  id: string
+  projectId: string
+  name: string
+  icon?: ProjectIcon
+  color?: ProjectColor
+  /** Solo al buscar en todos los proyectos. */
+  projectName?: string
+  nameMatch: SnippetPart[]
+}
+
 export interface SearchResult {
+  /** Carpetas que coinciden por nombre (antes que las sesiones). */
+  folders: SearchFolder[]
   groups: SearchGroup[]
   total: number
   /** La consulta se buscó como frase literal (comillas sin cerrar o solo signos). */

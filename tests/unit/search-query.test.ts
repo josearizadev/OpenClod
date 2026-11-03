@@ -7,7 +7,7 @@ import { openIndex } from '../../src/main/services/index-schema'
 import { runPass } from '../../src/main/services/indexer'
 import { compileQuery, search, snippetParts } from '../../src/main/services/search-query'
 import { normalizeForSearch, splitMatches, type SearchQuery } from '../../src/shared/search'
-import type { Project, SessionMeta } from '../../src/shared/types'
+import type { Project, SessionFolder, SessionMeta } from '../../src/shared/types'
 
 const quiet = { info: (): void => {}, warn: (): void => {}, error: (): void => {} }
 
@@ -223,4 +223,63 @@ process.on('exit', () => {
   } catch {
     // Limpieza.
   }
+})
+
+describe('carpetas en la búsqueda', () => {
+  const dos = projects[1]!.id
+  const folders: SessionFolder[] = [
+    {
+      id: 'f0000000-0000-4000-8000-000000000001',
+      projectId: dos,
+      name: 'Vigilancia de archivos',
+      context: '',
+      createdAt: '',
+      icon: 'shield'
+    },
+    {
+      id: 'f0000000-0000-4000-8000-000000000002',
+      projectId: projects[0]!.id,
+      name: 'Búsqueda global',
+      context: '',
+      createdAt: ''
+    },
+    {
+      id: 'f0000000-0000-4000-8000-000000000003',
+      projectId: '99999999-9999-4999-8999-999999999999',
+      name: 'Búsqueda huérfana',
+      context: '',
+      createdAt: ''
+    }
+  ]
+  const withFolder: Record<string, SessionMeta> = {
+    ...meta,
+    [C]: { ...meta[C]!, folderId: folders[0]!.id },
+    // La carpeta es de otro proyecto: no se indica.
+    [A]: { folderId: folders[0]!.id, updatedAt: '' }
+  }
+  const find = (text: string, extra: Partial<SearchQuery> = {}): ReturnType<typeof search> =>
+    search(
+      db,
+      { projects, sessionMeta: withFolder, folders },
+      { text, scope: 'all', author: 'all', sort: 'relevance', includeHidden: false, ...extra }
+    )
+
+  it('carpetas por nombre (sin tildes), solo de proyectos importados y en el ámbito', () => {
+    const all = find('busqueda')
+    expect(all.folders.map((f) => f.name)).toEqual(['Búsqueda global'])
+    expect(all.folders[0]).toMatchObject({ projectName: 'uno' })
+    expect(all.folders[0]?.nameMatch.some((p) => p.match)).toBe(true)
+    const scoped = find('vigilancia', { scope: 'project', projectId: dos })
+    expect(scoped.folders).toEqual([
+      expect.objectContaining({ name: 'Vigilancia de archivos', icon: 'shield' })
+    ])
+    expect(scoped.folders[0]?.projectName).toBeUndefined()
+    expect(find('busqueda', { scope: 'project', projectId: dos }).folders).toEqual([])
+  })
+
+  it('los resultados de sesiones indican su carpeta si es de su proyecto', () => {
+    const result = find('busqueda')
+    expect(result.groups.find((g) => g.entryId === C)?.folderName).toBe('Vigilancia de archivos')
+    expect(result.groups.find((g) => g.entryId === B)?.folderName).toBeUndefined()
+  })
 })

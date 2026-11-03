@@ -20,6 +20,7 @@ export function registerSearchIpc(
         {
           projects: state.projects,
           sessionMeta: state.sessionMeta,
+          folders: state.sessionFolders,
           progress: progress(),
           log: logger
         },

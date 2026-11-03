@@ -1,10 +1,11 @@
 import type Database from 'better-sqlite3'
-import type { Project, SessionMeta } from '../../shared/types'
+import type { Project, SessionFolder, SessionMeta } from '../../shared/types'
 import {
   normalizeForSearch,
   splitMatches,
   SearchQuerySchema,
   type SearchGroup,
+  type SearchFolder,
   type SearchHit,
   type SearchQuery,
   type SearchResult,
@@ -83,6 +84,7 @@ export function snippetParts(snip: string): SnippetPart[] {
 export interface SearchContext {
   projects: readonly Project[]
   sessionMeta: Readonly<Record<string, SessionMeta>>
+  folders?: readonly SessionFolder[]
   progress?: { done: number; total: number } | null
   log?: { info(scope: string, message: string): void }
 }
@@ -133,6 +135,7 @@ interface Acc {
 
 function empty(literal: boolean, started: number, ctx: SearchContext): SearchResult {
   return {
+    folders: [],
     groups: [],
     total: 0,
     literal,
@@ -169,6 +172,13 @@ export function search(db: Database.Database, ctx: SearchContext, raw: SearchQue
     if (!entries.has(e.conversation_id)) entries.set(e.conversation_id, e)
   }
   const projectNames = new Map(ctx.projects.map((p) => [pathKey(p.path), p.name]))
+  const folders = new Map((ctx.folders ?? []).map((f) => [f.id, f]))
+  const projectKeys = new Map(ctx.projects.map((p) => [p.id, pathKey(p.path)]))
+  /** Carpeta de la conversación, si es del proyecto en el que está ahora. */
+  function folderOf(meta: SessionMeta | undefined, key: string | null): SessionFolder | null {
+    const folder = meta?.folderId ? folders.get(meta.folderId) : undefined
+    return folder && key && projectKeys.get(folder.projectId) === key ? folder : null
+  }
 
   const groups = new Map<string, Acc>()
   function groupOf(conversationId: string): Acc | null {
@@ -181,6 +191,7 @@ export function search(db: Database.Database, ctx: SearchContext, raw: SearchQue
     const normTitle = normalizeForSearch(title)
     const titleHit = (compiled as CompiledQuery).terms.every((t) => normTitle.includes(t))
     const projectName = entry.project_key ? projectNames.get(entry.project_key) : undefined
+    const folder = folderOf(meta, entry.project_key)
     const acc: Acc = {
       group: {
         entryId: entry.session_id,
@@ -188,6 +199,7 @@ export function search(db: Database.Database, ctx: SearchContext, raw: SearchQue
         ...(query.scope === 'all' && projectName ? { projectName } : {}),
         ...(entry.updated_at ? { updatedAt: entry.updated_at } : {}),
         titleMatch: titleHit ? splitMatches(title, (compiled as CompiledQuery).terms) : null,
+        ...(folder ? { folderName: folder.name } : {}),
         hitCount: 0,
         hits: []
       },
@@ -229,7 +241,27 @@ export function search(db: Database.Database, ctx: SearchContext, raw: SearchQue
   } else {
     list.sort((a, b) => Number(b.titleHit) - Number(a.titleHit) || a.best - b.best)
   }
+  // Carpetas por nombre, en el ámbito de la búsqueda y de proyectos importados.
+  const projectsById = new Map(ctx.projects.map((p) => [p.id, p]))
+  const folderHits: SearchFolder[] = []
+  for (const folder of ctx.folders ?? []) {
+    const owner = projectsById.get(folder.projectId)
+    if (!owner || (project && owner.id !== project.id)) continue
+    const name = normalizeForSearch(folder.name)
+    if (!compiled.terms.every((term) => name.includes(term))) continue
+    folderHits.push({
+      id: folder.id,
+      projectId: folder.projectId,
+      name: folder.name,
+      ...(folder.icon ? { icon: folder.icon } : {}),
+      ...(folder.color ? { color: folder.color } : {}),
+      ...(query.scope === 'all' ? { projectName: owner.name } : {}),
+      nameMatch: splitMatches(folder.name, compiled.terms)
+    })
+  }
+
   const result: SearchResult = {
+    folders: folderHits.slice(0, 20),
     groups: list.slice(0, query.limit).map((a) => a.group),
     total,
     literal: compiled.literal,

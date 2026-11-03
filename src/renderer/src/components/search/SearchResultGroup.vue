@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { t } from '../../i18n'
+import { Folder } from 'lucide-vue-next'
 import type { SearchGroup } from '../../../../shared/search'
 import { relativeTime } from '../../lib/dates'
 import { tag } from '../../i18n'
@@ -46,6 +47,14 @@ const count = (): string =>
       <span class="min-w-0 flex-1 truncate font-medium">
         <SnippetText v-if="group.titleMatch" :parts="group.titleMatch" />
         <template v-else>{{ group.title }}</template>
+      </span>
+      <span
+        v-if="group.folderName"
+        class="inline-flex max-w-40 shrink-0 items-center gap-1 self-center text-xs text-muted"
+        :title="t('En la carpeta «{name}»', { name: group.folderName })"
+      >
+        <Folder :size="12" :stroke-width="1.75" class="shrink-0" aria-hidden="true" />
+        <span class="truncate">{{ group.folderName }}</span>
       </span>
       <span v-if="group.projectName" class="shrink-0 text-xs text-muted">
         {{ group.projectName }}
