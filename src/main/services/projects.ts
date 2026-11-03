@@ -9,7 +9,13 @@ import type {
   SessionListItem,
   SessionMetaStats
 } from '../../shared/projects'
-import type { Project, ProjectColor, ProjectIcon, SessionMeta } from '../../shared/types'
+import type {
+  Project,
+  ProjectColor,
+  ProjectIcon,
+  SessionFolder,
+  SessionMeta
+} from '../../shared/types'
 import type { AppStore } from './app-store'
 import {
   conversationOf,
@@ -74,23 +80,73 @@ export interface ProjectsService {
   /** Borra los datos propios de conversaciones eliminadas. */
   forget(conversationIds: readonly string[]): void
   metaStats(): SessionMetaStats
+  /** Conversaciones de esas sesiones (las que estén en el índice). */
+  conversationsOf(sessionIds: readonly string[]): string[]
+  /** Mete una sesión recién creada en una carpeta (aún no está en el índice). */
+  assignFolder(conversationId: string, folderId: string): void
+  /** Saca de su carpeta esas conversaciones (p. ej. al moverlas a otro proyecto). */
+  clearFolders(conversationIds: readonly string[]): void
+  folders(projectId: string): SessionFolder[]
+  createFolder(input: FolderCreate): SessionFolder
+  updateFolder(input: FolderPatch): SessionFolder
+  /** Elimina la carpeta; sus sesiones se quedan sin carpeta. */
+  removeFolder(id: string): void
 }
 
-/** `title` vacío o `null` vuelve al título calculado. */
+export interface FolderCreate {
+  projectId: string
+  name: string
+  icon?: ProjectIcon | undefined
+  color?: ProjectColor | undefined
+  context?: string | undefined
+}
+
+/** `null` en icono o color lo quita. */
+export interface FolderPatch {
+  id: string
+  name?: string | undefined
+  icon?: ProjectIcon | null | undefined
+  color?: ProjectColor | null | undefined
+  context?: string | undefined
+  collapsed?: boolean | undefined
+}
+
+/** `title` vacío o `null` vuelve al título calculado; `null` en el resto, lo quita. */
 export interface SessionPatch {
   sessionId: string
-  title?: string | null
-  favorite?: boolean
-  hidden?: boolean
+  title?: string | null | undefined
+  favorite?: boolean | undefined
+  hidden?: boolean | undefined
+  icon?: ProjectIcon | null | undefined
+  color?: ProjectColor | null | undefined
+  folderId?: string | null | undefined
 }
 
-/** Aplica los datos propios a una entrada del índice y quita `conversationId`. */
+type MetaPatch = Omit<SessionPatch, 'sessionId'>
+
+type Looks = { favorite: boolean; hidden: boolean } & Pick<
+  SessionListItem,
+  'icon' | 'color' | 'folderId'
+>
+
+/**
+ * Aplica los datos propios a una entrada del índice y quita `conversationId`. `folderOk` dice si
+ * la carpeta guardada vale aquí (existe y es del proyecto que se lista).
+ */
 function withMeta<T extends IndexedListItem | IndexedDetail>(
   item: T,
-  meta: SessionMeta | undefined
-): Omit<T, 'conversationId'> & { favorite: boolean; hidden: boolean } {
-  const out = { ...item, favorite: meta?.favorite === true, hidden: meta?.hidden === true }
-  delete (out as Partial<T>).conversationId
+  meta: SessionMeta | undefined,
+  folderOk: (folderId: string) => boolean
+): Omit<T, 'conversationId'> & Looks {
+  const out: Omit<T, 'conversationId'> & Looks & { conversationId?: string } = {
+    ...item,
+    favorite: meta?.favorite === true,
+    hidden: meta?.hidden === true,
+    ...(meta?.icon ? { icon: meta.icon } : {}),
+    ...(meta?.color ? { color: meta.color } : {}),
+    ...(meta?.folderId && folderOk(meta.folderId) ? { folderId: meta.folderId } : {})
+  }
+  delete out.conversationId
   if (meta?.title) {
     out.title = meta.title
     if ('titleSource' in out) out.titleSource = 'app'
@@ -118,9 +174,53 @@ function byRecent(a: Project, b: Project): number {
   return b.lastOpenedAt.localeCompare(a.lastOpenedAt)
 }
 
+/** Nombre de carpeta: sin espacios a los lados y con un máximo de 100 caracteres. */
+function cleanName(name: string): string {
+  const clean = name.trim().slice(0, 100)
+  if (!clean) throw new ProjectError('NOT_FOUND', t('La carpeta necesita un nombre.'))
+  return clean
+}
+
+/** `all` con la entrada `conversationId` cambiada; una entrada sin datos se borra. */
+function metaWith(
+  all: Record<string, SessionMeta>,
+  conversationId: string,
+  patch: MetaPatch,
+  at: string
+): Record<string, SessionMeta> {
+  const current = all[conversationId]
+  const next: Partial<SessionMeta> = {}
+  const title = patch.title === undefined ? current?.title : patch.title?.trim()
+  if (title) next.title = title.slice(0, 200)
+  if (patch.favorite ?? current?.favorite === true) next.favorite = true
+  if (patch.hidden ?? current?.hidden === true) next.hidden = true
+  const icon = patch.icon === undefined ? current?.icon : patch.icon
+  if (icon) next.icon = icon
+  const color = patch.color === undefined ? current?.color : patch.color
+  if (color) next.color = color
+  const folderId = patch.folderId === undefined ? current?.folderId : patch.folderId
+  if (folderId) next.folderId = folderId
+  const rest = Object.fromEntries(Object.entries(all).filter(([key]) => key !== conversationId))
+  return Object.keys(next).length > 0
+    ? { ...rest, [conversationId]: { ...next, updatedAt: at } }
+    : rest
+}
+
 export function createProjectsService(options: ProjectsServiceOptions): ProjectsService {
   const { store, reader } = options
   const now = (): string => (options.now?.() ?? new Date()).toISOString()
+
+  /** Aplica `patch` a los datos propios de la conversación, lo guarda y devuelve el total. */
+  function writeMeta(conversationId: string, patch: MetaPatch): Record<string, SessionMeta> {
+    const sessionMeta = metaWith(store.get().sessionMeta, conversationId, patch, now())
+    store.set({ sessionMeta })
+    return sessionMeta
+  }
+
+  /** La carpeta existe (la lista, además, solo acepta las de su proyecto). */
+  function folderExists(folderId: string): boolean {
+    return store.get().sessionFolders.some((f) => f.id === folderId)
+  }
 
   function projects(): Project[] {
     return store.get().projects
@@ -316,59 +416,138 @@ export function createProjectsService(options: ProjectsServiceOptions): Projects
     sessions(projectId) {
       const project = projects().find((p) => p.id === projectId)
       if (!project || !reader) return []
-      const meta = store.get().sessionMeta
+      const state = store.get()
+      const mine = new Set(
+        state.sessionFolders.filter((f) => f.projectId === projectId).map((f) => f.id)
+      )
       return listSessions(reader, pathKey(project.path)).map((item) =>
-        withMeta(item, meta[item.conversationId])
+        withMeta(item, state.sessionMeta[item.conversationId], (id) => mine.has(id))
       )
     },
 
     session(sessionId) {
       const detail = reader ? getSession(reader, sessionId) : null
-      return detail ? withMeta(detail, store.get().sessionMeta[detail.conversationId]) : null
+      return detail
+        ? withMeta(detail, store.get().sessionMeta[detail.conversationId], folderExists)
+        : null
     },
 
     update({ sessionId, ...patch }) {
       if (!reader) return null
       const conversationId = conversationOf(reader, sessionId)
       if (!conversationId) return null
-      const all = store.get().sessionMeta
-      const current = all[conversationId]
-      const next: Partial<SessionMeta> = {}
-      const title = patch.title === undefined ? current?.title : patch.title?.trim()
-      if (title) next.title = title.slice(0, 200)
-      const favorite = patch.favorite ?? current?.favorite === true
-      if (favorite) next.favorite = true
-      const hidden = patch.hidden ?? current?.hidden === true
-      if (hidden) next.hidden = true
-      // Una entrada vacía no se guarda.
-      const rest = Object.fromEntries(Object.entries(all).filter(([key]) => key !== conversationId))
-      const sessionMeta =
-        next.title || next.favorite || next.hidden
-          ? { ...rest, [conversationId]: { ...next, updatedAt: now() } }
-          : rest
-      store.set({ sessionMeta })
+      if (patch.folderId && !folderExists(patch.folderId)) {
+        throw new ProjectError('NOT_FOUND', t('La carpeta no existe.'))
+      }
+      const sessionMeta = writeMeta(conversationId, patch)
       const detail = getSession(reader, sessionId)
       if (!detail) return null
       const {
         sessionId: id,
-        title: t,
+        title,
         startedAt,
         updatedAt,
         gitBranch,
         usage,
-        chainLength
-      } = withMeta(detail, sessionMeta[conversationId])
+        chainLength,
+        favorite,
+        hidden,
+        icon,
+        color,
+        folderId
+      } = withMeta(detail, sessionMeta[conversationId], folderExists)
       return {
         sessionId: id,
-        title: t,
+        title,
         ...(startedAt ? { startedAt } : {}),
         ...(updatedAt ? { updatedAt } : {}),
         ...(gitBranch ? { gitBranch } : {}),
         usage,
         chainLength,
-        favorite: sessionMeta[conversationId]?.favorite === true,
-        hidden: sessionMeta[conversationId]?.hidden === true
+        favorite,
+        hidden,
+        ...(icon ? { icon } : {}),
+        ...(color ? { color } : {}),
+        ...(folderId ? { folderId } : {})
       }
+    },
+
+    conversationsOf(sessionIds) {
+      if (!reader) return []
+      const out = new Set<string>()
+      for (const id of sessionIds) {
+        const conversationId = conversationOf(reader, id)
+        if (conversationId) out.add(conversationId)
+      }
+      return [...out]
+    },
+
+    assignFolder(conversationId, folderId) {
+      if (folderExists(folderId)) writeMeta(conversationId, { folderId })
+    },
+
+    clearFolders(conversationIds) {
+      const all = store.get().sessionMeta
+      const ids = conversationIds.filter((id) => all[id]?.folderId)
+      if (ids.length === 0) return
+      let next = all
+      for (const id of ids) next = metaWith(next, id, { folderId: null }, now())
+      store.set({ sessionMeta: next })
+    },
+
+    folders(projectId) {
+      return store.get().sessionFolders.filter((f) => f.projectId === projectId)
+    },
+
+    createFolder({ projectId, name, icon, color, context }) {
+      find(projectId)
+      const folder: SessionFolder = {
+        id: randomUUID(),
+        projectId,
+        name: cleanName(name),
+        ...(icon ? { icon } : {}),
+        ...(color ? { color } : {}),
+        context: context ?? '',
+        createdAt: now()
+      }
+      store.set({ sessionFolders: [...store.get().sessionFolders, folder] })
+      return folder
+    },
+
+    updateFolder({ id, name, icon, color, context, collapsed }) {
+      const all = store.get().sessionFolders
+      const current = all.find((f) => f.id === id)
+      if (!current) throw new ProjectError('NOT_FOUND', t('La carpeta no existe.'))
+      const next: SessionFolder = { ...current }
+      if (name !== undefined) next.name = cleanName(name)
+      if (icon !== undefined) {
+        if (icon) next.icon = icon
+        else delete next.icon
+      }
+      if (color !== undefined) {
+        if (color) next.color = color
+        else delete next.color
+      }
+      if (context !== undefined) next.context = context
+      if (collapsed !== undefined) {
+        if (collapsed) next.collapsed = true
+        else delete next.collapsed
+      }
+      store.set({ sessionFolders: all.map((f) => (f.id === id ? next : f)) })
+      return next
+    },
+
+    removeFolder(id) {
+      const state = store.get()
+      if (!state.sessionFolders.some((f) => f.id === id)) return
+      let meta = state.sessionMeta
+      for (const [key, m] of Object.entries(meta)) {
+        if (m.folderId === id) meta = metaWith(meta, key, { folderId: null }, now())
+      }
+      store.set({
+        sessionFolders: state.sessionFolders.filter((f) => f.id !== id),
+        sessionMeta: meta
+      })
     },
 
     forget(conversationIds) {

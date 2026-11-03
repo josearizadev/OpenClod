@@ -204,16 +204,40 @@ export type Project = z.infer<typeof ProjectSchema>
 
 /**
  * Datos propios de una conversación: nunca se escriben en la carpeta de
- * Claude Code. Una entrada sin `title`, `favorite` ni `hidden` no se guarda.
+ * Claude Code. Una entrada sin ningún dato (título, favorita, archivada, aspecto ni carpeta) no
+ * se guarda.
  */
 export const SessionMetaSchema = z.object({
   title: z.string().trim().min(1).max(200).optional(),
   favorite: z.literal(true).optional(),
   hidden: z.literal(true).optional(),
+  /** Aspecto: el mismo catálogo que los proyectos. */
+  icon: ProjectIconSchema.optional(),
+  color: ProjectColorSchema.optional(),
+  /** Carpeta de sesiones del proyecto (`sessionFolders`). */
+  folderId: z.string().uuid().optional(),
   /** ISO de la última modificación. */
   updatedAt: z.string()
 })
 export type SessionMeta = z.infer<typeof SessionMetaSchema>
+
+/** Máximo del contexto de una carpeta. */
+export const FOLDER_CONTEXT_MAX = 20_000
+
+/** Carpeta de sesiones de un proyecto: agrupa sesiones de una misma tarea y lleva un contexto. */
+export const SessionFolderSchema = z.object({
+  id: z.string().uuid(),
+  projectId: z.string().uuid(),
+  name: z.string().trim().min(1).max(100),
+  icon: ProjectIconSchema.optional(),
+  color: ProjectColorSchema.optional(),
+  /** Markdown que se manda a Claude Code al empezar cada sesión nueva de la carpeta. */
+  context: z.string().max(FOLDER_CONTEXT_MAX),
+  /** ISO. */
+  createdAt: z.string(),
+  collapsed: z.literal(true).optional()
+})
+export type SessionFolder = z.infer<typeof SessionFolderSchema>
 
 const ProjectPrefsSchema = z.object({ chrome: z.boolean() }).strict()
 export type ProjectPrefs = z.infer<typeof ProjectPrefsSchema>
@@ -227,6 +251,8 @@ export const StateSchema = SettingsSchema.extend({
   activeProjectId: z.string().uuid().nullable(),
   /** Datos propios por `conversationId`. */
   sessionMeta: z.record(z.string().max(100), SessionMetaSchema),
+  /** Carpetas de sesiones de todos los proyectos. */
+  sessionFolders: z.array(SessionFolderSchema).max(2000),
   /** Preferencias de la app por proyecto: Claude en Chrome en sus sesiones. */
   projectPrefs: z.record(z.string().uuid(), ProjectPrefsSchema),
   /** Sesiones movidas a otro proyecto desde la app: `sessionId` → carpeta del destino. */
@@ -257,6 +283,7 @@ export const DEFAULT_STATE: State = {
   projects: [],
   activeProjectId: null,
   sessionMeta: {},
+  sessionFolders: [],
   projectPrefs: {},
   sessionMoves: {},
   chatCache: { models: [], commands: [], updatedAt: null },

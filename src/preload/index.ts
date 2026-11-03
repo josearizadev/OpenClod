@@ -79,6 +79,12 @@ const api: Api = {
     active: () => invoke('projects:active', undefined),
     discover: () => invoke('projects:discover', undefined)
   },
+  folders: {
+    list: (projectId) => invoke('folders:list', { projectId }),
+    create: (input) => invoke('folders:create', input),
+    update: (input) => invoke('folders:update', input),
+    remove: (id) => invoke('folders:remove', { id })
+  },
   sessions: {
     list: (projectId) => invoke('sessions:list', { projectId }),
     get: (sessionId) => invoke('sessions:get', { sessionId }),

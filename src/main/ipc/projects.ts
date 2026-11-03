@@ -39,7 +39,11 @@ export function registerProjectsIpc(
   handle('projects:discover', () => service.discover())
   handle('sessions:list', ({ projectId }) => service.sessions(projectId))
   handle('sessions:get', ({ sessionId }) => service.session(sessionId))
-  handle('sessions:update', (patch) => service.update(patch))
+  handle('sessions:update', (patch) => guarded(() => service.update(patch)))
+  handle('folders:list', ({ projectId }) => service.folders(projectId))
+  handle('folders:create', (input) => guarded(() => service.createFolder(input)))
+  handle('folders:update', (input) => guarded(() => service.updateFolder(input)))
+  handle('folders:remove', ({ id }) => service.removeFolder(id))
   handle('sessions:trash', ({ sessionIds }) => {
     if (!trash) throw new IpcError('INTERNAL', t('El índice no está disponible.'))
     return trash(sessionIds)

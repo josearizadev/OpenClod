@@ -37,8 +37,10 @@ import {
 } from './chat'
 import {
   AppCommandSchema,
+  FOLDER_CONTEXT_MAX,
   ProjectColorSchema,
   ProjectIconSchema,
+  SessionFolderSchema,
   SettingsSchema,
   ShellMenuStatusSchema,
   SystemInfoSchema
@@ -181,13 +183,52 @@ export const invokeContract = {
         sessionId: z.string().min(1).max(100),
         title: z.string().max(200).nullable().optional(),
         favorite: z.boolean().optional(),
-        hidden: z.boolean().optional()
+        hidden: z.boolean().optional(),
+        icon: ProjectIconSchema.nullable().optional(),
+        color: ProjectColorSchema.nullable().optional(),
+        folderId: z.string().uuid().nullable().optional()
       })
       .strict()
-      .refine((p) => p.title !== undefined || p.favorite !== undefined || p.hidden !== undefined, {
+      .refine((p) => Object.keys(p).some((k) => k !== 'sessionId'), {
         message: 'Falta el cambio'
       }),
     output: SessionListItemSchema.nullable()
+  },
+  /** Carpetas de sesiones de un proyecto (datos propios en `state.json`). */
+  'folders:list': {
+    input: z.object({ projectId: z.string().uuid() }).strict(),
+    output: z.array(SessionFolderSchema)
+  },
+  'folders:create': {
+    input: z
+      .object({
+        projectId: z.string().uuid(),
+        name: z.string().trim().min(1).max(100),
+        icon: ProjectIconSchema.optional(),
+        color: ProjectColorSchema.optional(),
+        context: z.string().max(FOLDER_CONTEXT_MAX).optional()
+      })
+      .strict(),
+    output: SessionFolderSchema
+  },
+  /** `null` en icono o color lo quita. */
+  'folders:update': {
+    input: z
+      .object({
+        id: z.string().uuid(),
+        name: z.string().trim().min(1).max(100).optional(),
+        icon: ProjectIconSchema.nullable().optional(),
+        color: ProjectColorSchema.nullable().optional(),
+        context: z.string().max(FOLDER_CONTEXT_MAX).optional(),
+        collapsed: z.boolean().optional()
+      })
+      .strict(),
+    output: SessionFolderSchema
+  },
+  /** Elimina la carpeta; sus sesiones se quedan sin carpeta. */
+  'folders:remove': {
+    input: z.object({ id: z.string().uuid() }).strict(),
+    output: z.void()
   },
   /** Mover conversaciones enteras a la papelera del sistema. */
   'sessions:trash': {
@@ -450,10 +491,16 @@ export interface Api {
     active(): Promise<Result<InvokeOutput<'projects:active'>>>
     discover(): Promise<Result<InvokeOutput<'projects:discover'>>>
   }
+  folders: {
+    list(projectId: string): Promise<Result<InvokeOutput<'folders:list'>>>
+    create(input: InvokeInput<'folders:create'>): Promise<Result<InvokeOutput<'folders:create'>>>
+    update(input: InvokeInput<'folders:update'>): Promise<Result<InvokeOutput<'folders:update'>>>
+    remove(id: string): Promise<Result<void>>
+  }
   sessions: {
     list(projectId: string): Promise<Result<InvokeOutput<'sessions:list'>>>
     get(sessionId: string): Promise<Result<InvokeOutput<'sessions:get'>>>
-    /** Renombrar, favorita u ocultar (datos propios en `state.json`). */
+    /** Renombrar, favorita, archivar, aspecto o carpeta (datos propios en `state.json`). */
     update(patch: InvokeInput<'sessions:update'>): Promise<Result<InvokeOutput<'sessions:update'>>>
     /** Mueve a la papelera las conversaciones de esas entradas. */
     trash(sessionIds: string[]): Promise<Result<InvokeOutput<'sessions:trash'>>>

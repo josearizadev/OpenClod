@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { TokenUsageSchema } from './sessions'
-import { ProjectSchema } from './types'
+import { ProjectColorSchema, ProjectIconSchema, ProjectSchema } from './types'
 
 /**
  * Tipos IPC de proyectos, lista de sesiones e índice. Los produce el main
@@ -43,7 +43,11 @@ export const SessionListItemSchema = z.object({
   lastWriteAt: z.number().optional(),
   /** Datos propios de la conversación. */
   favorite: z.boolean(),
-  hidden: z.boolean()
+  hidden: z.boolean(),
+  icon: ProjectIconSchema.optional(),
+  color: ProjectColorSchema.optional(),
+  /** Carpeta del mismo proyecto (si existe). */
+  folderId: z.string().optional()
 })
 export type SessionListItem = z.infer<typeof SessionListItemSchema>
 

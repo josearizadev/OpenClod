@@ -313,6 +313,10 @@ app.whenReady().then(() => {
       void limits.requestUsage({ allowProbe: false })
     },
     onRateLimit: (window) => limits.fromChatEvent(window),
+    // La sesión nueva es su propia conversación: su id es el `conversationId`.
+    onNewSession: (sessionId, { folderId }) => {
+      if (folderId) projectsService.assignFolder(sessionId, folderId)
+    },
     onCatalog: (catalog) => {
       try {
         store.set({ chatCache: { ...catalog, updatedAt: new Date().toISOString() } })
@@ -531,6 +535,8 @@ app.whenReady().then(() => {
         const project = store.get().projects.find((p) => p.id === projectId)
         if (!project) throw new ProjectError('NOT_FOUND', t('El proyecto no existe.'))
         // En Windows, una carpeta `<id>/` vigilada no se puede renombrar: la vigilancia se pausa.
+        // Las carpetas son del proyecto: al cambiar de proyecto, la sesión sale de la suya.
+        const conversations = projectsService.conversationsOf(sessionIds)
         const watching = watcher.status().state === 'watching'
         if (watching) await watcher.pause()
         const outcome = await moveSessions(sessionIds, project.path, {
@@ -543,6 +549,8 @@ app.whenReady().then(() => {
           if (watching) watcher.start()
         })
         if (outcome.sessions.length > 0) {
+          const movedConversations = new Set(projectsService.conversationsOf(outcome.sessions))
+          projectsService.clearFolders(conversations.filter((c) => movedConversations.has(c)))
           const moves = { ...store.get().sessionMoves }
           for (const id of outcome.sessions) moves[id] = project.path
           store.set({ sessionMoves: moves })

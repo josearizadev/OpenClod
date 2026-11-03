@@ -30,7 +30,10 @@ function tempDir(): string {
   return dir
 }
 
-function setup(targets: Record<string, ResumeTarget> = {}): {
+function setup(
+  targets: Record<string, ResumeTarget> = {},
+  extra: Partial<ChatServiceDeps> = {}
+): {
   service: ChatService
   queries: ReturnType<typeof fakeFactory>['queries']
   log: ChatEvent[]
@@ -57,12 +60,63 @@ function setup(targets: Record<string, ResumeTarget> = {}): {
     knownModels: () => ['haiku', 'sonnet', 'claude-haiku-5-5'],
     log: quiet,
     now: () => clock.now,
-    closeGraceMs: 0
+    closeGraceMs: 0,
+    ...extra
   }
   return { service: new ChatService(deps), queries, log, root, clock, turnEnds }
 }
 
 describe('ChatService', () => {
+  it('sesión nueva: avisa una vez con su id y su carpeta; reanudar o incógnito no avisa', async () => {
+    const calls: [string, { folderId?: string }][] = []
+    const id = '23a86f7b-e53a-4322-9146-2d28cfab6b81'
+    const { service, root, queries } = setup(
+      { [id]: { sessionId: id, cwd: '' } },
+      { onNewSession: (sessionId, info) => calls.push([sessionId, info]) }
+    )
+    const folderId = '6f1c2b4e-8d3a-4f5b-9c7e-1a2b3c4d5e6f'
+    const [a] = pushes('pregunta')
+    await service.start({ cwd: join(root, 'proyecto'), text: a!.text, uuid: a!.uuid, folderId })
+    await flush()
+    await emitUntil(
+      queries[0]!,
+      replay('pregunta'),
+      (m) => isResult(m),
+      () => {
+        const req = service.snapshot(id)!.permissions[0]!
+        service.respond({ sessionId: id, requestId: req.requestId, decision: 'deny' })
+      }
+    )
+    expect(calls).toEqual([[id, { folderId }]])
+
+    const [b] = pushes('pregunta')
+    await service.start({
+      cwd: join(root, 'proyecto'),
+      text: b!.text,
+      uuid: b!.uuid,
+      incognito: true,
+      folderId
+    })
+    await flush()
+    await emitUntil(
+      queries[1]!,
+      replay('pregunta'),
+      (m) => isResult(m),
+      () => {
+        const req = service.active().find((e) => e.incognito)
+        const snap = req?.sessionId ? service.snapshot(req.sessionId) : null
+        const perm = snap?.permissions[0]
+        if (snap && perm)
+          service.respond({
+            sessionId: snap.sessionId!,
+            requestId: perm.requestId,
+            decision: 'deny'
+          })
+      }
+    )
+    expect(calls).toHaveLength(1)
+  })
+
   it('start comprueba la carpeta', async () => {
     const { service, root, queries } = setup()
     await expect(

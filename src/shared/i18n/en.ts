@@ -1172,5 +1172,6 @@ export const en = {
   'Las sesiones de incógnito no se guardan: no se pueden exportar.':
     'Incognito sessions aren’t saved: they can’t be exported.',
   'Las sesiones de incógnito no se pueden seguir en la terminal.':
-    'Incognito sessions can’t be continued in the terminal.'
+    'Incognito sessions can’t be continued in the terminal.',
+  'La carpeta necesita un nombre.': 'The folder needs a name.'
 } satisfies Record<string, string>

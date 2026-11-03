@@ -278,7 +278,9 @@ export const ChatStartInputSchema = z
     /** Claude en Chrome; sin él, la preferencia del proyecto. */
     chrome: z.boolean().optional(),
     /** De incógnito: Claude Code no guarda la sesión en disco. */
-    incognito: z.boolean().optional()
+    incognito: z.boolean().optional(),
+    /** Carpeta de sesiones donde nace la sesión. */
+    folderId: z.string().uuid().optional()
   })
   .strict()
   .refine(hasContent, EMPTY)

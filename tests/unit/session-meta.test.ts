@@ -178,3 +178,120 @@ describe('sessions:update (zod)', () => {
     expect(Object.keys(store.get().sessionMeta)).toEqual([NUBE_RECENT])
   })
 })
+
+describe('aspecto y carpetas de las sesiones', () => {
+  it('icono y color se guardan por conversación y se ven en lista y ficha; null los quita', async () => {
+    const { store, service, nube } = await setup()
+    const item = service.update({ sessionId: CONTINUATION, icon: 'rocket', color: 'teal' })
+    expect(item).toMatchObject({ icon: 'rocket', color: 'teal' })
+    expect(store.get().sessionMeta[ORIGIN]).toMatchObject({ icon: 'rocket', color: 'teal' })
+    expect(service.sessions(nube).find((s) => s.sessionId === CONTINUATION)).toMatchObject({
+      icon: 'rocket',
+      color: 'teal'
+    })
+    expect(service.session(CONTINUATION)).toMatchObject({ icon: 'rocket' })
+    service.update({ sessionId: CONTINUATION, icon: null })
+    expect(service.session(CONTINUATION)?.icon).toBeUndefined()
+    service.update({ sessionId: CONTINUATION, color: null })
+    // Sin datos, la entrada no se guarda.
+    expect(store.get().sessionMeta).toEqual({})
+  })
+
+  it('crear, editar y listar carpetas por proyecto', async () => {
+    const { store, service, nube } = await setup()
+    const folder = service.createFolder({ projectId: nube, name: '  Migración auth  ' })
+    expect(folder).toMatchObject({ projectId: nube, name: 'Migración auth', context: '' })
+    expect(service.folders(nube)).toEqual([folder])
+    expect(service.folders('00000000-0000-4000-8000-000000000000')).toEqual([])
+    const edited = service.updateFolder({
+      id: folder.id,
+      icon: 'shield',
+      color: 'red',
+      context: '# Tarea',
+      collapsed: true
+    })
+    expect(edited).toMatchObject({
+      icon: 'shield',
+      color: 'red',
+      context: '# Tarea',
+      collapsed: true
+    })
+    const cleared = service.updateFolder({ id: folder.id, icon: null, collapsed: false })
+    expect(cleared.icon).toBeUndefined()
+    expect(cleared.collapsed).toBeUndefined()
+    expect(store.get().sessionFolders).toHaveLength(1)
+    expect(() => service.updateFolder({ id: folder.id, name: '   ' })).toThrow()
+    expect(() =>
+      service.createFolder({ projectId: '00000000-0000-4000-8000-000000000000', name: 'X' })
+    ).toThrow()
+  })
+
+  it('meter y sacar sesiones; la carpeta solo vale en su proyecto', async () => {
+    const { store, service, nube } = await setup()
+    const folder = service.createFolder({ projectId: nube, name: 'Tarea' })
+    service.update({ sessionId: CONTINUATION, folderId: folder.id })
+    expect(service.sessions(nube).find((s) => s.sessionId === CONTINUATION)?.folderId).toBe(
+      folder.id
+    )
+    expect(() =>
+      service.update({ sessionId: NUBE_RECENT, folderId: '00000000-0000-4000-8000-000000000000' })
+    ).toThrow()
+    // Una carpeta de otro proyecto no se aplica en la lista.
+    store.set({
+      sessionFolders: store
+        .get()
+        .sessionFolders.map((f) => ({ ...f, projectId: '00000000-0000-4000-8000-000000000000' }))
+    })
+    expect(service.sessions(nube).find((s) => s.sessionId === CONTINUATION)?.folderId).toBe(
+      undefined
+    )
+    service.update({ sessionId: CONTINUATION, folderId: null })
+    expect(store.get().sessionMeta).toEqual({})
+  })
+
+  it('eliminar la carpeta deja sus sesiones sin carpeta y conserva lo demás', async () => {
+    const { store, service, nube } = await setup()
+    const folder = service.createFolder({ projectId: nube, name: 'Tarea' })
+    service.update({ sessionId: CONTINUATION, folderId: folder.id, favorite: true })
+    service.update({ sessionId: NUBE_RECENT, folderId: folder.id })
+    service.removeFolder(folder.id)
+    expect(store.get().sessionFolders).toEqual([])
+    expect(store.get().sessionMeta[ORIGIN]).toMatchObject({ favorite: true })
+    expect(store.get().sessionMeta[ORIGIN]?.folderId).toBeUndefined()
+    expect(store.get().sessionMeta[NUBE_RECENT]).toBeUndefined()
+  })
+
+  it('assignFolder (sesión nueva) y clearFolders (mover a otro proyecto)', async () => {
+    const { store, service, nube } = await setup()
+    const folder = service.createFolder({ projectId: nube, name: 'Tarea' })
+    service.assignFolder('sesion-nueva', folder.id)
+    service.assignFolder('otra', '00000000-0000-4000-8000-000000000000')
+    expect(store.get().sessionMeta['sesion-nueva']?.folderId).toBe(folder.id)
+    expect(store.get().sessionMeta['otra']).toBeUndefined()
+    expect(service.conversationsOf([CONTINUATION, 'no-existe'])).toEqual([ORIGIN])
+    service.update({ sessionId: CONTINUATION, folderId: folder.id, icon: 'bot' })
+    service.clearFolders([ORIGIN, 'sesion-nueva'])
+    expect(store.get().sessionMeta[ORIGIN]).toMatchObject({ icon: 'bot' })
+    expect(store.get().sessionMeta[ORIGIN]?.folderId).toBeUndefined()
+    expect(store.get().sessionMeta['sesion-nueva']).toBeUndefined()
+  })
+
+  it('validación zod de sessions:update y folders:*', () => {
+    const update = invokeContract['sessions:update'].input
+    expect(update.safeParse({ sessionId: 'x', icon: 'rocket' }).success).toBe(true)
+    expect(update.safeParse({ sessionId: 'x', icon: 'nope' }).success).toBe(false)
+    expect(update.safeParse({ sessionId: 'x', folderId: 'no-uuid' }).success).toBe(false)
+    expect(update.safeParse({ sessionId: 'x', folderId: null }).success).toBe(true)
+    const create = invokeContract['folders:create'].input
+    expect(
+      create.safeParse({ projectId: '6f1c2b4e-8d3a-4f5b-9c7e-1a2b3c4d5e6f', name: ' ' }).success
+    ).toBe(false)
+    expect(
+      create.safeParse({
+        projectId: '6f1c2b4e-8d3a-4f5b-9c7e-1a2b3c4d5e6f',
+        name: 'A',
+        context: 'x'.repeat(20_001)
+      }).success
+    ).toBe(false)
+  })
+})

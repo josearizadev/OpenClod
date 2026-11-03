@@ -55,6 +55,8 @@ export interface ChatServiceDeps {
   onRateLimit?: (window: LimitWindow) => void
   /** Claude en Chrome por defecto en esa carpeta (preferencia del proyecto). */
   chromeDefault?: (cwd: string) => boolean
+  /** Una sesión nueva (no de incógnito) recibió su id: p. ej. meterla en su carpeta. */
+  onNewSession?: (sessionId: string, info: { folderId?: string }) => void
   /** Modelos conocidos: `setModel` solo acepta estos (y `null`). */
   knownModels?: () => string[]
   log?: Pick<Logger, 'info' | 'warn' | 'error'>
@@ -72,6 +74,8 @@ export interface StartArgs {
   chrome?: boolean
   /** No se guarda en disco: al cerrarla desaparece. */
   incognito?: boolean
+  /** Carpeta de sesiones donde nace. */
+  folderId?: string
 }
 
 export interface SendArgs {
@@ -100,13 +104,16 @@ export class ChatService {
     const check = await checkCwd(args.cwd, this.deps.claudeDir())
     if (!check.ok) throw new ChatServiceError('INVALID_CWD', cwdErrorMessage(check.reason))
     const content = await this.content(args.text, args.attachments)
-    const session = this.create({
-      cwd: check.path,
-      ...(args.model !== undefined ? { model: args.model } : {}),
-      ...(args.mode ? { mode: args.mode } : {}),
-      chrome: args.chrome ?? this.deps.chromeDefault?.(check.path) ?? false,
-      ...(args.incognito ? { incognito: true } : {})
-    })
+    const session = this.create(
+      {
+        cwd: check.path,
+        ...(args.model !== undefined ? { model: args.model } : {}),
+        ...(args.mode ? { mode: args.mode } : {}),
+        chrome: args.chrome ?? this.deps.chromeDefault?.(check.path) ?? false,
+        ...(args.incognito ? { incognito: true } : {})
+      },
+      args.folderId ? { folderId: args.folderId } : {}
+    )
     const uuid = session.send(content.text, args.uuid, false, content.images)
     this.log.info(
       'chat',
@@ -297,15 +304,28 @@ export class ChatService {
     return this.sessions.size
   }
 
-  private create(init: ConstructorParameters<typeof ChatSession>[0]): ChatSession {
+  /** `info`: solo para sesiones nuevas; se entrega con su primer id (`onNewSession`). */
+  private create(
+    init: ConstructorParameters<typeof ChatSession>[0],
+    info?: { folderId?: string }
+  ): ChatSession {
+    const fresh = !init.resume && !init.incognito
     const session = new ChatSession(init, {
       query: this.deps.query,
       base: this.deps.base(),
       emit: this.deps.emit,
       onTurnEnd: () => this.deps.onTurnEnd?.(),
       // Si Claude Code la continuó en otra sesión, se llega por los dos ids.
-      onSessionId: (s) => {
-        if (s.sessionId) this.bySessionId.set(s.sessionId, s)
+      onSessionId: (s, previous) => {
+        if (!s.sessionId) return
+        this.bySessionId.set(s.sessionId, s)
+        if (fresh && previous === null) {
+          try {
+            this.deps.onNewSession?.(s.sessionId, info ?? {})
+          } catch (error) {
+            this.log.error('chat', error)
+          }
+        }
       },
       ...(this.deps.onCatalog ? { onCatalog: this.deps.onCatalog } : {}),
       ...(this.deps.onRateLimit ? { onRateLimit: this.deps.onRateLimit } : {}),
